@@ -139,7 +139,7 @@ src/main/java/kr/santanrudolph/everyvent/
 ### API 설계 원칙
 - RESTful URL 구조
 - HTTP 상태코드 명시적 사용
-- 일관된 응답 형태 (`ApiResponse<T>`)
+- 일관된 응답 형태 (`ResponseEntity<T>`)
 - 요청 데이터 validation 필수
 
 ### 주요 비즈니스 규칙
