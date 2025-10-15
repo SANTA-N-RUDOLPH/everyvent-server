@@ -25,7 +25,7 @@ public class User extends BaseEntity {
   private String socialId;
 
   @Column(nullable = false)
-  private String provider;
+  private SocialProvider socialProvider;
 
   @Column
   private String email;
@@ -44,10 +44,10 @@ public class User extends BaseEntity {
   private LocalDateTime deletedAt;
 
   @Builder
-  public User(String socialId, String provider, String email, String nickname,
+  public User(String socialId, SocialProvider socialProvider, String email, String nickname,
       String introduction) {
     this.socialId = socialId;
-    this.provider = provider;
+    this.socialProvider = socialProvider;
     this.email = email;
     this.nickname = nickname;
     this.introduction = introduction;
