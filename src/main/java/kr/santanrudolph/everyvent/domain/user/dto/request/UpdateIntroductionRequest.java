@@ -1,0 +1,13 @@
+package kr.santanrudolph.everyvent.domain.user.dto.request;
+
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+public class UpdateIntroductionRequest {
+
+    @Size(max = 200, message = "소개글은 최대 200자까지 입력 가능합니다.")
+    private String introduction;
+}
