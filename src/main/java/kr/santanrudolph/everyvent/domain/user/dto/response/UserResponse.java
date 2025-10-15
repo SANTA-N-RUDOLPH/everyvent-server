@@ -12,7 +12,7 @@ public class UserResponse {
   private String nickname;
   private String email;
   private String introduction;
-  private String provider;
+  private String socialProvider;
   private String role;
 
   public static UserResponse from(User user) {
@@ -21,7 +21,7 @@ public class UserResponse {
         .nickname(user.getNickname())
         .email(user.getEmail())
         .introduction(user.getIntroduction())
-        .provider(user.getProvider())
+        .socialProvider(String.valueOf(user.getSocialProvider()))
         .role(user.getRole().name())
         .build();
   }
