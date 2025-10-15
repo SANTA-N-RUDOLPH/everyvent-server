@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"socialId", "provider"})
+    @UniqueConstraint(columnNames = {"social_id", "social_provider"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
