@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.auth;
+package kr.santanrudolph.everyvent.auth.security;
 
 
 import io.jsonwebtoken.Claims;
