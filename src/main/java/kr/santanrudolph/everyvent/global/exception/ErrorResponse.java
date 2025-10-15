@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.global;
+package kr.santanrudolph.everyvent.global.exception;
 
 public record ErrorResponse(
     String code,
