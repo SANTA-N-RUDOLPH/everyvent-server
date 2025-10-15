@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb # 개발용 인메모리 테스트 db
+    url: jdbc:h2:file:./data/testdb # 개발용 파일 기반 DB (재시작해도 데이터 유지)
     username: sa # system administartor
     password:
 
@@ -44,6 +44,6 @@ spring:
             user-name-attribute: id
 
 jwt:
-  secret: ${jwt.secret}
+  secret: ${JWT_SECRET}
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
