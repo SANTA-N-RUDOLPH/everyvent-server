@@ -2,6 +2,7 @@ package kr.santanrudolph.everyvent.auth.security;
 
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Jwts.SIG;
@@ -74,6 +75,17 @@ public class JwtTokenProvider {
       log.warn("Invalid JWT: {}: {}", e.getClass().getSimpleName(), e.getMessage());
     }
     return false;
+  }
+
+  public boolean isExpired(String token) {
+    try {
+      parseClaims(token);
+      return false;
+    } catch (ExpiredJwtException e) {
+      return true;
+    } catch (JwtException | IllegalArgumentException e) {
+      return false;
+    }
   }
 
   private Claims parseClaims(String token) {
