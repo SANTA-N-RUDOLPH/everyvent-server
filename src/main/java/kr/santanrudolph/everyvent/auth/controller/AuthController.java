@@ -14,6 +14,8 @@ import kr.santanrudolph.everyvent.auth.security.JwtTokenProvider;
 import kr.santanrudolph.everyvent.auth.entity.BlacklistedToken;
 import kr.santanrudolph.everyvent.auth.repository.BlacklistedTokenRepository;
 import kr.santanrudolph.everyvent.auth.repository.RefreshTokenRepository;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,15 +68,13 @@ public class AuthController {
               log.info("Deleting expired token - User ID: {}", token.getUserId());
               refreshTokenRepository.delete(token);
             });
+        throw new EveryventException(ErrorCode.EXPIRED_TOKEN);
       }
-      return ResponseEntity.badRequest().build();
+      throw new EveryventException(ErrorCode.INVALID_TOKEN);
     }
 
     RefreshToken refreshToken = refreshTokenRepository.findByToken(requestRefreshToken)
-        .orElseThrow(() -> {
-          log.warn("Refresh token not found in database");
-          return new IllegalArgumentException("Invalid refresh token");
-        });
+        .orElseThrow(() -> new EveryventException(ErrorCode.INVALID_TOKEN));
 
     Long userId = jwtTokenProvider.getUserIdFromToken(requestRefreshToken);
     String newAccessToken = jwtTokenProvider.createAccessToken(userId);
