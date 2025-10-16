@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.global;
+package kr.santanrudolph.everyvent.global.exception;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +17,7 @@ public enum ErrorCode {
   UNAUTHORIZED("인증이 필요합니다."),
   INVALID_TOKEN("유효하지 않은 토큰입니다."),
   EXPIRED_TOKEN("만료된 토큰입니다."),
+  BLACKLISTED_TOKEN("로그아웃된 토큰입니다."),
   ACCESS_DENIED("권한이 없습니다."),
 
   // 사용자 에러

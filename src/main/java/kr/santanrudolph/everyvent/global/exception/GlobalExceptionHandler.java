@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.global;
+package kr.santanrudolph.everyvent.global.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;

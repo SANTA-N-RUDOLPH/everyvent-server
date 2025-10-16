@@ -1,3 +1,4 @@
+.env
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -34,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### H2 Database Files ###
+/data/
+*.db
+*.trace.db
+*.lock.db
