@@ -24,7 +24,7 @@ public class User extends BaseEntity {
   @Column(nullable = false)
   private String socialId;
 
-  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   private SocialProvider socialProvider;
 
   @Column
