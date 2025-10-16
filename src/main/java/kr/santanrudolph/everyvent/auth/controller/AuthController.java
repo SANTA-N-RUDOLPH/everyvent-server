@@ -59,6 +59,14 @@ public class AuthController {
 
     if (!jwtTokenProvider.validateToken(requestRefreshToken)) {
       log.warn("Invalid refresh token");
+
+      if (jwtTokenProvider.isExpired(requestRefreshToken)) {
+        refreshTokenRepository.findByToken(requestRefreshToken)
+            .ifPresent(token -> {
+              log.info("Deleting expired token - User ID: {}", token.getUserId());
+              refreshTokenRepository.delete(token);
+            });
+      }
       return ResponseEntity.badRequest().build();
     }
 
@@ -68,31 +76,23 @@ public class AuthController {
           return new IllegalArgumentException("Invalid refresh token");
         });
 
-    if (refreshToken.isExpired()) {
-      log.warn("Refresh token expired - User ID: {}", refreshToken.getUserId());
-      refreshTokenRepository.delete(refreshToken);
-      return ResponseEntity.status(401).build();
-    }
-
     Long userId = jwtTokenProvider.getUserIdFromToken(requestRefreshToken);
     String newAccessToken = jwtTokenProvider.createAccessToken(userId);
     String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
 
-    LocalDateTime newExpiresAt = LocalDateTime.now()
-        .plusSeconds(refreshTokenExpiration);
-    refreshToken.updateToken(newRefreshToken, newExpiresAt);
+    refreshToken.updateToken(
+        newRefreshToken,
+        LocalDateTime.now().plusSeconds(refreshTokenExpiration)
+    );
 
     log.info("Token refreshed - User ID: {}", userId);
 
-    // 응답 생성
-    TokenResponse response = TokenResponse.builder()
+    return ResponseEntity.ok(TokenResponse.builder()
         .accessToken(newAccessToken)
         .refreshToken(newRefreshToken)
         .tokenType("Bearer")
-        .expiresIn(accessTokenExpiration / 1000) // ms를 초로 변환
-        .build();
-
-    return ResponseEntity.ok(response);
+        .expiresIn(accessTokenExpiration / 1000)
+        .build());
   }
 
   @Operation(
