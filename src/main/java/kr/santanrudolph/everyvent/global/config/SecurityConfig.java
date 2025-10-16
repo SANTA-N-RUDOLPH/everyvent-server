@@ -35,7 +35,7 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/oauth2/**").permitAll()
             .requestMatchers("/login/**").permitAll()
-            .requestMatchers("/oauth/callback").permitAll()
+            .requestMatchers("/oauth/callback", "/oauth/test").permitAll()
             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
             .anyRequest().authenticated())
         .headers(headers -> headers
