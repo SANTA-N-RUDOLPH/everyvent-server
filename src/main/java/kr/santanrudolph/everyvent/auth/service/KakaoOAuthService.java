@@ -37,7 +37,7 @@ public class KakaoOAuthService extends DefaultOAuth2UserService {
     log.info("Kakao Email: {}", email);
 
     // socialId + provider로 사용자 조회 또는 생성
-    User user = userRepository.findBySocialIdAndProviderAndDeletedAtIsNull(kakaoId, "KAKAO")
+    User user = userRepository.findBySocialIdAndSocialProviderAndDeletedAtIsNull(kakaoId, SocialProvider.KAKAO)
         .orElseGet(() -> createUser(kakaoId, email));
 
     return new EveryventOAuth2User(user, oAuth2User.getAttributes());
