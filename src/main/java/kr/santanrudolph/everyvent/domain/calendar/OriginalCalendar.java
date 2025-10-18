@@ -1,0 +1,94 @@
+package kr.santanrudolph.everyvent.domain.calendar;
+
+import jakarta.persistence.*;
+import kr.santanrudolph.everyvent.domain.user.User;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+
+@Entity
+@DiscriminatorValue("ORIGINAL")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class OriginalCalendar extends Calendar {
+
+    private Instant previewStartDate; // 공개할 task 시작일
+    private Instant previewEndDate; // 공개할 task 종료일
+
+    @Column(nullable = false)
+    private boolean isOfficial; // 공식 캘린더 여부
+
+    @Builder
+    public OriginalCalendar(User user, String title, String description, Instant startDate, Instant endDate, Visibility visibility, String color, Category category,
+                            Instant previewStartDate, Instant previewEndDate, boolean isOfficial) {
+        super(user, title, description, startDate, endDate, visibility, color, category);
+        this.previewStartDate = previewStartDate;
+        this.previewEndDate = previewEndDate;
+        this.isOfficial = isOfficial;
+    }
+
+    @Override
+    public boolean isScrapable() {
+        return !isOfficial && getVisibility() != Visibility.PRIVATE;
+    }
+
+    // === 공식 캘린더 관련 메서드 ===
+    public void changeOfficialStatus(boolean isOfficial) {
+        this.isOfficial = isOfficial;
+        if (isOfficial) {
+            clearPreviewPeriod();
+        }
+    }
+
+    // === 미리보기 관련 메서드 ===
+    public void setPreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
+        validatePreviewPeriod(previewStartDate, previewEndDate);
+        this.previewStartDate = previewStartDate;
+        this.previewEndDate = previewEndDate;
+    }
+
+    public boolean hasPreviewPeriod() {
+        return previewStartDate != null && previewEndDate != null;
+    }
+
+    public void clearPreviewPeriod() {
+        this.previewStartDate = null;
+        this.previewEndDate = null;
+    }
+
+    public boolean isTaskPreviewable(Instant taskDate) {
+        if (!hasPreviewPeriod()) {
+            return false;
+        }
+        return !taskDate.isBefore(previewStartDate) && !taskDate.isAfter(previewEndDate);
+    }
+
+    // === 검증 관련 메서드 ===
+    private void validatePreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
+        validateNotOfficial();
+        validateNotPrivate();
+        validateDateRange(previewStartDate, previewEndDate);
+        validateWithinCalendarPeriod(previewStartDate, previewEndDate);
+    }
+
+    private void validateNotOfficial() {
+        if (isOfficial) {
+            throw new IllegalStateException("공식 캘린더는 미리보기를 설정할 수 없습니다");
+        }
+    }
+
+    private void validateNotPrivate() {
+        if (getVisibility() == Visibility.PRIVATE) {
+            throw new IllegalStateException("비공개 캘린더는 미리보기를 설정할 수 없습니다");
+        }
+    }
+
+    private void validateWithinCalendarPeriod(Instant start, Instant end) {
+        if (start.isBefore(getStartDate()) || end.isAfter(getEndDate())) {
+            throw new IllegalArgumentException("미리보기 기간은 캘린더 기간 내에 있어야 합니다");
+        }
+    }
+}
