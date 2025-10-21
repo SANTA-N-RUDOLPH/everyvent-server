@@ -52,13 +52,23 @@ public class User extends BaseEntity {
   private Instant deletedAt;
 
   public User(String socialId, SocialProvider socialProvider, String email, String nickname,
-      String introduction) {
+      String introduction, Role role) {
     this.socialId = socialId;
     this.socialProvider = socialProvider;
     this.email = email;
     this.nickname = nickname;
     this.introduction = introduction;
-    this.role = Role.USER; // 기본값 USER
+    this.role = role;
+  }
+
+  public static User createFromOAuth(String socialId, SocialProvider provider, String email,
+      String nickname) {
+    return new User(socialId, provider, email, nickname, null, Role.USER);
+  }
+
+  public static User createAdmin(String socialId, SocialProvider provider, String email,
+      String nickname) {
+    return new User(socialId, provider, email, nickname, null, Role.ADMIN);
   }
 
   public void updateIntroduction(String introduction) {

@@ -39,7 +39,8 @@ public class KakaoOAuthService extends DefaultOAuth2UserService {
     log.info("Kakao Email: {}", email);
 
     // socialId + provider로 사용자 조회 또는 생성
-    User user = userRepository.findBySocialIdAndSocialProviderAndDeletedAtIsNull(kakaoId, SocialProvider.KAKAO)
+    User user = userRepository.findBySocialIdAndSocialProviderAndDeletedAtIsNull(kakaoId,
+            SocialProvider.KAKAO)
         .orElseGet(() -> createUser(kakaoId, email));
 
     return new EveryventOAuth2User(user, oAuth2User.getAttributes());
@@ -57,18 +58,13 @@ public class KakaoOAuthService extends DefaultOAuth2UserService {
     // 임시 닉네임 생성
     String tempNickname = generateUniqueNickname(socialId);
 
-    User newUser = User.builder()
-        .socialId(socialId)
-        .socialProvider(SocialProvider.KAKAO)
-        .email(email)
-        .nickname(tempNickname)
-        .build();
+    User newUser = User.createFromOAuth(socialId, SocialProvider.KAKAO, email, tempNickname);
 
     return userRepository.save(newUser);
   }
 
   private String generateUniqueNickname(String socialId) {
-    String baseNickname = "kakao_" + socialId;
+    String baseNickname = SocialProvider.KAKAO.name() + "_" + socialId;
     String nickname = baseNickname;
     int suffix = 1;
 
