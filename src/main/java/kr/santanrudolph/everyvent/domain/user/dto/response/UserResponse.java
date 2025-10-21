@@ -21,7 +21,7 @@ public class UserResponse {
         .nickname(user.getNickname())
         .email(user.getEmail())
         .introduction(user.getIntroduction())
-        .socialProvider(String.valueOf(user.getSocialProvider()))
+        .socialProvider(user.getSocialProvider().name())
         .role(user.getRole().name())
         .build();
   }
