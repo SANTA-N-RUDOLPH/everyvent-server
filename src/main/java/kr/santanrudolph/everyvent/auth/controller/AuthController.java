@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.auth.dto.TokenRefreshRequest;
 import kr.santanrudolph.everyvent.auth.dto.TokenResponse;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 
 @Tag(name = "인증", description = "인증 관련 API")
 @Slf4j
@@ -82,8 +82,7 @@ public class AuthController {
 
     refreshToken.updateToken(
         newRefreshToken,
-        LocalDateTime.now().plusSeconds(refreshTokenExpiration)
-    );
+        Instant.now().plusMillis(refreshTokenExpiration));
 
     log.info("Token refreshed - User ID: {}", userId);
 
@@ -116,7 +115,7 @@ public class AuthController {
     if (accessToken != null) {
       BlacklistedToken blacklist = BlacklistedToken.builder()
           .token(accessToken)
-          .expiresAt(LocalDateTime.now().plusHours(1))
+          .expiresAt(Instant.now().plusMillis(accessTokenExpiration))
           .build();
       blacklistedTokenRepository.save(blacklist);
     }

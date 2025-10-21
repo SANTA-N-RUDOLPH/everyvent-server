@@ -1,12 +1,12 @@
 package kr.santanrudolph.everyvent.auth.entity;
 
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "refresh_tokens")
@@ -21,21 +21,21 @@ public class RefreshToken {
   private String token;
 
   @Column(nullable = false)
-  private LocalDateTime expiresAt;
+  private Instant expiresAt;
 
   @Builder
-  public RefreshToken(Long userId, String token, LocalDateTime expiresAt) {
+  public RefreshToken(Long userId, String token, Instant expiresAt) {
     this.userId = userId;
     this.token = token;
     this.expiresAt = expiresAt;
   }
 
-  public void updateToken(String token, LocalDateTime expiresAt) {
+  public void updateToken(String token, Instant expiresAt) {
     this.token = token;
     this.expiresAt = expiresAt;
   }
 
   public boolean isExpired() {
-    return LocalDateTime.now().isAfter(expiresAt);
+    return Instant.now().isAfter(expiresAt);
   }
 }
