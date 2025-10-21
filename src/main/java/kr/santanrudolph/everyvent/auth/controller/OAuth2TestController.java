@@ -2,15 +2,17 @@ package kr.santanrudolph.everyvent.auth.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+// TODO: 프론트엔드 연동 완료 후 삭제 예정 (OAuth2 로그인 테스트용 임시 컨트롤러)
 @Slf4j
+@Profile({"local", "dev"})
 @Controller
 @Hidden
-// 프론트 구현 전 OAuth2 로그인 테스트용 임시 컨트롤러 (토큰 값 보기 위함)
 public class OAuth2TestController {
 
     @GetMapping("/oauth/test")
