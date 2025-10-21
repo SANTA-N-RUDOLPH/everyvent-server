@@ -1,10 +1,8 @@
 package kr.santanrudolph.everyvent.global.exception;
 
-import lombok.Getter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-@Getter
 @AllArgsConstructor
 public enum ErrorCode {
 
@@ -127,6 +125,10 @@ public enum ErrorCode {
 
   public String getCode() {
     return name();
+  }
+
+  public String getMessage() {
+    return message;
   }
 
 }
