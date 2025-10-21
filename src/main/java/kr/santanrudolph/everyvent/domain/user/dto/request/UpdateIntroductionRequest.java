@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateIntroductionRequest {
 
-    @Size(max = 200, message = "소개글은 최대 200자까지 입력 가능합니다.")
+    @Size(max = 500, message = "소개글은 최대500자까지 입력 가능합니다.")
     private String introduction;
 }

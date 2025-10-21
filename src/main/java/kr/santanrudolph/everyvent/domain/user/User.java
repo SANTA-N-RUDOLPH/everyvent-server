@@ -1,6 +1,9 @@
 package kr.santanrudolph.everyvent.domain.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import lombok.AccessLevel;
@@ -21,19 +24,24 @@ public class User extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @NotBlank(message = "socialId는 필수입니다.")
   @Column(nullable = false)
   private String socialId;
 
+  @NotNull(message = "socialProvider는 필수입니다.")
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private SocialProvider socialProvider;
 
-  @Column
+  @Email
+  @Column(unique = true)
   private String email;
 
+  @NotBlank(message = "닉네임은 필수입니다.")
   @Column(nullable = false, unique = true)
   private String nickname;
 
-  @Column
+  @Column(length = 500)
   private String introduction;
 
   @Enumerated(EnumType.STRING)
@@ -43,7 +51,6 @@ public class User extends BaseEntity {
   @Column
   private Instant deletedAt;
 
-  @Builder
   public User(String socialId, SocialProvider socialProvider, String email, String nickname,
       String introduction) {
     this.socialId = socialId;
