@@ -43,9 +43,11 @@ public class JwtTokenProvider {
     Date expirationDate = new Date(now.getTime() + expiration);
 
     return Jwts.builder()
-        .setSubject(String.valueOf(userId))
-        .setIssuedAt(now)
-        .setExpiration(expirationDate)
+        .claims()
+        .subject(String.valueOf(userId))
+        .issuedAt(now)
+        .expiration(expirationDate)
+        .and()
         .signWith(secretKey, SIG.HS256)
         .compact();
   }
