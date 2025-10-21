@@ -63,6 +63,10 @@ public class JwtTokenProvider {
     return Long.parseLong(claims.getSubject());
   }
 
+  public Date getExpirationDate(String token) {
+    return parseClaims(token).getExpiration();
+  }
+
   public boolean validateToken(String token) {
     try {
       Claims claims = parseClaims(token);
