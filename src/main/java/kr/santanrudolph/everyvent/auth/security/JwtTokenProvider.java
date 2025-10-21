@@ -39,10 +39,6 @@ public class JwtTokenProvider {
   }
 
   private String generateToken(Long userId, long expiration) {
-    if (userId == null) {
-      throw new IllegalArgumentException("userId cannot be null");
-    }
-
     Date now = new Date();
     Date expirationDate = new Date(now.getTime() + expiration);
 
@@ -69,7 +65,21 @@ public class JwtTokenProvider {
 
   public boolean validateToken(String token) {
     try {
-      parseClaims(token);
+      Claims claims = parseClaims(token);
+
+      String subject = claims.getSubject();
+      if (subject == null || subject.isEmpty()) {
+        log.warn("JWT subject is null or empty");
+        return false;
+      }
+
+      try {
+        Long.parseLong(subject);
+      } catch (NumberFormatException e) {
+        log.warn("JWT subject is not a valid userId: {}", subject);
+        return false;
+      }
+
       return true;
     } catch (JwtException | IllegalArgumentException e) {
       log.warn("Invalid JWT: {}: {}", e.getClass().getSimpleName(), e.getMessage());
