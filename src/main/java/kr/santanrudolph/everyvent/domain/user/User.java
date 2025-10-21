@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
