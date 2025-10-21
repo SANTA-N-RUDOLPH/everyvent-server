@@ -1,13 +1,13 @@
 package kr.santanrudolph.everyvent.domain.user;
 
 import jakarta.persistence.*;
+import java.time.Instant;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -41,7 +41,7 @@ public class User extends BaseEntity {
   private Role role;
 
   @Column
-  private LocalDateTime deletedAt;
+  private Instant deletedAt;
 
   @Builder
   public User(String socialId, SocialProvider socialProvider, String email, String nickname,
@@ -67,7 +67,7 @@ public class User extends BaseEntity {
   }
 
   public void softDelete() {
-    this.deletedAt = LocalDateTime.now();
+    this.deletedAt = Instant.now();
   }
 
   public boolean isDeleted() {

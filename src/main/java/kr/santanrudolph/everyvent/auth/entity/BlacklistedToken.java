@@ -1,12 +1,12 @@
 package kr.santanrudolph.everyvent.auth.entity;
 
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "blacklisted_token", indexes = {
@@ -24,15 +24,15 @@ public class BlacklistedToken {
   private String token;
 
   @Column(nullable = false)
-  private LocalDateTime expiresAt;
+  private Instant expiresAt;
 
   @Column(nullable = false)
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   @Builder
-  public BlacklistedToken(String token, LocalDateTime expiresAt) {
+  public BlacklistedToken(String token, Instant expiresAt) {
     this.token = token;
     this.expiresAt = expiresAt;
-    this.createdAt = LocalDateTime.now();
+    this.createdAt = Instant.now();
   }
 }
