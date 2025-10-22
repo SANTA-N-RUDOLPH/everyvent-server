@@ -84,7 +84,7 @@ public class OriginalCalendar extends Calendar {
     // === 검증 관련 메서드 ===
     private void validateWithinCalendarPeriod(Instant start, Instant end) {
         if (start.isBefore(getStartDate()) || end.isAfter(getEndDate())) {
-            throw new IllegalArgumentException("미리보기 기간은 캘린더 기간 내에 있어야 합니다");
+            throw new EveryventException(ErrorCode.PREVIEW_PERIOD_OUT_OF_CALENDAR);
         }
     }
 

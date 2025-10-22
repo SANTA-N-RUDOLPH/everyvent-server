@@ -12,6 +12,7 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다."),
   INVALID_TYPE_VALUE("잘못된 타입입니다."),
   HANDLE_ACCESS_DENIED("접근이 거부되었습니다."),
+  REQUIRED_FIELD("은(는) 필수값입니다."),
 
   // 인증/인가 에러
   UNAUTHORIZED("인증이 필요합니다."),
@@ -33,6 +34,8 @@ public enum ErrorCode {
   CALENDAR_ALREADY_DELETED("이미 삭제된 캘린더입니다."),
   INVALID_CALENDAR_PERIOD("잘못된 캘린더 기간입니다."),
   OFFICIAL_CALENDAR_CANNOT_MODIFY("공식 캘린더는 수정할 수 없습니다."),
+  INVALID_COLOR("유효한 HEX 색상 코드여야 합니다."),
+  INVALID_DATE_RANGE("시작일은 종료일보다 이전이어야 합니다."),
 
   // 태스크 에러
   TASK_NOT_FOUND("태스크를 찾을 수 없습니다."),
@@ -41,6 +44,7 @@ public enum ErrorCode {
   INVALID_TASK_DATE("유효하지 않은 태스크 날짜입니다. (1-25일)"),
   TASK_ALREADY_COMPLETED("이미 완료된 태스크입니다."),
   TASK_ACCESS_DENIED("태스크에 접근할 권한이 없습니다."),
+  PREVIEW_PERIOD_OUT_OF_CALENDAR("미리보기 기간은 캘린더 기간 내에 있어야 합니다"),
 
   // 스크랩 에러
   SCRAP_NOT_FOUND("스크랩을 찾을 수 없습니다."),
