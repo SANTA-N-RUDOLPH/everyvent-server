@@ -55,6 +55,9 @@ public abstract class Calendar extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
+    @Column
+    private Instant deletedAt;
+
     protected Calendar(User user, String title, String description, Instant startDate, Instant endDate, Visibility visibility, String color, Category category) {
         this.user = user;
         this.title = title;
@@ -67,6 +70,10 @@ public abstract class Calendar extends BaseEntity {
     }
 
     public abstract boolean isScrapable();
+
+    public void softDelete() {
+        this.deletedAt = Instant.now();
+    }
 
     // === 속성 변경 메서드 ===
     public void changeColor(String newColor) {
