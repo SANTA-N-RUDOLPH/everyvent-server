@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -101,19 +103,19 @@ public abstract class Calendar extends BaseEntity {
     // === 공통 검증 메서드 ===
     protected void validateHexColor(String color) {
         if (!color.matches(HEX_COLOR_PATTERN)) {
-            throw new IllegalArgumentException("유효한 HEX 색상 코드여야 합니다");
+            throw new EveryventException(ErrorCode.INVALID_COLOR);
         }
     }
 
     protected void validateNotNull(Object value, String fieldName) {
         if (value == null || (value instanceof String s && s.isBlank())) {
-            throw new IllegalArgumentException(fieldName + "은(는) 필수값입니다");
+            throw new EveryventException(ErrorCode.REQUIRED_FIELD, fieldName);
         }
     }
 
     protected void validateDateRange(Instant startDate, Instant endDate) {
         if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("시작일은 종료일보다 이전이어야 합니다");
+            throw new EveryventException(ErrorCode.INVALID_DATE_RANGE);
         }
     }
 }
