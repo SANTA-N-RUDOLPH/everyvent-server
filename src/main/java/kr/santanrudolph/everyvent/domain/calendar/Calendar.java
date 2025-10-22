@@ -82,16 +82,14 @@ public abstract class Calendar extends BaseEntity {
     }
 
     public void changeVisibility(Visibility newVisibility) {
-        if (newVisibility == null) {
-            throw new IllegalArgumentException("공개 범위는 필수입니다");
-        }
+        validateNotNull(newVisibility, "공개 범위");
         this.visibility = newVisibility;
     }
 
     public void updateDetails(String title, String description, Instant startDate, Instant endDate, Category category) {
-        validateTitle(title);
+        validateNotNull(title, "제목");
         validateDateRange(startDate, endDate);
-        validateCategory(category);
+        validateNotNull(category, "카테고리");
 
         this.title = title;
         this.description = description;
@@ -107,21 +105,15 @@ public abstract class Calendar extends BaseEntity {
         }
     }
 
-    protected void validateTitle(String title) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("제목은 필수입니다");
+    protected void validateNotNull(Object value, String fieldName) {
+        if (value == null || (value instanceof String s && s.isBlank())) {
+            throw new IllegalArgumentException(fieldName + "은(는) 필수값입니다");
         }
     }
 
     protected void validateDateRange(Instant startDate, Instant endDate) {
         if (startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("시작일은 종료일보다 이전이어야 합니다");
-        }
-    }
-
-    protected void validateCategory(Category category) {
-        if (category == null) {
-            throw new IllegalArgumentException("카테고리는 필수입니다");
         }
     }
 }
