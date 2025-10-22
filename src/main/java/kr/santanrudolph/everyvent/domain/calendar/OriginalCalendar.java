@@ -1,7 +1,10 @@
 package kr.santanrudolph.everyvent.domain.calendar;
 
 import jakarta.persistence.*;
+import kr.santanrudolph.everyvent.domain.user.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -82,6 +85,12 @@ public class OriginalCalendar extends Calendar {
     private void validateWithinCalendarPeriod(Instant start, Instant end) {
         if (start.isBefore(getStartDate()) || end.isAfter(getEndDate())) {
             throw new IllegalArgumentException("미리보기 기간은 캘린더 기간 내에 있어야 합니다");
+        }
+    }
+
+    public void ensureOfficialEditableByUser() {
+        if (this.isOfficial() && this.getUser().getRole() == Role.USER) {
+            throw new EveryventException(ErrorCode.OFFICIAL_CALENDAR_CANNOT_MODIFY);
         }
     }
 }
