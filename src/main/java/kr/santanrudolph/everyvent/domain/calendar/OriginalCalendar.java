@@ -35,17 +35,27 @@ public class OriginalCalendar extends Calendar {
         return !isOfficial && getVisibility() != Visibility.PRIVATE;
     }
 
+    @Override
+    public void changeVisibility(Visibility newVisibility) {
+        super.changeVisibility(newVisibility);
+        updatePreviewAvailability();
+    }
+
     // === 공식 캘린더 관련 메서드 ===
     public void changeOfficialStatus(boolean isOfficial) {
         this.isOfficial = isOfficial;
-        if (isOfficial) {
-            clearPreviewPeriod();
-        }
+        updatePreviewAvailability();
     }
 
     // === 미리보기 관련 메서드 ===
     public void setPreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
-        validatePreviewPeriod(previewStartDate, previewEndDate);
+        if (isOfficial || getVisibility() == Visibility.PRIVATE) {
+            updatePreviewAvailability();
+            return;
+        }
+        validateDateRange(previewStartDate, previewEndDate);
+        validateWithinCalendarPeriod(previewStartDate, previewEndDate);
+
         this.previewStartDate = previewStartDate;
         this.previewEndDate = previewEndDate;
     }
@@ -54,9 +64,11 @@ public class OriginalCalendar extends Calendar {
         return previewStartDate != null && previewEndDate != null;
     }
 
-    public void clearPreviewPeriod() {
-        this.previewStartDate = null;
-        this.previewEndDate = null;
+    public void updatePreviewAvailability() {
+        if (isOfficial || getVisibility() == Visibility.PRIVATE) {
+            this.previewStartDate = null;
+            this.previewEndDate = null;
+        }
     }
 
     public boolean isTaskPreviewable(Instant taskDate) {
@@ -67,25 +79,6 @@ public class OriginalCalendar extends Calendar {
     }
 
     // === 검증 관련 메서드 ===
-    private void validatePreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
-        validateNotOfficial();
-        validateNotPrivate();
-        validateDateRange(previewStartDate, previewEndDate);
-        validateWithinCalendarPeriod(previewStartDate, previewEndDate);
-    }
-
-    private void validateNotOfficial() {
-        if (isOfficial) {
-            throw new IllegalStateException("공식 캘린더는 미리보기를 설정할 수 없습니다");
-        }
-    }
-
-    private void validateNotPrivate() {
-        if (getVisibility() == Visibility.PRIVATE) {
-            throw new IllegalStateException("비공개 캘린더는 미리보기를 설정할 수 없습니다");
-        }
-    }
-
     private void validateWithinCalendarPeriod(Instant start, Instant end) {
         if (start.isBefore(getStartDate()) || end.isAfter(getEndDate())) {
             throw new IllegalArgumentException("미리보기 기간은 캘린더 기간 내에 있어야 합니다");
