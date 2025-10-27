@@ -36,6 +36,8 @@ public enum ErrorCode {
   OFFICIAL_CALENDAR_CANNOT_MODIFY("공식 캘린더는 수정할 수 없습니다."),
   INVALID_COLOR("유효한 HEX 색상 코드여야 합니다."),
   INVALID_DATE_RANGE("시작일은 종료일보다 이전이어야 합니다."),
+  CALENDAR_NOT_OFFICIAL("관리자가 만든 공식 캘린더가 아닙니다."),
+  CALENDAR_TYPE_INVALID("잘못된 캘린더 유형입니다."),
 
   // 태스크 에러
   TASK_NOT_FOUND("태스크를 찾을 수 없습니다."),
