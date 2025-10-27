@@ -24,13 +24,16 @@ public class OriginalCalendar extends Calendar {
     @Column(nullable = false)
     private boolean isOfficial; // 공식 캘린더 여부
 
+    private Long officialId; // 복제된 공식 캘린더의 원본 id
+
     @Builder
     public OriginalCalendar(User user, String title, String description, Instant startDate, Instant endDate, Visibility visibility, String color, Category category,
-                            Instant previewStartDate, Instant previewEndDate, boolean isOfficial) {
+                            Instant previewStartDate, Instant previewEndDate, boolean isOfficial, Long officialId) {
         super(user, title, description, startDate, endDate, visibility, color, category);
         this.previewStartDate = previewStartDate;
         this.previewEndDate = previewEndDate;
         this.isOfficial = isOfficial;
+        this.officialId = officialId;
     }
 
     @Override
@@ -48,6 +51,10 @@ public class OriginalCalendar extends Calendar {
     public void changeOfficialStatus(boolean isOfficial) {
         this.isOfficial = isOfficial;
         updatePreviewAvailability();
+    }
+
+    public void enterOfficialId(Long officialId) {
+        this.officialId = officialId;
     }
 
     // === 미리보기 관련 메서드 ===
@@ -89,7 +96,7 @@ public class OriginalCalendar extends Calendar {
     }
 
     public void ensureOfficialEditableByUser() {
-        if (this.isOfficial() && this.getUser().getRole() == Role.USER) {
+        if (this.officialId != null && this.getUser().getRole() == Role.USER) {
             throw new EveryventException(ErrorCode.OFFICIAL_CALENDAR_CANNOT_MODIFY);
         }
     }
