@@ -36,77 +36,56 @@ public class CalendarService {
     @Transactional
     public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request, ZoneId userZone) {
 
-        // 사용자 존재 및 탈퇴 여부 확인
         User user = getUserOrThrow(userId);
 
-        // 공식 캘린더 생성 권한 검증 (관리자만 생성 가능)
         boolean isOfficial = request.getIsOfficial() != null ? request.getIsOfficial() : false;
         validateOfficialCalendarPermission(isOfficial, user);
 
-        // 해당 년도와 월에 대해 사용자가 생성한 달력 수 확인 (월 최대 3개 제한)
+        // 한 달에 생성할 수 있는 캘린더 개수 제한 (최대 3개)
         validateMonthlyCalendarLimit(userId, request.getYear(), request.getMonth(), userZone);
 
-        // 캘린더 기간 계산 (사용자 시간대 기준)
+        // 사용자 시간대 기준으로 캘린더 기간 계산
         InstantRange range = InstantRange.of(request.getYear(), request.getMonth(), userZone);
 
-        // OriginalCalendar 엔티티 객체 생성
         OriginalCalendar calendar = buildCalendar(user, request, range, isOfficial, userZone);
-
-        // JPA Repository를 통해 엔티티를 DB에 저장
         calendarRepository.save(calendar);
 
-        // 응답 DTO 생성 및 반환 (사용자 시간대 반영)
         return OriginalCalendarResponse.from(calendar, calendar.isScrapable(), userZone);
     }
 
     @Transactional
     public OriginalCalendarResponse createOfficialCalendar(Long adminId, OriginalCalendarRequest request, ZoneId userZone) {
 
-        // 관리자 존재 및 탈퇴 여부 확인
         User admin = getUserOrThrow(adminId);
-
-        // 관리자 권한 확인
         validateAdminRole(admin);
 
-        // 캘린더 기간 계산 (사용자 시간대 기준)
         InstantRange range = InstantRange.of(request.getYear(), request.getMonth(), userZone);
-
-        // OriginalCalendar 엔티티 객체 생성
         OriginalCalendar calendar = buildCalendar(admin, request, range, true, userZone);
-
-        // JPA Repository를 통해 엔티티를 DB에 저장
         calendarRepository.save(calendar);
 
-        // 응답 DTO 생성 및 반환 (사용자 시간대 반영)
         return OriginalCalendarResponse.from(calendar, false, userZone);
     }
 
     public CalendarResponse getCalendar(Long calendarId, ZoneId userZone) {
 
-        // 캘린더 존재 및 삭제 여부 확인
         Calendar calendar = getActiveCalendarOrThrow(calendarId);
-
-        // 캘린더 타입에 따른 응답 DTO 생성 및 반환 (사용자 시간대 반영)
         return toCalendarResponse(calendar, calendar.isScrapable(), userZone);
     }
 
     public List<CalendarResponse> getMyCalendars(Long userId, int year, int month, ZoneId userZone) {
 
-        // 사용자 존재 및 탈퇴 여부 확인
         User user = getUserOrThrow(userId);
 
-        // 조회 범위 계산 (사용자 시간대 기준)
         InstantRange range = InstantRange.of(year, month, userZone);
         log.info("조회 범위: {} ~ {}", range.start(), range.end());
 
-        // 해당 년도와 월의 캘린더 조회
         List<Calendar> calendars = calendarRepository.findAllByUserIdInMonth(user.getId(), range.start(), range.end());
         if (user.getRole() == Role.ADMIN) {
+            // 관리자일 경우, 본인 캘린더 외에도 공식 캘린더를 함께 조회
             List<Calendar> officialCalendars = calendarRepository.findAllOfficialCalendars(user.getId(), range.start(), range.end(), Role.ADMIN);
             calendars.addAll(officialCalendars);
         }
 
-        // 캘린더 타입별 응답 DTO 생성 및 반환 (사용자 시간대 반영)
         return calendars.stream()
                 .map(c -> toCalendarResponse(c, c.isScrapable(), userZone))
                 .collect(Collectors.toList());
@@ -114,19 +93,15 @@ public class CalendarService {
 
     public List<CalendarResponse> getCalendars(Long userId, Long targetId, int year, int month, ZoneId userZone) {
 
-        // 사용자 존재 및 탈퇴 여부 확인
         User viewer = getUserOrThrow(userId);
         User targetUser = getUserOrThrow(targetId);
 
-        // 조회 범위 계산 (사용자 시간대 기준)
         InstantRange range = InstantRange.of(year, month, userZone);
 
-        // 해당 년도와 월의 캘린더 조회
         List<Calendar> calendars = calendarRepository.findAllByUserIdInMonth(
                 targetUser.getId(), range.start(), range.end()
         );
 
-        // 캘린더 타입별 응답 DTO 생성 및 반환 (사용자 시간대 반영)
         return calendars.stream()
                 .filter(c -> canView(c, viewer, targetUser))
                 .map(c -> {
@@ -139,23 +114,19 @@ public class CalendarService {
     @Transactional
     public CalendarResponse updateCalendar(Long userId, Long calendarId, OriginalCalendarRequest request, ZoneId userZone) {
 
-        // 캘린더 존재 및 삭제 여부 확인
         Calendar calendar = getActiveCalendarOrThrow(calendarId);
 
-        // 수정 권한 확인 (본인 캘린더 또는 같은 관리자가 만든 공식 캘린더만 수정 가능)
         User viewer = getUserOrThrow(userId);
         validateUpdateOrDeletePermission(calendar, viewer);
 
-        // 캘린더 기간 및 미리보기 기간 계산 (사용자 시간대 기준)
+        // 사용자 시간대 기준으로 캘린더 및 미리보기 기간 계산
         InstantRange range = InstantRange.of(request.getYear(), request.getMonth(), userZone);
         Instant previewStartDate = request.getPreviewStartDate() != null ? toStartOfDayOrNull(request.getPreviewStartDate(), userZone) : null;
         Instant previewEndDate = request.getPreviewEndDate() != null ? toEndOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
 
-        // Enum 필드 안전 변환
         Visibility visibility = EnumUtil.parseEnum(Visibility.class, request.getVisibility());
         Category category  = EnumUtil.parseEnum(Category.class, request.getCategory());
 
-        // 캘린더 타입별 캘린더 수정 및 응답 DTO 반환 (사용자 시간대 반영)
         if (calendar instanceof OriginalCalendar oc) {
             updateOriginalCalendar(oc, request, range, visibility, category, previewStartDate, previewEndDate, viewer);
             return OriginalCalendarResponse.from(oc, oc.isScrapable(), userZone);
@@ -170,46 +141,34 @@ public class CalendarService {
     @Transactional
     public void deleteCalendar(Long userId, Long calendarId) {
 
-        // 캘린더 존재 및 삭제 여부 확인
         Calendar calendar = getActiveCalendarOrThrow(calendarId);
 
-        // 삭제 권한 확인
         User viewer = getUserOrThrow(userId);
         validateUpdateOrDeletePermission(calendar, viewer);
-
-        // Soft Delete 처리
         calendar.softDelete();
 
-        // JPA Repository를 통해 삭제 시점을 DB에 반영
         calendarRepository.save(calendar);
     }
 
     @Transactional
     public void distributeOfficialCalendar(Long adminId, Long calendarId, ZoneId userZone) {
 
-        // 관리자 존재 및 탈퇴 여부 확인
         User admin = getUserOrThrow(adminId);
 
-        // 관리자 권한 확인
         validateAdminRole(admin);
 
-        // 캘린더 존재 및 삭제 여부 확인
         Calendar calendar = getActiveCalendarOrThrow(calendarId);
 
-        // OriginalCalendar 타입인지 검증
         if (!(calendar instanceof OriginalCalendar originalCalendar)) {
             throw new EveryventException(ErrorCode.CALENDAR_TYPE_INVALID);
         }
 
-        // 관리자가 만든 공식 캘린더인지 검증
         if (!originalCalendar.isOfficial()) {
             throw new EveryventException(ErrorCode.CALENDAR_NOT_OFFICIAL);
         }
 
-        // 탈퇴하지 않은 일반 사용자 조회
+        // 탈퇴하지 않은 일반 사용자 중, 아직 해당 공식 캘린더 복제본을 가지지 않은 대상에게 배포
         List<User> users = userRepository.findAllByRoleAndDeletedAtIsNull(Role.USER);
-
-        // 이미 해당 공식 캘린더 복제본을 가진 사용자 조회
         List<Long> existingUserIds = calendarRepository.findUserIdsByOfficialId(originalCalendar.getId());
 
         List<OriginalCalendar> calendarsToSave = users.stream()
@@ -217,7 +176,6 @@ public class CalendarService {
                 .map(user -> createDistributedCalendar(user, originalCalendar))
                 .collect(Collectors.toList());
 
-        // 한번에 DB에 저장
         if (!calendarsToSave.isEmpty()) {
             calendarRepository.saveAll(calendarsToSave);
         }
