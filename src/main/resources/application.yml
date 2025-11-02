@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  profiles:
+    active: dev
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:file:./data/testdb # 개발용 파일 기반 DB (재시작해도 데이터 유지)
@@ -24,6 +26,11 @@ spring:
   mvc:
     async:
       request-timeout: 60000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   security:
     oauth2:
