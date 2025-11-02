@@ -59,8 +59,9 @@ public class OriginalCalendar extends Calendar {
 
     // === 미리보기 관련 메서드 ===
     public void setPreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
-        if (isOfficial || getVisibility() == Visibility.PRIVATE) {
-            updatePreviewAvailability();
+        if (previewStartDate == null || previewEndDate == null) {
+            this.previewStartDate = null;
+            this.previewEndDate = null;
             return;
         }
         validateDateRange(previewStartDate, previewEndDate);
