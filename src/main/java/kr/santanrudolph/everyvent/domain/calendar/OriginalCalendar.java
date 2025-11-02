@@ -30,8 +30,7 @@ public class OriginalCalendar extends Calendar {
     public OriginalCalendar(User user, String title, String description, Instant startDate, Instant endDate, Visibility visibility, String color, Category category,
                             Instant previewStartDate, Instant previewEndDate, boolean isOfficial, Long officialId) {
         super(user, title, description, startDate, endDate, visibility, color, category);
-        this.previewStartDate = previewStartDate;
-        this.previewEndDate = previewEndDate;
+        setPreviewPeriod(previewStartDate, previewEndDate);
         this.isOfficial = isOfficial;
         this.officialId = officialId;
     }
