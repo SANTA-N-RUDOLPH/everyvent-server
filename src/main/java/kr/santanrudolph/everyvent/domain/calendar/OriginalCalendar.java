@@ -1,6 +1,8 @@
 package kr.santanrudolph.everyvent.domain.calendar;
 
 import jakarta.persistence.*;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.user.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;

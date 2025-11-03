@@ -1,7 +1,7 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
-import kr.santanrudolph.everyvent.domain.calendar.Category;
-import kr.santanrudolph.everyvent.domain.calendar.Visibility;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 

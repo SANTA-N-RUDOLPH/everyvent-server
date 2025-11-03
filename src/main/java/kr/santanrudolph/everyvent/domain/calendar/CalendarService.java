@@ -3,6 +3,8 @@ package kr.santanrudolph.everyvent.domain.calendar;
 import kr.santanrudolph.everyvent.domain.calendar.dto.request.OriginalCalendarRequest;
 import kr.santanrudolph.everyvent.domain.calendar.dto.response.CalendarResponse;
 import kr.santanrudolph.everyvent.domain.calendar.dto.response.OriginalCalendarResponse;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.user.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;

@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar;
+package kr.santanrudolph.everyvent.domain.calendar.enums;
 
 public enum Category {
     SELF_DEVELOPMENT,  // 자기계발

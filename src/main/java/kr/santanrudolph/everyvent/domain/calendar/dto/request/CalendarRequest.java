@@ -2,8 +2,8 @@ package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import kr.santanrudolph.everyvent.domain.calendar.Category;
-import kr.santanrudolph.everyvent.domain.calendar.Visibility;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

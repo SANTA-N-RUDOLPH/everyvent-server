@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar;
+package kr.santanrudolph.everyvent.domain.calendar.enums;
 
 public enum Visibility {
     PUBLIC,     // 전체 공개
