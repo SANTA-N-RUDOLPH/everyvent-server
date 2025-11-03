@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,9 +26,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CalendarService {
-
-    private static final int CALENDAR_START_DAY = 1;
-    private static final int CALENDAR_END_DAY = 25;
 
     private final CalendarRepository calendarRepository;
     private final UserRepository userRepository;
@@ -123,7 +119,7 @@ public class CalendarService {
         // 사용자 시간대 기준으로 캘린더 및 미리보기 기간 계산
         InstantRange range = InstantRange.of(request.getYear(), request.getMonth(), userZone);
         Instant previewStartDate = request.getPreviewStartDate() != null ? toStartOfDayOrNull(request.getPreviewStartDate(), userZone) : null;
-        Instant previewEndDate = request.getPreviewEndDate() != null ? toEndOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
+        Instant previewEndDate = request.getPreviewEndDate() != null ? toStartOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
 
         if (calendar instanceof OriginalCalendar oc) {
             updateOriginalCalendar(oc, request, range, request.getVisibility(), request.getCategory(), previewStartDate, previewEndDate, viewer);
@@ -278,7 +274,7 @@ public class CalendarService {
                                            boolean isOfficial, ZoneId userZone) {
 
         Instant previewStartDate = request.getPreviewStartDate() != null ? toStartOfDayOrNull(request.getPreviewStartDate(), userZone) : null;
-        Instant previewEndDate = request.getPreviewEndDate() != null ? toEndOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
+        Instant previewEndDate = request.getPreviewEndDate() != null ? toStartOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
 
         OriginalCalendar calendar = OriginalCalendar.builder()
                 .user(user)
@@ -299,32 +295,6 @@ public class CalendarService {
 
     private static Instant toStartOfDayOrNull(LocalDate date, ZoneId userZone) {
         return date != null ? date.atStartOfDay(userZone).toInstant() : null;
-    }
-
-    private static Instant toEndOfDayOrNull(LocalDate date, ZoneId userZone) {
-        return date != null ? date.atTime(LocalTime.MAX).atZone(userZone).toInstant() : null;
-    }
-
-    private static class InstantRange {
-        private final Instant start;
-        private final Instant end;
-
-        private InstantRange(Instant start, Instant end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public static InstantRange of(int year, int month, ZoneId userZone) {
-            LocalDate startLocal = LocalDate.of(year, month, CALENDAR_START_DAY);
-            LocalDate endLocal = LocalDate.of(year, month, CALENDAR_END_DAY);
-            return new InstantRange(
-                    toStartOfDayOrNull(startLocal, userZone),
-                    toStartOfDayOrNull(endLocal.plusDays(1), userZone)
-            );
-        }
-
-        public Instant start() { return start; }
-        public Instant end() { return end; }
     }
 
     private boolean canView(Calendar calendar, User viewer, User targetUser) {
