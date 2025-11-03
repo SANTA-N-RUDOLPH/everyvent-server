@@ -8,7 +8,6 @@ import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
-import kr.santanrudolph.everyvent.global.util.EnumUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -124,11 +123,8 @@ public class CalendarService {
         Instant previewStartDate = request.getPreviewStartDate() != null ? toStartOfDayOrNull(request.getPreviewStartDate(), userZone) : null;
         Instant previewEndDate = request.getPreviewEndDate() != null ? toEndOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
 
-        Visibility visibility = EnumUtil.parseEnum(Visibility.class, request.getVisibility());
-        Category category  = EnumUtil.parseEnum(Category.class, request.getCategory());
-
         if (calendar instanceof OriginalCalendar oc) {
-            updateOriginalCalendar(oc, request, range, visibility, category, previewStartDate, previewEndDate, viewer);
+            updateOriginalCalendar(oc, request, range, request.getVisibility(), request.getCategory(), previewStartDate, previewEndDate, viewer);
             return OriginalCalendarResponse.from(oc, oc.isScrapable(), userZone);
         }
 
@@ -279,9 +275,6 @@ public class CalendarService {
     private OriginalCalendar buildCalendar(User user, OriginalCalendarRequest request, InstantRange range,
                                            boolean isOfficial, ZoneId userZone) {
 
-        Visibility visibility = EnumUtil.parseEnum(Visibility.class, request.getVisibility());
-        Category category  = EnumUtil.parseEnum(Category.class, request.getCategory());
-
         Instant previewStartDate = request.getPreviewStartDate() != null ? toStartOfDayOrNull(request.getPreviewStartDate(), userZone) : null;
         Instant previewEndDate = request.getPreviewEndDate() != null ? toEndOfDayOrNull(request.getPreviewEndDate(), userZone) : null;
 
@@ -291,9 +284,9 @@ public class CalendarService {
                 .description(request.getDescription())
                 .startDate(range.start())
                 .endDate(range.end())
-                .visibility(visibility)
+                .visibility(request.getVisibility())
                 .color(request.getColor())
-                .category(category)
+                .category(request.getCategory())
                 .isOfficial(isOfficial)
                 .build();
 

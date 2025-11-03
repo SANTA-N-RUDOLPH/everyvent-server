@@ -1,5 +1,7 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
+import kr.santanrudolph.everyvent.domain.calendar.Category;
+import kr.santanrudolph.everyvent.domain.calendar.Visibility;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 
@@ -16,9 +18,9 @@ public abstract class CalendarResponse {
     private String description;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String visibility;
+    private Visibility visibility;
     private String color;
-    private String category;
+    private Category category;
     private Boolean isScrapable;
 
     protected static LocalDate toLocalDate(Instant instant, ZoneId userZone) {

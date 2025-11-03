@@ -2,6 +2,8 @@ package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import kr.santanrudolph.everyvent.domain.calendar.Category;
+import kr.santanrudolph.everyvent.domain.calendar.Visibility;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,11 +23,11 @@ public class CalendarRequest {
     private Integer month;
 
     @NotBlank
-    private String visibility;
+    private Visibility visibility;
 
     @NotBlank
     private String color;
 
     @NotBlank
-    private String category;
+    private Category category;
 }
