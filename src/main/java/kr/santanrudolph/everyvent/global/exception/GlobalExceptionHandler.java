@@ -28,16 +28,22 @@ public class GlobalExceptionHandler {
       EveryventException e
   ) {
     ErrorCode errorCode = e.getErrorCode();
-    log.warn(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request), e.getMessage());
+    log.warn(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request),
+        e.getMessage());
+
+    ErrorResponse response = e.getDetail() != null
+        ? ErrorResponse.of(errorCode, e.getDetail())
+        : ErrorResponse.of(errorCode);
 
     return ResponseEntity
-        .status(HttpStatus.BAD_REQUEST)
-        .body(ErrorResponse.of(errorCode));
+        .status(errorCode.getHttpStatus())
+        .body(response);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(HttpServletRequest request, Exception e) {
-    log.error(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request), e.getMessage(), e);
+    log.error(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request),
+        e.getMessage(), e);
 
     return ResponseEntity
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
