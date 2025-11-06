@@ -33,6 +33,7 @@ public class KakaoOAuthService extends DefaultOAuth2UserService {
     log.info("Kakao Login - Kakao ID: {}", kakaoId);
 
     Map<String, Object> attributes = oAuth2User.getAttributes();
+    @SuppressWarnings("unchecked")
     Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
 
     String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
