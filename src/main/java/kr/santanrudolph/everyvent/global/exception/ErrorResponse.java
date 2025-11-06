@@ -1,6 +1,5 @@
 package kr.santanrudolph.everyvent.global.exception;
 
-import org.springframework.http.HttpStatus;
 
 public record ErrorResponse(
     int status,
