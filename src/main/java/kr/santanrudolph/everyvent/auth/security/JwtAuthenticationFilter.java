@@ -5,7 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import kr.santanrudolph.everyvent.auth.service.TokenStoreService;
+import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
-  private final TokenStoreService tokenStoreService;
+  private final RedisTokenRepository redisTokenRepository;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
       if (token != null) {
         // Redis 블랙리스트 체크
-        if (tokenStoreService.isBlacklisted(token)) {
+        if (redisTokenRepository.isBlacklisted(token)) {
           log.warn("Blocked blacklisted token");
           sendErrorResponse(response, ErrorCode.BLACKLISTED_TOKEN);
           return;

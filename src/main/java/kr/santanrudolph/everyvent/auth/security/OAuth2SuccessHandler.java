@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
-import kr.santanrudolph.everyvent.auth.service.TokenStoreService;
+import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -18,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
-  private final TokenStoreService tokenStoreService;
+  private final RedisTokenRepository redisTokenRepository;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -32,7 +32,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     String refreshToken = jwtTokenProvider.createRefreshToken(userId);
     Instant refreshTokenExpiration = jwtTokenProvider.getExpirationDate(refreshToken).toInstant();
 
-    tokenStoreService.saveRefreshToken(userId, refreshToken, refreshTokenExpiration);
+    redisTokenRepository.saveRefreshToken(userId, refreshToken, refreshTokenExpiration);
     log.info("RefreshToken saved to Redis for User ID: {}", userId);
 
     // 테스트용 콜백 엔드포인트로 리다이렉트 (토큰을 쿼리 파라미터로 전달하여, 로그인 시 프론트 없이도 토큰 확인 가능)
