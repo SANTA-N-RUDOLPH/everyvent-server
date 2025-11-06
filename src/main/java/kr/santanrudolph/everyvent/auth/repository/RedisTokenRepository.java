@@ -1,16 +1,16 @@
-package kr.santanrudolph.everyvent.auth.service;
+package kr.santanrudolph.everyvent.auth.repository;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class RedisTokenRepository {
 
   private final RedisTemplate<String, String> redisTemplate;
@@ -19,6 +19,9 @@ public class RedisTokenRepository {
   private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
   private static final String BLACKLIST_TOKEN_PREFIX = "blacklist_token:";
 
+  public RedisTokenRepository(@Qualifier("tokenRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+    this.redisTemplate = redisTemplate;
+  }
 
   public void saveRefreshToken(Long userId, String refreshToken, Instant expiresAt) {
     String key = REFRESH_TOKEN_PREFIX + userId;
@@ -33,9 +36,15 @@ public class RedisTokenRepository {
   }
 
   public String getRefreshToken(Long userId) {
-    String key = REFRESH_TOKEN_PREFIX + userId;
-    Object value = redisTemplate.opsForValue().get(key);
-    return value != null ? value.toString() : null;
+    try {
+      String key = REFRESH_TOKEN_PREFIX + userId;
+      return Optional.ofNullable(redisTemplate.opsForValue().get(key))
+          .map(Object::toString)
+          .orElse(null);
+    } catch (Exception e) {
+      log.error("Redis error - getRefreshToken failed for userId: {}", userId, e);
+      return null;
+    }
   }
 
   public void deleteRefreshToken(Long userId) {
