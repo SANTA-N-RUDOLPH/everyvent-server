@@ -6,15 +6,16 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 @Slf4j
-@Service
+@Repository
 @RequiredArgsConstructor
-public class TokenStoreService {
+public class RedisTokenRepository {
 
-  private final RedisTemplate<String, Object> redisTemplate;
+  private final RedisTemplate<String, String> redisTemplate;
 
+  // TODO: RedisKeyConstants 상수로 분리
   private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
   private static final String BLACKLIST_TOKEN_PREFIX = "blacklist_token:";
 
@@ -51,7 +52,8 @@ public class TokenStoreService {
       redisTemplate.opsForValue().set(key, "true", ttl, TimeUnit.SECONDS);
       log.info("Token added to blacklist with TTL: {} seconds", ttl);
     } else {
-      log.warn("Token expiresAt is in the past, not adding to blacklist");
+      // TODO: 에러처리 필요
+      log.warn("Token already expired, skipping blacklist - Expires at: {}", expiresAt);
     }
   }
 
