@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -38,6 +39,23 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(errorCode.getHttpStatus())
         .body(response);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationException(
+      HttpServletRequest request,
+      MethodArgumentNotValidException e
+  ) {
+    String detail = e.getBindingResult().getFieldErrors().stream()
+        .map(error -> error.getField() + ": " + error.getDefaultMessage())
+        .collect(Collectors.joining(", "));
+
+    log.warn(LOG_FORMAT, request.getMethod(), request.getRequestURI(),
+        getRequestBody(request), detail);
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, detail));
   }
 
   @ExceptionHandler(Exception.class)
