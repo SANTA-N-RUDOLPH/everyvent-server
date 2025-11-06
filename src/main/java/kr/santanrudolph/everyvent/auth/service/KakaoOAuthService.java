@@ -52,7 +52,7 @@ public class KakaoOAuthService extends DefaultOAuth2UserService {
     // email이 null이 아닌 경우, 중복 체크
     if (email != null && userRepository.findByEmail(email).isPresent()) {
       log.warn("Email already exists: {}", email);
-      throw new EveryventException(ErrorCode.DUPLICATED_EMAIL);
+      throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 존재하는 이메일입니다.");
     }
 
     // 임시 닉네임 생성
