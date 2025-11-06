@@ -6,17 +6,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.time.Instant;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.auth.dto.TokenRefreshRequest;
 import kr.santanrudolph.everyvent.auth.dto.TokenResponse;
 import kr.santanrudolph.everyvent.auth.security.JwtTokenProvider;
-import kr.santanrudolph.everyvent.auth.service.TokenStoreService;
-import kr.santanrudolph.everyvent.global.exception.ErrorCode;
-import kr.santanrudolph.everyvent.global.exception.EveryventException;
+import kr.santanrudolph.everyvent.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,13 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final TokenStoreService tokenStoreService;
+  private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
-
-  @Value("${jwt.access-token-expiration}")
-  private long accessTokenExpiration;
-  @Value("${jwt.refresh-token-expiration}")
-  private long refreshTokenExpiration;
 
   @Operation(
       summary = "토큰 재발급",
@@ -45,50 +36,14 @@ public class AuthController {
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
-      @ApiResponse(responseCode = "400", description = "비즈니스 에러 (에러코드로 구분: INVALID_TOKEN, TOKEN_EXPIRED, INVALID_INPUT_VALUE 등)")
+      @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 요청 형식 오류"),
+      @ApiResponse(responseCode = "401", description = "INVALID_REFRESH_TOKEN: 유효하지 않은 리프레시 토큰 | REFRESH_TOKEN_EXPIRED: 만료된 리프레시 토큰 | ACCESS_TOKEN_EXPIRED: JWT 파싱 중 만료")
   })
   @PostMapping("/refresh")
   public ResponseEntity<TokenResponse> refreshToken(
       @Valid @RequestBody TokenRefreshRequest request) {
-
-    String requestRefreshToken = request.getRefreshToken();
-
-    // 토큰 형식 검증
-    if (!jwtTokenProvider.validateToken(requestRefreshToken)) {
-      log.warn("Invalid refresh token");
-
-      if (jwtTokenProvider.isExpired(requestRefreshToken)) {
-        throw new EveryventException(ErrorCode.EXPIRED_TOKEN);
-      }
-      throw new EveryventException(ErrorCode.INVALID_TOKEN);
-    }
-
-    // Redis에서 RefreshToken 확인
-    Long userId = jwtTokenProvider.getUserIdFromToken(requestRefreshToken);
-    String storedRefreshToken = tokenStoreService.getRefreshToken(userId);
-
-    if (storedRefreshToken == null || !storedRefreshToken.equals(requestRefreshToken)) {
-      log.warn("RefreshToken not found in Redis or mismatch - User ID: {}", userId);
-      throw new EveryventException(ErrorCode.INVALID_TOKEN);
-    }
-
-    // 새로운 토큰 발급
-    String newAccessToken = jwtTokenProvider.createAccessToken(userId);
-    String newRefreshToken = jwtTokenProvider.createRefreshToken(userId);
-    Instant newRefreshTokenExpiration = jwtTokenProvider.getExpirationDate(newRefreshToken)
-        .toInstant();
-
-    // Redis에 새로운 RefreshToken 저장
-    tokenStoreService.saveRefreshToken(userId, newRefreshToken, newRefreshTokenExpiration);
-
-    log.info("Token refreshed - User ID: {}", userId);
-
-    return ResponseEntity.ok(TokenResponse.builder()
-        .accessToken(newAccessToken)
-        .refreshToken(newRefreshToken)
-        .tokenType("Bearer")
-        .expiresIn(accessTokenExpiration / 1000)
-        .build());
+    TokenResponse response = authService.refreshToken(request.getRefreshToken());
+    return ResponseEntity.ok(response);
   }
 
   @Operation(
@@ -97,27 +52,16 @@ public class AuthController {
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
-      @ApiResponse(responseCode = "400", description = "비즈니스 에러 (에러코드로 구분: USER_NOT_FOUND, UNAUTHORIZED 등)")
+      @ApiResponse(responseCode = "401", description = "UNAUTHORIZED: 인증되지 않은 사용자 | INVALID_ACCESS_TOKEN: 유효하지 않은 액세스 토큰"),
+      @ApiResponse(responseCode = "500", description = "INTERNAL_SERVER_ERROR: 서버 내부 오류")
   })
   @PostMapping("/logout")
-  public ResponseEntity<String> logout(HttpServletRequest request) {
+  public ResponseEntity<Void> logout(HttpServletRequest request) {
     Long userId = AuthenticationUtil.getCurrentUserId();
+    String accessToken = jwtTokenProvider.resolveToken(request.getHeader("Authorization"));
 
-    String bearerToken = request.getHeader("Authorization");
-    String accessToken = jwtTokenProvider.resolveToken(bearerToken);
+    authService.logout(userId, accessToken);
 
-    // Redis에서 RefreshToken 삭제
-    tokenStoreService.deleteRefreshToken(userId);
-
-    // AccessToken을 블랙리스트에 추가
-    if (accessToken != null) {
-      Instant accessTokenExpiration = jwtTokenProvider.getExpirationDate(accessToken).toInstant();
-      tokenStoreService.addToBlacklist(accessToken, accessTokenExpiration);
-    }
-
-    log.info("User logged out - User ID: {}, RefreshToken deleted, AccessToken blacklisted",
-        userId);
-
-    return ResponseEntity.ok("Logged out successfully");
+    return ResponseEntity.ok().build();
   }
 }
