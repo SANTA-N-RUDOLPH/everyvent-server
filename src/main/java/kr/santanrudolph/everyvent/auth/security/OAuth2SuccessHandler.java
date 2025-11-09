@@ -2,18 +2,15 @@ package kr.santanrudolph.everyvent.auth.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.Instant;
-import kr.santanrudolph.everyvent.auth.entity.RefreshToken;
-import kr.santanrudolph.everyvent.auth.repository.RefreshTokenRepository;
+import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
-import java.io.IOException;
 
 @Slf4j
 @Component
@@ -21,13 +18,9 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
   private final JwtTokenProvider jwtTokenProvider;
-  private final RefreshTokenRepository refreshTokenRepository;
-
-  @Value("${jwt.refresh-token-expiration}")
-  private long refreshTokenExpiration;
+  private final RedisTokenRepository redisTokenRepository;
 
   @Override
-  @Transactional
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException {
     EveryventOAuth2User oAuth2User = (EveryventOAuth2User) authentication.getPrincipal();
@@ -35,28 +28,15 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     log.info("OAuth2 Login Success - User ID: {}", userId);
 
-    // JWT 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(userId);
     String refreshToken = jwtTokenProvider.createRefreshToken(userId);
+    Instant refreshTokenExpiration = jwtTokenProvider.getExpirationDate(refreshToken).toInstant();
 
-    // RefreshToken DB 저장 (기존 토큰이 있으면 업데이트)
-    RefreshToken refreshTokenEntity = refreshTokenRepository.findById(userId)
-        .orElse(RefreshToken.builder()
-            .userId(userId)
-            .token(refreshToken)
-            .expiresAt(Instant.now().plusMillis(refreshTokenExpiration))
-            .build());
-
-    if (refreshTokenEntity.getToken() != null) {
-      refreshTokenEntity.updateToken(refreshToken,
-          Instant.now().plusMillis(refreshTokenExpiration));
-    }
-
-    refreshTokenRepository.save(refreshTokenEntity);
-    log.info("RefreshToken saved for User ID: {}", userId);
+    redisTokenRepository.saveRefreshToken(userId, refreshToken, refreshTokenExpiration);
+    log.info("RefreshToken saved to Redis for User ID: {}", userId);
 
     // 테스트용 콜백 엔드포인트로 리다이렉트 (토큰을 쿼리 파라미터로 전달하여, 로그인 시 프론트 없이도 토큰 확인 가능)
-    // 프론트 연동 시에는 삭제 필요
+    // TODO: 프론트 연동 시에는 삭제 필요
     String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/oauth/callback")
         .queryParam("accessToken", accessToken)
         .queryParam("refreshToken", refreshToken)
