@@ -48,7 +48,7 @@ public class UserService {
 
     try {
       user.updateNickname(request.getNickname());
-      // flush 시 unique constraint violation 발생
+      userRepository.flush();
     } catch (DataIntegrityViolationException e) {
       throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 사용 중인 닉네임입니다");
     }
