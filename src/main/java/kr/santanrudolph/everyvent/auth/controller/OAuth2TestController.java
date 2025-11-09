@@ -110,8 +110,8 @@ public class OAuth2TestController {
     @GetMapping("/oauth/callback")
     @ResponseBody
     public String oauthCallback(
-            @RequestParam(required = false) String accessToken,
-            @RequestParam(required = false) String refreshToken) {
+            @RequestParam(required = false, value = "accessToken") String accessToken,
+            @RequestParam(required = false, value = "refreshToken") String refreshToken) {
         log.info("OAuth2 Callback - AccessToken: {}, RefreshToken: {}", accessToken, refreshToken);
 
         return """
