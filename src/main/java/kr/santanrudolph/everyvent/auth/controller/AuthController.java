@@ -37,7 +37,7 @@ public class AuthController {
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "토큰 재발급 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 요청 형식 오류"),
-      @ApiResponse(responseCode = "401", description = "INVALID_REFRESH_TOKEN: 유효하지 않은 리프레시 토큰 | REFRESH_TOKEN_EXPIRED: 만료된 리프레시 토큰 | ACCESS_TOKEN_EXPIRED: JWT 파싱 중 만료")
+      @ApiResponse(responseCode = "401", description = "INVALID_REFRESH_TOKEN: 유효하지 않은 리프레시 토큰 | REFRESH_TOKEN_EXPIRED: 만료된 리프레시 토큰")
   })
   @PostMapping("/refresh")
   public ResponseEntity<TokenResponse> refreshToken(
