@@ -1,6 +1,8 @@
 package kr.santanrudolph.everyvent.domain.follow;
 
 
+import java.util.List;
+import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +29,11 @@ public class FollowService {
     User follower = userRepository.findByIdAndDeletedAtIsNull(command.followerId())
         .orElseThrow(() -> new EveryventException(
             ErrorCode.NOT_FOUND, "팔로워 id를 찾을 수 없습니다."));
+
     User target = userRepository.findByIdAndDeletedAtIsNull(command.targetId())
         .orElseThrow(() -> new EveryventException(
             ErrorCode.NOT_FOUND, "팔로우 대상 id를 찾을 수 없습니다."));
+
     if (followRepository.existsByFollowerIdAndTargetId(
         command.followerId(),
         command.targetId()
@@ -45,5 +49,30 @@ public class FollowService {
 
     return FollowCreateResponse.from(saved);
   }
+
+  public List<UserBasicResponse> getFollowers(Long targetId) {
+
+    userRepository.findByIdAndDeletedAtIsNull(targetId)
+        .orElseThrow(() -> new EveryventException(
+            ErrorCode.NOT_FOUND,
+            "팔로워 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + targetId + ")"
+        ));
+
+    return followRepository.findFollowersBasicByTargetId(targetId);
+
+  }
+
+  public List<UserBasicResponse> getFollowings(Long followerId) {
+
+    userRepository.findByIdAndDeletedAtIsNull(followerId)
+        .orElseThrow(() -> new EveryventException(
+            ErrorCode.NOT_FOUND,
+            "팔로잉 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + followerId + ")"
+        ));
+
+    return followRepository.findFollowingsBasicByFollowerId(followerId);
+
+  }
+
 
 }
