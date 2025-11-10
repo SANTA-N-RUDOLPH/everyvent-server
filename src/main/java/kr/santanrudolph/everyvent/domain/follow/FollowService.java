@@ -58,7 +58,7 @@ public class FollowService {
             "팔로워 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + targetId + ")"
         ));
 
-    return followRepository.findFollowersBasicByTargetId(targetId);
+    return followRepository.findActiveFollowersBasicByTargetId(targetId);
 
   }
 
@@ -70,7 +70,7 @@ public class FollowService {
             "팔로잉 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + followerId + ")"
         ));
 
-    return followRepository.findFollowingsBasicByFollowerId(followerId);
+    return followRepository.findActiveFollowingsBasicByFollowerId(followerId);
 
   }
 
