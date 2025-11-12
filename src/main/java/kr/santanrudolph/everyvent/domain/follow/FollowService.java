@@ -2,7 +2,7 @@ package kr.santanrudolph.everyvent.domain.follow;
 
 
 import java.util.List;
-import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +50,7 @@ public class FollowService {
     return FollowCreateResponse.from(saved);
   }
 
-  public List<UserBasicResponse> getFollowers(Long targetId) {
+  public List<FollowResponse> getFollowers(Long targetId) {
 
     userRepository.findByIdAndDeletedAtIsNull(targetId)
         .orElseThrow(() -> new EveryventException(
@@ -58,11 +58,11 @@ public class FollowService {
             "팔로워 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + targetId + ")"
         ));
 
-    return followRepository.findActiveFollowersBasicByTargetId(targetId);
+    return followRepository.findActiveFollowersByTargetId(targetId);
 
   }
 
-  public List<UserBasicResponse> getFollowings(Long followerId) {
+  public List<FollowResponse> getFollowings(Long followerId) {
 
     userRepository.findByIdAndDeletedAtIsNull(followerId)
         .orElseThrow(() -> new EveryventException(
