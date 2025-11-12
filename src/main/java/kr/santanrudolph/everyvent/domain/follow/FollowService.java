@@ -74,5 +74,32 @@ public class FollowService {
 
   }
 
+  @Transactional
+  public void deleteFollow(Long followerId, Long targetId) {
+    if (!userRepository.existsByIdAndDeletedAtIsNull(followerId)) {
+      throw new EveryventException(
+          ErrorCode.NOT_FOUND,
+          "삭제할 팔로워 사용자를 찾을 수 없습니다. (ID: " + followerId + ")"
+      );
+    }
+
+    if (!userRepository.existsByIdAndDeletedAtIsNull(targetId)) {
+      throw new EveryventException(
+          ErrorCode.NOT_FOUND,
+          "삭제할 팔로우 대상 사용자를 찾을 수 없습니다. (ID: " + targetId + ")"
+      );
+    }
+
+    int deletedCount = followRepository.deleteByFollowerIdAndTargetId(followerId, targetId);
+
+    if (deletedCount == 0) {
+      throw new EveryventException(
+          ErrorCode.NOT_FOUND,
+          "삭제할 팔로우 관계가 존재하지 않습니다."
+      );
+    }
+
+    log.info("Follow deleted - follower: {}, target: {}", followerId, targetId);
+  }
 
 }

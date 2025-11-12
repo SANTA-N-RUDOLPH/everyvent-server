@@ -2,7 +2,9 @@ package kr.santanrudolph.everyvent.domain.follow;
 
 import java.util.List;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,4 +26,10 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
       "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
+  Optional<Follow> findByFollowerIdAndTargetId(Long followerId, Long targetId);
+
+  @Modifying
+  @Query("DELETE FROM Follow f WHERE f.follower.id = :followerId AND f.target.id = :targetId")
+  int deleteByFollowerIdAndTargetId(@Param("followerId") Long followerId,
+      @Param("targetId") Long targetId);
 }
