@@ -70,7 +70,7 @@ public class FollowService {
             "팔로잉 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + followerId + ")"
         ));
 
-    return followRepository.findActiveFollowingsBasicByFollowerId(followerId);
+    return followRepository.findActiveFollowingsByFollowerId(followerId);
 
   }
 
