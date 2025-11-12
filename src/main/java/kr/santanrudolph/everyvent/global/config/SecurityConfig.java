@@ -33,6 +33,7 @@ public class SecurityConfig {
             .requestMatchers("/", "/error", "/favicon.ico").permitAll()
             .requestMatchers("/h2-console/**").permitAll()
             .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/dev/**").permitAll() // 개발용 API
             .requestMatchers("/oauth2/**").permitAll()
             .requestMatchers("/login/**").permitAll()
             .requestMatchers("/oauth/callback", "/oauth/test").permitAll()
