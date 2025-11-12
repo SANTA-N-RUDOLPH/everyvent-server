@@ -3,6 +3,7 @@ package kr.santanrudolph.everyvent.domain.follow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -10,10 +11,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Optional;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateCommand;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
-import kr.santanrudolph.everyvent.domain.user.SocialProvider;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
+import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -43,6 +46,7 @@ class FollowServiceTest {
   // reflection field
   private static final Field USER_ID_FIELD;
   private static final Field FOLLOW_ID_FIELD;
+
   static {
     USER_ID_FIELD = FieldUtils.getField(User.class, "id", true);
     USER_ID_FIELD.setAccessible(true);
@@ -90,7 +94,8 @@ class FollowServiceTest {
 
   @Nested
   @DisplayName("Follow 관계 생성 테스트")
-  class CreateFollowTest{
+  class CreateFollowTest {
+
     @BeforeEach
     void setUp() {
       // 공통 테스트 픽스쳐 초기화
@@ -106,9 +111,11 @@ class FollowServiceTest {
       // given
       Follow expectedFollow = createFollow(follower, target, FOLLOW_ID);
 
-      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
+          follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
-      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(false);
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(
+          false);
       given(followRepository.save(any(Follow.class))).willReturn(expectedFollow);
 
       // when
@@ -123,7 +130,8 @@ class FollowServiceTest {
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
 
-      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID,
+          TARGET_ID);
       ArgumentCaptor<Follow> followCaptor = ArgumentCaptor.forClass(Follow.class);
       then(followRepository).should(times(1)).save(followCaptor.capture());
       Follow savedFollow = followCaptor.getValue();
@@ -158,7 +166,8 @@ class FollowServiceTest {
     @Test
     void createFollow_whenTargetNotFound_thenThrowsException() {
       // given
-      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
+          follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.empty());
 
       // when & then
@@ -181,9 +190,11 @@ class FollowServiceTest {
     @Test
     void createFollow_whenFollowExists_thenThrowsException() {
       // given
-      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
+          follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
-      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(true);
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(
+          true);
 
       // when & then
       assertThatThrownBy(() -> followService.createFollow(command))
@@ -197,11 +208,155 @@ class FollowServiceTest {
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
 
-      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID,
+          TARGET_ID);
       then(followRepository).should(never()).save(any(Follow.class));
     }
   }
 
+  @Nested
+  @DisplayName("팔로워 목록 조회 테스트")
+  class GetFollowersTest {
 
+    @DisplayName("TARGET_ID로 팔로워 목록을 조회한다.")
+    @Test
+    void getFollowers_Success() {
+      // given
+      Long FOLLOWER_ID2 = 4L;
+      Long FOLLOW_ID2 = 5L;
+
+      target = createUser(TARGET_ID, "target");
+
+      List<FollowResponse> expectedFollowers = List.of(
+          new FollowResponse(FOLLOW_ID, FOLLOWER_ID, "follower1"),
+          new FollowResponse(FOLLOW_ID2, FOLLOWER_ID2, "follower2")
+      );
+
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
+      given(followRepository.findActiveFollowersByTargetId(TARGET_ID)).willReturn(
+          expectedFollowers);
+
+      // when
+      List<FollowResponse> result = followService.getFollowers(TARGET_ID);
+
+      // then
+      assertThat(result)
+          .hasSize(2)
+          .extracting("id", "user.id", "user.nickname")
+          .containsExactly(
+              tuple(FOLLOW_ID, FOLLOWER_ID, "follower1"),
+              tuple(FOLLOW_ID2, FOLLOWER_ID2, "follower2"));
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(times(1)).findActiveFollowersByTargetId(TARGET_ID);
+    }
+
+    @DisplayName("팔로워가 없으면 빈 리스트를 반환한다.")
+    @Test
+    void getFollowers_whenNoFollowers_thenReturnsEmptyList() {
+      // given
+      target = createUser(TARGET_ID, "target");
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
+      given(followRepository.findActiveFollowersByTargetId(TARGET_ID)).willReturn(List.of());
+
+      // when
+      List<FollowResponse> result = followService.getFollowers(TARGET_ID);
+
+      // then
+      assertThat(result).isEmpty();
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(times(1)).findActiveFollowersByTargetId(TARGET_ID);
+    }
+
+    @DisplayName("팔로워 정보를 가져올 사용자가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void getFollowers_whenTargetNotFound_thenThrowsException() {
+      // given
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> followService.getFollowers(TARGET_ID))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(ErrorCode.NOT_FOUND,
+              "팔로워 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + TARGET_ID + ")");
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(never()).findActiveFollowersByTargetId(any());
+    }
+
+  }
+
+  @Nested
+  @DisplayName("팔로잉 목록 조회 테스트")
+  class GetFollowingsTest {
+
+    @DisplayName("FOLLOWER_ID로 팔로잉 목록을 조회한다.")
+    @Test
+    void getFollowings_Success() {
+      // given
+      Long TARGET_ID2 = 4L;
+      Long FOLLOW_ID2 = 5L;
+
+      follower = createUser(FOLLOWER_ID, "follower");
+
+      List<FollowResponse> expectedFollowings = List.of(
+          new FollowResponse(FOLLOW_ID, TARGET_ID, "target1"),
+          new FollowResponse(FOLLOW_ID2, TARGET_ID2, "target2")
+      );
+
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(
+          Optional.of(follower));
+      given(followRepository.findActiveFollowingsByFollowerId(FOLLOWER_ID)).willReturn(
+          expectedFollowings);
+
+      // when
+      List<FollowResponse> result = followService.getFollowings(FOLLOWER_ID);
+
+      // then
+      assertThat(result)
+          .hasSize(2)
+          .extracting("id", "user.id", "user.nickname")
+          .containsExactly(
+              tuple(FOLLOW_ID, TARGET_ID, "target1"),
+              tuple(FOLLOW_ID2, TARGET_ID2, "target2"));
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(followRepository).should(times(1)).findActiveFollowingsByFollowerId(FOLLOWER_ID);
+    }
+
+    @DisplayName("팔로잉하는 사람이 없으면 빈 리스트를 반환한다.")
+    @Test
+    void getFollowings_whenNoFollowings_thenReturnsEmptyList() {
+      // given
+      follower = createUser(FOLLOWER_ID, "follower");
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(
+          Optional.of(follower));
+      given(followRepository.findActiveFollowingsByFollowerId(FOLLOWER_ID)).willReturn(List.of());
+
+      // when
+      List<FollowResponse> result = followService.getFollowings(FOLLOWER_ID);
+
+      // then
+      assertThat(result).isEmpty();
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(followRepository).should(times(1)).findActiveFollowingsByFollowerId(FOLLOWER_ID);
+    }
+
+    @DisplayName("팔로잉 정보를 가져올 사용자가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void getFollowings_whenFollowerNotFound_thenThrowsException() {
+      // given
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> followService.getFollowings(FOLLOWER_ID))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(ErrorCode.NOT_FOUND,
+              "팔로잉 정보를 가져올 대상 사용자가 존재하지 않습니다. (ID: " + FOLLOWER_ID + ")"
+          );
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(followRepository).should(never()).findActiveFollowingsByFollowerId(any());
+    }
+
+  }
 
 }
