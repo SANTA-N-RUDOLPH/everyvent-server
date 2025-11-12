@@ -9,6 +9,7 @@ import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.global.config.JpaConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -124,6 +125,25 @@ class FollowRepositoryTest {
 
     }
 
+  }
+
+  @Nested
+  @DisplayName("팔로잉 목록 조회 테스트")
+  class findFollowingsTest {
+
+
+
+    @BeforeEach
+    void setUp() {
+      User follower = createAndSaveUser("follower");
+    }
+
+
+    @DisplayName("팔로잉하는 사람의 id와 닉네임 목록을 조회한다.")
+    @Test
+    public void findFollowings() {
+
+    }
   }
 
 
