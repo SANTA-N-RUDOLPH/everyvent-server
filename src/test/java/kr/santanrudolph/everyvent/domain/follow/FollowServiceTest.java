@@ -13,7 +13,7 @@ import static org.mockito.Mockito.times;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
-import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateCommand;
+import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;

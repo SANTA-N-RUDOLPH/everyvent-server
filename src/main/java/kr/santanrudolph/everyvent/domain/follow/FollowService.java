@@ -6,7 +6,7 @@ import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateCommand;
+import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;

@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.follow.dto;
+package kr.santanrudolph.everyvent.domain.follow.command;
 
 
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
