@@ -359,4 +359,89 @@ class FollowServiceTest {
 
   }
 
+  @Nested
+  @DisplayName("팔로우 관계 삭제 테스트")
+  class DeleteFollowTest {
+
+    @DisplayName("팔로우 관계를 삭제한다.")
+    @Test
+    void deleteFollow_Success() {
+      // given
+      given(userRepository.existsByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(true);
+      given(userRepository.existsByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(true);
+      given(followRepository.deleteByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(1);
+
+      // when
+      followService.deleteFollow(FOLLOWER_ID, TARGET_ID);
+
+      // then
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(times(1)).deleteByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+    }
+
+    @DisplayName("팔로워 사용자가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void deleteFollow_whenFollowerNotFound_throwsException() {
+      // given
+      given(userRepository.existsByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(false);
+
+      // when & then
+      assertThatThrownBy(() -> followService.deleteFollow(FOLLOWER_ID, TARGET_ID))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "삭제할 팔로워 사용자를 찾을 수 없습니다. (ID: " + FOLLOWER_ID + ")"
+          );
+
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(never()).existsByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(never()).deleteByFollowerIdAndTargetId(any(), any());
+    }
+
+    @DisplayName("팔로우 대상 사용자가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void deleteFollow_whenTargetNotFound_throwsException() {
+      // given
+      given(userRepository.existsByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(true);
+      given(userRepository.existsByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(false);
+
+      // when & then
+      assertThatThrownBy(() -> followService.deleteFollow(FOLLOWER_ID, TARGET_ID))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "삭제할 팔로우 대상 사용자를 찾을 수 없습니다. (ID: " + TARGET_ID + ")"
+          );
+
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(never()).deleteByFollowerIdAndTargetId(any(), any());
+    }
+
+    @DisplayName("삭제할 팔로우 관계가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void deleteFollow_whenFollowNotFound_throwsException() {
+      // given
+      given(userRepository.existsByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(true);
+      given(userRepository.existsByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(true);
+      given(followRepository.deleteByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(0);
+
+      // when & then
+      assertThatThrownBy(() -> followService.deleteFollow(FOLLOWER_ID, TARGET_ID))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "삭제할 팔로우 관계가 존재하지 않습니다."
+          );
+
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(TARGET_ID);
+      then(followRepository).should(times(1)).deleteByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+    }
+
+  }
 }
