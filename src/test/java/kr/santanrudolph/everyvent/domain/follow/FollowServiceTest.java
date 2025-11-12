@@ -19,7 +19,9 @@ import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -41,13 +43,21 @@ class FollowServiceTest {
   // reflection field
   private static final Field USER_ID_FIELD;
   private static final Field FOLLOW_ID_FIELD;
-
   static {
     USER_ID_FIELD = FieldUtils.getField(User.class, "id", true);
     USER_ID_FIELD.setAccessible(true);
     FOLLOW_ID_FIELD = FieldUtils.getField(Follow.class, "id", true);
     FOLLOW_ID_FIELD.setAccessible(true);
   }
+
+  private static final Long FOLLOWER_ID = 1L;
+  private static final Long TARGET_ID = 2L;
+  private static final Long FOLLOW_ID = 3L;
+
+  // Test fixtures
+  private FollowCreateCommand command;
+  private User follower;
+  private User target;
 
 
   // helper method
@@ -78,124 +88,120 @@ class FollowServiceTest {
     return follow;
   }
 
+  @Nested
+  @DisplayName("Follow 관계 생성 테스트")
+  class CreateFollowTest{
+    @BeforeEach
+    void setUp() {
+      // 공통 테스트 픽스쳐 초기화
+      command = new FollowCreateCommand(FOLLOWER_ID, TARGET_ID);
 
-  @DisplayName("팔로우 관계를 생성한다.")
-  @Test
-  void createFollow_Success() {
-    // given
-    Long followerId = 1L;
-    Long targetId = 2L;
-    Long followId = 3L;
-    FollowCreateCommand command = new FollowCreateCommand(followerId, targetId);
+      follower = createUser(FOLLOWER_ID, "follower");
+      target = createUser(TARGET_ID, "target");
+    }
 
-    User follower = createUser(1L, "follower");
-    User target = createUser(2L, "target");
-    Follow expectedFollow = createFollow(follower, target, followId);
+    @DisplayName("팔로우 관계를 생성한다.")
+    @Test
+    void createFollow_Success() {
+      // given
+      Follow expectedFollow = createFollow(follower, target, FOLLOW_ID);
 
-    given(userRepository.findByIdAndDeletedAtIsNull(followerId)).willReturn(Optional.of(follower));
-    given(userRepository.findByIdAndDeletedAtIsNull(targetId)).willReturn(Optional.of(target));
-    given(followRepository.existsByFollowerIdAndTargetId(followerId, targetId)).willReturn(false);
-    given(followRepository.save(any(Follow.class))).willReturn(expectedFollow);
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(false);
+      given(followRepository.save(any(Follow.class))).willReturn(expectedFollow);
 
-    // when
-    FollowCreateResponse response = followService.createFollow(command);
+      // when
+      FollowCreateResponse response = followService.createFollow(command);
 
-    // then
-    assertThat(response).isNotNull();
-    assertThat(response.followerId()).isEqualTo(followerId);
-    assertThat(response.targetId()).isEqualTo(targetId);
-    assertThat(response.followId()).isEqualTo(followId);
+      // then
+      assertThat(response).isNotNull();
+      assertThat(response.followerId()).isEqualTo(FOLLOWER_ID);
+      assertThat(response.targetId()).isEqualTo(TARGET_ID);
+      assertThat(response.followId()).isEqualTo(FOLLOW_ID);
 
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(followerId);
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(targetId);
-    then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(followerId, targetId);
-    ArgumentCaptor<Follow> followCaptor = ArgumentCaptor.forClass(Follow.class);
-    then(followRepository).should(times(1)).save(followCaptor.capture());
-    Follow savedFollow = followCaptor.getValue();
-    assertThat(savedFollow).isNotNull();
-    assertThat(savedFollow.getFollower()).isEqualTo(follower);
-    assertThat(savedFollow.getTarget()).isEqualTo(target);
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      ArgumentCaptor<Follow> followCaptor = ArgumentCaptor.forClass(Follow.class);
+      then(followRepository).should(times(1)).save(followCaptor.capture());
+      Follow savedFollow = followCaptor.getValue();
+      assertThat(savedFollow).isNotNull();
+      assertThat(savedFollow.getFollower()).isEqualTo(follower);
+      assertThat(savedFollow.getTarget()).isEqualTo(target);
+    }
+
+    @DisplayName("팔로워를 찾을 수 없으면 예외를 던진다.")
+    @Test
+    void createFollow_whenFollowerNotFound_thenThrowsException() {
+      // given
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> followService.createFollow(command))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "팔로워 id를 찾을 수 없습니다."
+          );
+
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(never()).findByIdAndDeletedAtIsNull(TARGET_ID);
+
+      then(followRepository).should(never()).existsByFollowerIdAndTargetId(any(), any());
+      then(followRepository).should(never()).save(any(Follow.class));
+    }
+
+    @DisplayName("팔로우 대상을 찾을 수 없으면 예외를 던진다.")
+    @Test
+    void createFollow_whenTargetNotFound_thenThrowsException() {
+      // given
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> followService.createFollow(command))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "팔로우 대상 id를 찾을 수 없습니다."
+          );
+
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+
+      then(followRepository).should(never()).existsByFollowerIdAndTargetId(any(), any());
+      then(followRepository).should(never()).save(any(Follow.class));
+    }
+
+    @DisplayName("이미 팔로우 중이면 예외를 던진다.")
+    @Test
+    void createFollow_whenFollowExists_thenThrowsException() {
+      // given
+      given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(follower));
+      given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID)).willReturn(true);
+
+      // when & then
+      assertThatThrownBy(() -> followService.createFollow(command))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.ALREADY_EXIST,
+              "이미 팔로우 중입니다."
+          );
+
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
+
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      then(followRepository).should(never()).save(any(Follow.class));
+    }
   }
 
-  @DisplayName("팔로우 생성 시 팔로워를 찾을 수 없으면 예외를 던진다.")
-  @Test
-  void createFollow_whenFollowerNotFound_thenThrowsException() {
-    // given
-    Long followerId = 1L;
-    Long targetId = 2L;
-    FollowCreateCommand command = new FollowCreateCommand(followerId, targetId);
 
-    given(userRepository.findByIdAndDeletedAtIsNull(followerId)).willReturn(Optional.empty());
-
-    // when & then
-    assertThatThrownBy(() -> followService.createFollow(command))
-        .isInstanceOf(EveryventException.class)
-        .extracting("errorCode", "detail")
-        .containsExactly(
-            ErrorCode.NOT_FOUND,
-            "팔로워 id를 찾을 수 없습니다."
-        );
-
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(followerId);
-    then(userRepository).should(never()).findByIdAndDeletedAtIsNull(targetId);
-    then(followRepository).should(never()).existsByFollowerIdAndTargetId(any(), any());
-    then(followRepository).should(never()).save(any(Follow.class));
-  }
-
-  @DisplayName("팔로우 생성 시 팔로우 대상을 찾을 수 없으면 예외를 던진다.")
-  @Test
-  void createFollow_whenTargetNotFound_thenThrowsException() {
-    // given
-    Long followerId = 1L;
-    Long targetId = 2L;
-    FollowCreateCommand command = new FollowCreateCommand(followerId, targetId);
-    User follower = createUser(1L, "follower");
-
-    given(userRepository.findByIdAndDeletedAtIsNull(followerId)).willReturn(Optional.of(follower));
-    given(userRepository.findByIdAndDeletedAtIsNull(targetId)).willReturn(Optional.empty());
-
-    // when & then
-    assertThatThrownBy(() -> followService.createFollow(command))
-        .isInstanceOf(EveryventException.class)
-        .extracting("errorCode", "detail")
-        .containsExactly(
-            ErrorCode.NOT_FOUND,
-            "팔로우 대상 id를 찾을 수 없습니다."
-        );
-
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(followerId);
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(targetId);
-    then(followRepository).should(never()).existsByFollowerIdAndTargetId(any(), any());
-    then(followRepository).should(never()).save(any(Follow.class));
-  }
-
-  @DisplayName("팔로우 생성 시 이미 팔로우 중이면 예외를 던진다.")
-  @Test
-  void createFollow_whenFollowExists_thenThrowsException() {
-    // given
-    Long followerId = 1L;
-    Long targetId = 2L;
-    FollowCreateCommand command = new FollowCreateCommand(followerId, targetId);
-    User follower = createUser(1L, "follower");
-    User target = createUser(2L, "target");
-
-    given(userRepository.findByIdAndDeletedAtIsNull(followerId)).willReturn(Optional.of(follower));
-    given(userRepository.findByIdAndDeletedAtIsNull(targetId)).willReturn(Optional.of(target));
-    given(followRepository.existsByFollowerIdAndTargetId(followerId, targetId)).willReturn(true);
-
-    // when & then
-    assertThatThrownBy(() -> followService.createFollow(command))
-        .isInstanceOf(EveryventException.class)
-        .extracting("errorCode", "detail")
-        .containsExactly(
-            ErrorCode.ALREADY_EXIST,
-            "이미 팔로우 중입니다."
-        );
-
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(followerId);
-    then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(targetId);
-    then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(followerId, targetId);
-    then(followRepository).should(never()).save(any(Follow.class));
-  }
 
 }

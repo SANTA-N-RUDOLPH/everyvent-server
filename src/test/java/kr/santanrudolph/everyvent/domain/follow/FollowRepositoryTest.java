@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 import java.util.List;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
-import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.global.config.JpaConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +65,7 @@ class FollowRepositoryTest {
   @DisplayName("팔로워 목록 조회 테스트")
   class FindFollowersTest {
 
-    @DisplayName("팔로워의 id와 닉네임 목록을 조회한다.")
+    @DisplayName("Follow id, 팔로워의 id, 닉네임 목록을 조회한다.")
     @Test
     public void findFollowers() {
       // given
@@ -77,15 +77,15 @@ class FollowRepositoryTest {
       Follow follow2 = createAndSaveFollow(follower2, target);
 
       // when
-      List<UserBasicResponse> result = followRepository.findActiveFollowersBasicByTargetId(
+      List<FollowResponse> result = followRepository.findActiveFollowersByTargetId(
           target.getId());
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "nickname")
+          .extracting("id", "user.id", "user.nickname")
           .containsExactlyInAnyOrder(
-              tuple(follower1.getId(), "follower1"),
-              tuple(follower2.getId(), "follower2"));
+              tuple(follow1.getId(), follower1.getId(), "follower1"),
+              tuple(follow2.getId(), follower2.getId(), "follower2"));
     }
 
     @DisplayName("팔로워가 없으면 빈 리스트를 반환한다.")
@@ -95,7 +95,7 @@ class FollowRepositoryTest {
       User target = createAndSaveUser("target");
 
       // when
-      List<UserBasicResponse> result = followRepository.findActiveFollowersBasicByTargetId(
+      List<FollowResponse> result = followRepository.findActiveFollowersByTargetId(
           target.getId());
 
       // then
@@ -115,13 +115,13 @@ class FollowRepositoryTest {
       Follow follow2 = createAndSaveFollow(deletedUser, target);
 
       // when
-      List<UserBasicResponse> result = followRepository.findActiveFollowersBasicByTargetId(
+      List<FollowResponse> result = followRepository.findActiveFollowersByTargetId(
           target.getId());
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("nickname")
-          .containsExactly("activeUser");
+          .extracting("id", "user.id", "user.nickname")
+          .containsExactly(tuple(follow1.getId(), activeUser.getId(), activeUser.getNickname()));
 
     }
 
@@ -130,7 +130,6 @@ class FollowRepositoryTest {
   @Nested
   @DisplayName("팔로잉 목록 조회 테스트")
   class findFollowingsTest {
-
 
 
     @BeforeEach
