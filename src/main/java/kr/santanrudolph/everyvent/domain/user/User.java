@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import kr.santanrudolph.everyvent.domain.user.enums.Role;
+import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;

@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.domain.user;
 
+import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

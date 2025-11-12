@@ -1,7 +1,7 @@
 package kr.santanrudolph.everyvent.auth.service;
 
 import kr.santanrudolph.everyvent.auth.security.EveryventOAuth2User;
-import kr.santanrudolph.everyvent.domain.user.SocialProvider;
+import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
