@@ -12,7 +12,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -38,9 +37,8 @@ public class SecurityConfig {
               .requestMatchers("/h2-console/**").permitAll()
               .requestMatchers("/api/auth/**").permitAll();
 
-          // dev 또는 local 프로파일일 때만 개발용 API 허용
-          if (Arrays.asList(environment.getActiveProfiles()).contains("dev") ||
-              Arrays.asList(environment.getActiveProfiles()).contains("local")) {
+          // dev 또는 local 프로파일일 때만 개발용 API 허용 (활성/기본 프로파일 모두 고려)
+          if (environment.acceptsProfiles("dev", "local")) {
             auth.requestMatchers("/api/dev/**").permitAll();
           }
 
