@@ -41,7 +41,7 @@ public class FollowController {
   )
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "팔로우 생성 성공"),
-      @ApiResponse(responseCode = "400", description = "BAD_REQUEST: 자기 자신을 팔로우할 수 없음 | INVALID_INPUT: 요청 형식 오류"),
+      @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 요청 형식 오류"),
       @ApiResponse(responseCode = "404", description = "NOT_FOUND: 팔로우 대상 사용자를 찾을 수 없음"),
       @ApiResponse(responseCode = "409", description = "ALREADY_EXIST: 이미 팔로우 중")
   })
