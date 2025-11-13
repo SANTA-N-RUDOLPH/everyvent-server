@@ -6,11 +6,13 @@ import kr.santanrudolph.everyvent.auth.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -20,6 +22,7 @@ public class SecurityConfig {
   private final KakaoOAuthService kakaoOAuthService;
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final Environment environment;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfig corsConfig)
@@ -29,16 +32,25 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/", "/error", "/favicon.ico").permitAll()
-            .requestMatchers("/h2-console/**").permitAll()
-            .requestMatchers("/api/auth/**").permitAll()
-            .requestMatchers("/api/dev/**").permitAll() // 개발용 API
-            .requestMatchers("/oauth2/**").permitAll()
-            .requestMatchers("/login/**").permitAll()
-            .requestMatchers("/oauth/callback", "/oauth/test").permitAll()
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-            .anyRequest().authenticated())
+        .authorizeHttpRequests(auth -> {
+          auth
+              .requestMatchers("/", "/error", "/favicon.ico").permitAll()
+              .requestMatchers("/h2-console/**").permitAll()
+              .requestMatchers("/api/auth/**").permitAll();
+
+          // dev 또는 local 프로파일일 때만 개발용 API 허용
+          if (Arrays.asList(environment.getActiveProfiles()).contains("dev") ||
+              Arrays.asList(environment.getActiveProfiles()).contains("local")) {
+            auth.requestMatchers("/api/dev/**").permitAll();
+          }
+
+          auth
+              .requestMatchers("/oauth2/**").permitAll()
+              .requestMatchers("/login/**").permitAll()
+              .requestMatchers("/oauth/callback", "/oauth/test").permitAll()
+              .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+              .anyRequest().authenticated();
+        })
         .headers(headers -> headers
             .frameOptions(frameOptions -> frameOptions.sameOrigin()))
         .oauth2Login(oauth2 -> oauth2
