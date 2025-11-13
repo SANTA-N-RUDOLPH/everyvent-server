@@ -73,15 +73,6 @@ public enum ErrorCode {
   /*                                                                                                 */
   /*=================================================================================================*/
 
-  // 공통 에러
-  @Deprecated INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
-  @Deprecated INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "잘못된 타입입니다."),
-  @Deprecated HANDLE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근이 거부되었습니다."),
-
-  // 사용자 에러
-  @Deprecated USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 탈퇴한 사용자입니다."),
-  @Deprecated INVALID_USER_INFO(HttpStatus.BAD_REQUEST, "잘못된 사용자 정보입니다."),
-
   // 캘린더 에러
   @Deprecated CALENDAR_NOT_FOUND(HttpStatus.NOT_FOUND, "캘린더를 찾을 수 없습니다."),
   @Deprecated MAX_CALENDAR_EXCEEDED(HttpStatus.BAD_REQUEST, "캘린더는 최대 3개까지 생성할 수 있습니다."),
@@ -95,23 +86,7 @@ public enum ErrorCode {
   @Deprecated TASK_NOT_ACCESSIBLE_YET(HttpStatus.BAD_REQUEST, "아직 열람할 수 없는 태스크입니다."),
   @Deprecated INVALID_TASK_DATE(HttpStatus.BAD_REQUEST, "유효하지 않은 태스크 날짜입니다. (1-25일)"),
   @Deprecated TASK_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "이미 완료된 태스크입니다."),
-  @Deprecated TASK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "태스크에 접근할 권한이 없습니다."),
-
-  // 스크랩 에러
-  @Deprecated SCRAP_NOT_FOUND(HttpStatus.NOT_FOUND, "스크랩을 찾을 수 없습니다."),
-  @Deprecated ALREADY_SCRAPPED(HttpStatus.BAD_REQUEST, "이미 스크랩한 캘린더입니다."),
-  @Deprecated CANNOT_SCRAP_OWN_CALENDAR(HttpStatus.BAD_REQUEST, "본인의 캘린더는 스크랩할 수 없습니다."),
-  @Deprecated SCRAP_NOT_AVAILABLE_YET(HttpStatus.BAD_REQUEST, "스크랩할 수 있는 기간이 아닙니다."),
-
-  // 팔로우 에러
-  @Deprecated FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "팔로우 관계를 찾을 수 없습니다."),
-  @Deprecated ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "이미 팔로우한 사용자입니다."),
-  @Deprecated CANNOT_FOLLOW_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 팔로우할 수 없습니다."),
-
-  // OAuth 에러
-  @Deprecated OAUTH_PROVIDER_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인입니다."),
-  @Deprecated OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패했습니다."),
-  @Deprecated OAUTH_USER_INFO_FETCH_FAILED(HttpStatus.BAD_REQUEST, "사용자 정보를 가져오는데 실패했습니다.");
+  @Deprecated TASK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "태스크에 접근할 권한이 없습니다.");
 
   private final HttpStatus httpStatus;
   private final String message;
