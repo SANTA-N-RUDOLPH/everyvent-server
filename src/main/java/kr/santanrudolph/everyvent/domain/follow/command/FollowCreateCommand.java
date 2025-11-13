@@ -14,6 +14,8 @@ public record FollowCreateCommand(
       throw new EveryventException(ErrorCode.INVALID_INPUT, "팔로워 유저의 ID는 1 이상의 값이어야 합니다.");
     } else if (targetId <= 0) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "팔로우 대상 유저의 ID는 1 이상의 값이어야 합니다.");
+    } else if (followerId == targetId) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "자기 자신을 팔로우할 수 없습니다.");
     }
   }
 }
