@@ -1,11 +1,13 @@
 package kr.santanrudolph.everyvent.domain.calendar;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
-import kr.santanrudolph.everyvent.domain.calendar.validator.ValidColor;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,8 +46,13 @@ public abstract class Calendar extends BaseEntity {
     @Column(nullable = false)
     private Visibility visibility;
 
-    @ValidColor
+    private static final String HEX_COLOR_PATTERN = "^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$";
+
     @Column(nullable = false)
+    @Pattern(
+            regexp = HEX_COLOR_PATTERN,
+            message = "유효한 HEX 색상 코드여야 합니다 (예: #FFF, #FFFFFF)"
+    )
     private String color;
 
     @Enumerated(EnumType.STRING)
@@ -55,14 +62,7 @@ public abstract class Calendar extends BaseEntity {
     @Column
     private Instant deletedAt;
 
-    protected Calendar(User user,
-                       String title,
-                       String description,
-                       Instant startDate,
-                       Instant endDate,
-                       Visibility visibility,
-                       String color,
-                       Category category) {
+    protected Calendar(User user, String title, String description, Instant startDate, Instant endDate, Visibility visibility, String color, Category category) {
         this.user = user;
         this.title = title;
         this.description = description;
@@ -79,4 +79,45 @@ public abstract class Calendar extends BaseEntity {
         this.deletedAt = Instant.now();
     }
 
+    // === 속성 변경 메서드 ===
+    public void changeColor(String newColor) {
+        validateHexColor(newColor);
+        this.color = newColor;
+    }
+
+    public void changeVisibility(Visibility newVisibility) {
+        validateNotNull(newVisibility, "공개 범위");
+        this.visibility = newVisibility;
+    }
+
+    public void updateDetails(String title, String description, Instant startDate, Instant endDate, Category category) {
+        validateNotNull(title, "제목");
+        validateDateRange(startDate, endDate);
+        validateNotNull(category, "카테고리");
+
+        this.title = title;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.category = category;
+    }
+
+    // === 공통 검증 메서드 ===
+    protected void validateHexColor(String color) {
+        if (!color.matches(HEX_COLOR_PATTERN)) {
+            throw new EveryventException(ErrorCode.INVALID_COLOR);
+        }
+    }
+
+    protected void validateNotNull(Object value, String fieldName) {
+        if (value == null || (value instanceof String s && s.isBlank())) {
+            throw new EveryventException(ErrorCode.REQUIRED_FIELD, fieldName);
+        }
+    }
+
+    protected void validateDateRange(Instant startDate, Instant endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new EveryventException(ErrorCode.INVALID_DATE_RANGE);
+        }
+    }
 }
