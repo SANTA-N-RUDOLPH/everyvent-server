@@ -1,10 +1,14 @@
 package kr.santanrudolph.everyvent.domain.user;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import kr.santanrudolph.everyvent.domain.user.enums.Role;
+import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,19 +25,24 @@ public class User extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @NotBlank(message = "socialId는 필수입니다.")
   @Column(nullable = false)
   private String socialId;
 
+  @NotNull(message = "socialProvider는 필수입니다.")
   @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private SocialProvider socialProvider;
 
-  @Column
+  @Email
+  @Column(unique = true)
   private String email;
 
+  @NotBlank(message = "닉네임은 필수입니다.")
   @Column(nullable = false, unique = true)
   private String nickname;
 
-  @Column
+  @Column(length = 500)
   private String introduction;
 
   @Enumerated(EnumType.STRING)
@@ -43,15 +52,24 @@ public class User extends BaseEntity {
   @Column
   private Instant deletedAt;
 
-  @Builder
   public User(String socialId, SocialProvider socialProvider, String email, String nickname,
-      String introduction) {
+      String introduction, Role role) {
     this.socialId = socialId;
     this.socialProvider = socialProvider;
     this.email = email;
     this.nickname = nickname;
     this.introduction = introduction;
-    this.role = Role.USER; // 기본값 USER
+    this.role = role;
+  }
+
+  public static User createFromOAuth(String socialId, SocialProvider provider, String email,
+      String nickname) {
+    return new User(socialId, provider, email, nickname, null, Role.USER);
+  }
+
+  public static User createAdmin(String socialId, SocialProvider provider, String email,
+      String nickname) {
+    return new User(socialId, provider, email, nickname, null, Role.ADMIN);
   }
 
   public void updateIntroduction(String introduction) {

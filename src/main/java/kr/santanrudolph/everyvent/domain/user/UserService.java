@@ -7,6 +7,7 @@ import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +21,7 @@ public class UserService {
 
   public UserResponse getUserInfo(Long userId) {
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
     return UserResponse.from(user);
   }
@@ -28,7 +29,7 @@ public class UserService {
   @Transactional
   public UserResponse updateIntroduction(Long userId, UpdateIntroductionRequest request) {
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
     user.updateIntroduction(request.getIntroduction());
     log.info("User introduction updated - User ID: {}", userId);
@@ -39,13 +40,19 @@ public class UserService {
   @Transactional
   public UserResponse updateNickname(Long userId, UpdateNicknameRequest request) {
     if (userRepository.existsByNickname(request.getNickname())) {
-      throw new EveryventException(ErrorCode.DUPLICATE_NICKNAME);
+      throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 사용 중인 닉네임입니다.");
     }
 
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-    user.updateNickname(request.getNickname());
+    try {
+      user.updateNickname(request.getNickname());
+      userRepository.flush();
+    } catch (DataIntegrityViolationException e) {
+      throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 사용 중인 닉네임입니다");
+    }
+
     log.info("User nickname updated - User ID: {}, New nickname: {}", userId,
         request.getNickname());
 

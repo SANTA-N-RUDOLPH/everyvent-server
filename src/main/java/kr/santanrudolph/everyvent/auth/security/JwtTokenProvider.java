@@ -7,6 +7,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Jwts.SIG;
 import io.jsonwebtoken.security.Keys;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,17 +41,15 @@ public class JwtTokenProvider {
   }
 
   private String generateToken(Long userId, long expiration) {
-    if (userId == null) {
-      throw new IllegalArgumentException("userId cannot be null");
-    }
-
     Date now = new Date();
     Date expirationDate = new Date(now.getTime() + expiration);
 
     return Jwts.builder()
-        .setSubject(String.valueOf(userId))
-        .setIssuedAt(now)
-        .setExpiration(expirationDate)
+        .claims()
+        .subject(String.valueOf(userId))
+        .issuedAt(now)
+        .expiration(expirationDate)
+        .and()
         .signWith(secretKey, SIG.HS256)
         .compact();
   }
@@ -63,13 +63,46 @@ public class JwtTokenProvider {
   }
 
   public Long getUserIdFromToken(String token) {
-    Claims claims = parseClaims(token);
-    return Long.parseLong(claims.getSubject());
+    try {
+      Claims claims = parseClaims(token);
+      return Long.parseLong(claims.getSubject());
+    } catch (ExpiredJwtException e) {
+      throw new EveryventException(ErrorCode.ACCESS_TOKEN_EXPIRED, "토큰이 만료되어 userId를 추출할 수 없습니다");
+    } catch (NumberFormatException e) {
+      throw new EveryventException(ErrorCode.INVALID_ACCESS_TOKEN, "토큰의 userId 형식이 올바르지 않습니다");
+    } catch (JwtException | IllegalArgumentException e) {
+      throw new EveryventException(ErrorCode.INVALID_ACCESS_TOKEN, "userId 추출 중 토큰 파싱에 실패했습니다");
+    }
+  }
+
+  public Date getExpirationDate(String token) {
+    try {
+      return parseClaims(token).getExpiration();
+    } catch (ExpiredJwtException e) {
+      // 만료된 토큰이라도 만료 시간은 가져올 수 있음
+      return e.getClaims().getExpiration();
+    } catch (JwtException | IllegalArgumentException e) {
+      throw new EveryventException(ErrorCode.INVALID_ACCESS_TOKEN, "만료 시간 추출 중 토큰 파싱에 실패했습니다");
+    }
   }
 
   public boolean validateToken(String token) {
     try {
-      parseClaims(token);
+      Claims claims = parseClaims(token);
+
+      String subject = claims.getSubject();
+      if (subject == null || subject.isEmpty()) {
+        log.warn("JWT subject is null or empty");
+        return false;
+      }
+
+      try {
+        Long.parseLong(subject);
+      } catch (NumberFormatException e) {
+        log.warn("JWT subject is not a valid userId: {}", subject);
+        return false;
+      }
+
       return true;
     } catch (JwtException | IllegalArgumentException e) {
       log.warn("Invalid JWT: {}: {}", e.getClass().getSimpleName(), e.getMessage());
