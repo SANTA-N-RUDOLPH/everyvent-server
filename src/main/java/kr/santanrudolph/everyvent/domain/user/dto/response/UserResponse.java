@@ -1,28 +1,26 @@
 package kr.santanrudolph.everyvent.domain.user.dto.response;
 
+
 import kr.santanrudolph.everyvent.domain.user.User;
-import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-@Builder
-public class UserResponse {
+public record UserResponse(
 
-  private Long id;
-  private String nickname;
-  private String email;
-  private String introduction;
-  private String socialProvider;
-  private String role;
+    Long id,
+    String nickname,
+    String email,
+    String introduction,
+    String socialProvider,
+    String role
+) {
 
   public static UserResponse from(User user) {
-    return UserResponse.builder()
-        .id(user.getId())
-        .nickname(user.getNickname())
-        .email(user.getEmail())
-        .introduction(user.getIntroduction())
-        .socialProvider(user.getSocialProvider().name())
-        .role(user.getRole().name())
-        .build();
+    return new UserResponse(
+        user.getId(),
+        user.getNickname(),
+        user.getEmail(),
+        user.getIntroduction(),
+        user.getSocialProvider().name(),
+        user.getRole().name()
+    );
   }
 }

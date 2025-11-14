@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.user;
+package kr.santanrudolph.everyvent.domain.user.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
