@@ -25,4 +25,9 @@ public class EveryventException extends RuntimeException {
     this.errorCode = errorCode;
   }
 
+  public EveryventException(ErrorCode errorCode, String fieldName) {
+    super(fieldName + errorCode.getMessage());
+    this.errorCode = errorCode;
+  }
+
 }
