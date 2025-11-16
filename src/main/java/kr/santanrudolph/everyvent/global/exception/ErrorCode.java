@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-@Getter
 @AllArgsConstructor
 public enum ErrorCode {
 
@@ -81,5 +80,14 @@ public enum ErrorCode {
   public String getCode() {
     return name();
   }
+
+  public HttpStatus getHttpStatus() {
+    return httpStatus;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
 
 }
