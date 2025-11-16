@@ -28,7 +28,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     WHERE u.role = :role AND u.deletedAt IS NULL
     AND u.id NOT IN (
         SELECT c.user.id FROM DistributedCalendar c
-        WHERE c.originalCalendar.id = :originalId AND c.deletedAt IS NULL
+        WHERE c.originalCalendar.id = :originalId
     )
    """)
   List<User> findTargetUsersForDistribution(@Param("role") Role role, @Param("originalId") Long originalId);
