@@ -1,7 +1,6 @@
 package kr.santanrudolph.everyvent.global.exception;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @AllArgsConstructor
