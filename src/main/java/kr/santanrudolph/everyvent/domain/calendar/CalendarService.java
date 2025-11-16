@@ -105,7 +105,8 @@ public class CalendarService {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
     }
 
-    return toCalendarResponse(calendar, calendar.isScrapable());
+    boolean isScrapable = calendar.isScrapable() && !calendar.getUser().getId().equals(viewer.getId());
+    return toCalendarResponse(calendar, isScrapable);
   }
 
   public List<CalendarResponse> getMyCalendars(Long userId, int year, int month) {
