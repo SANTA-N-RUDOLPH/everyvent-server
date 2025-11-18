@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateRequest;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
@@ -144,6 +145,26 @@ public class FollowController {
     log.info("Follower removed - follower: {}, target: {}", followerId, currentUserId);
 
     return ResponseEntity.noContent().build();
+  }
+
+  @Operation(
+      summary = "팔로워/팔로잉 수 조회",
+      description = "특정 사용자의 팔로워 수와 팔로잉 수를 조회합니다."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "팔로워/팔로잉 수 조회 성공"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
+  })
+  @GetMapping("/{userId}/count")
+  public ResponseEntity<FollowCountDto> getFollowCount(
+      @PathVariable Long userId
+  ) {
+    FollowCountDto count = followService.getFollowCount(userId);
+
+    log.debug("Follow count retrieved for user: {}, followers: {}, followings: {}",
+        userId, count.followerCount(), count.followingCount());
+
+    return ResponseEntity.ok(count);
   }
 
 }
