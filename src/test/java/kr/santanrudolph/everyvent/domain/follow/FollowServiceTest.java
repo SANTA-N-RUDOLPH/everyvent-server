@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
@@ -441,6 +442,75 @@ class FollowServiceTest {
       then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(FOLLOWER_ID);
       then(userRepository).should(times(1)).existsByIdAndDeletedAtIsNull(TARGET_ID);
       then(followRepository).should(times(1)).deleteByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+    }
+
+  }
+
+  @Nested
+  @DisplayName("팔로우/팔로워 수 조회 테스트")
+  class GetFollowCountTest {
+
+    @DisplayName("팔로워 수와 팔로잉 수를 조회한다.")
+    @Test
+    void getFollowCount_Success() {
+      // given
+      Long userId = 1L;
+      User user = createUser(userId, "user");
+
+      given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
+      given(followRepository.countActiveFollowersByTargetId(userId)).willReturn(10);
+      given(followRepository.countActiveFollowingsByFollowerId(userId)).willReturn(5);
+
+      // when
+      FollowCountDto result = followService.getFollowCount(userId);
+
+      // then
+      assertThat(result.followerCount()).isEqualTo(10);
+      assertThat(result.followingCount()).isEqualTo(5);
+
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(userId);
+      then(followRepository).should(times(1)).countActiveFollowersByTargetId(userId);
+      then(followRepository).should(times(1)).countActiveFollowingsByFollowerId(userId);
+    }
+
+    @DisplayName("사용자가 존재하지 않으면 예외를 던진다.")
+    @Test
+    void getFollowCount_whenUserNotFound_thenThrowsException() {
+      // given
+      Long userId = 1L;
+      given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.empty());
+
+      // when & then
+      assertThatThrownBy(() -> followService.getFollowCount(userId))
+          .isInstanceOf(EveryventException.class)
+          .extracting("errorCode", "detail")
+          .containsExactly(
+              ErrorCode.NOT_FOUND,
+              "팔로우 정보를 찾을 유저가 존재하지 않습니다."
+          );
+
+      then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(userId);
+      then(followRepository).should(never()).countActiveFollowersByTargetId(any());
+      then(followRepository).should(never()).countActiveFollowingsByFollowerId(any());
+    }
+
+    @DisplayName("팔로우 관계가 없으면 모두 0을 반환한다.")
+    @Test
+    void getFollowCount_whenNoFollows_thenReturnsZero() {
+      // given
+      Long userId = 1L;
+      User user = createUser(userId, "user");
+
+      given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
+      given(followRepository.countActiveFollowersByTargetId(userId)).willReturn(0);
+      given(followRepository.countActiveFollowingsByFollowerId(userId)).willReturn(0);
+
+      // when
+      FollowCountDto result = followService.getFollowCount(userId);
+
+      // then
+      assertThat(result.followerCount()).isZero();
+      assertThat(result.followingCount()).isZero();
     }
 
   }
