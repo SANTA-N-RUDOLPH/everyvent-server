@@ -14,10 +14,16 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
   boolean existsByFollowerIdAndTargetId(Long followerId, Long targetId);
 
-  @Query("SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) " +
-      "FROM Follow f " +
-      "JOIN f.follower u " +
-      "WHERE f.target.id = :targetId AND u.deletedAt IS NULL")
+  @Query("SELECT COUNT(f) FROM Follow f " +
+         "WHERE f.target.id = :targetId " +
+         "AND f.follower.deletedAt IS NULL ")
+  int countActiveFollowersByTargetId(@Param("targetId") Long targetId);
+
+  @Query("SELECT COUNT(f) FROM Follow f " +
+         "WHERE f.follower.id = :followerId " +
+         "AND f.target.deletedAt IS NULL")
+  int countActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
+
   @Query(
       "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) "
           +
