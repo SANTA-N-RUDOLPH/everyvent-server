@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.domain.user;
 
+import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final FollowRepository followRepository;
 
   public UserResponse getUserInfo(Long userId) {
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
@@ -57,5 +59,18 @@ public class UserService {
         request.getNickname());
 
     return UserResponse.from(user);
+  }
+
+  @Transactional
+  public void deleteUser(Long userId) {
+    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "탈퇴할 사용자를 찾을 수 없습니다."));
+
+    user.softDelete();
+
+    int deletedFollowCount = followRepository.deleteAllByUserId(userId);
+
+    log.info("User soft deleted - User ID: {}, Deleted follow count: {}",
+        userId, deletedFollowCount);
   }
 }

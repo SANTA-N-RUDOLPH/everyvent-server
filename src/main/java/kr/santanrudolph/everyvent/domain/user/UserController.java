@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
+import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
   private final UserService userService;
+  private final FollowService followService;
 
   @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
   @ApiResponses({
@@ -66,4 +68,21 @@ public class UserController {
     UserResponse response = userService.updateNickname(userId, request);
     return ResponseEntity.ok(response);
   }
+
+  @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자를 탈퇴 처리합니다. (Soft Delete)")
+  @ApiResponses({
+      @ApiResponse(responseCode = "204", description = "탈퇴 성공"),
+      @ApiResponse(responseCode = "400", description = "비즈니스 에러 (에러코드로 구분: USER_NOT_FOUND, UNAUTHORIZED 등)")
+  })
+  @DeleteMapping("/me")
+  public ResponseEntity<Void> deleteUser() {
+    Long userId = AuthenticationUtil.getCurrentUserId();
+    log.info("User deletion requested - User ID: {}", userId);
+
+    userService.deleteUser(userId);
+    followService.deleteFollow(userId, userId);
+
+    return ResponseEntity.noContent().build();
+  }
+
 }
