@@ -11,6 +11,7 @@ import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateRequest;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
+import kr.santanrudolph.everyvent.domain.user.UserService;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ import java.util.List;
 @Tag(name = "팔로우", description = "팔로우 관련 API")
 @Slf4j
 @RestController
-@RequestMapping("/api/me")
+@RequestMapping("/api/users/me")
 @RequiredArgsConstructor
 public class FollowController {
 
