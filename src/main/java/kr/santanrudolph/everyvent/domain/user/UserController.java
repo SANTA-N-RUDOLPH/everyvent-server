@@ -80,7 +80,6 @@ public class UserController {
     log.info("User deletion requested - User ID: {}", userId);
 
     userService.deleteUser(userId);
-    followService.deleteFollow(userId, userId);
 
     return ResponseEntity.noContent().build();
   }
