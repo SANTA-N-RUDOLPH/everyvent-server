@@ -18,12 +18,20 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
       "FROM Follow f " +
       "JOIN f.follower u " +
       "WHERE f.target.id = :targetId AND u.deletedAt IS NULL")
+  @Query(
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) "
+          +
+          "FROM Follow f " +
+          "JOIN f.follower u " +
+          "WHERE f.target.id = :targetId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowersByTargetId(@Param("targetId") Long targetId);
 
-  @Query("SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) " +
-      "FROM Follow f " +
-      "JOIN f.target u " +
-      "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
+  @Query(
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) "
+          +
+          "FROM Follow f " +
+          "JOIN f.target u " +
+          "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
   Optional<Follow> findByFollowerIdAndTargetId(Long followerId, Long targetId);
