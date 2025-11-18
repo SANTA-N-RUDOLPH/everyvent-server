@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
-import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
   private final UserService userService;
-  private final FollowService followService;
 
   @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
   @ApiResponses({
