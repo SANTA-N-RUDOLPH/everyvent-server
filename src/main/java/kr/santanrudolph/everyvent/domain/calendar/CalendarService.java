@@ -69,30 +69,25 @@ public class CalendarService {
   }
 
   @Transactional
-  public void distributeOfficialCalendar(Long adminId, Long calendarId) {
+  public List<DistributedCalendarResponse> distributeOfficialCalendar(Long adminId, Long calendarId) {
 
-    User admin = getUserOrThrow(adminId);
-    validateAdminRole(admin);
-
-    OfficialCalendar officialCalendar = officialCalendarRepository
-            .findByOriginalCalendarId(calendarId)
-            .orElseThrow(() -> new EveryventException(ErrorCode.INVALID_INPUT, "해당 캘린더는 공식 캘린더가 아닙니다."));
+    OfficialCalendar officialCalendar = getOfficialCalendarOrThrow(calendarId, adminId);
+    OriginalCalendar originalCalendar = officialCalendar.getOriginalCalendar();
     validateDistribution(officialCalendar);
 
-    Calendar calendar = getActiveCalendarOrThrow(officialCalendar.getOriginalCalendar().getId());
-    if (!(calendar instanceof OriginalCalendar originalCalendar)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "해당 캘린더는 원본 캘린더가 아닙니다.");
-    }
-
-    // 탈퇴하지 않은 일반 사용자 중, 아직 해당 공식 캘린더 복제본을 가지지 않은 대상에게 배포
-    List<User> targetUsers = userRepository.findTargetUsersForDistribution(Role.USER, originalCalendar.getId());
+    // 탈퇴하지 않은 사용자 중, 아직 해당 공식 캘린더 복제본을 가지지 않은 대상에게 배포
+    List<User> targetUsers = userRepository.findTargetUsersForDistribution(originalCalendar.getId());
 
     List<DistributedCalendar> calendarsToSave = targetUsers.stream()
             .map(user -> DistributedCalendar.of(user, originalCalendar))
             .collect(Collectors.toList());
 
-    calendarRepository.saveAll(calendarsToSave);
+    List<DistributedCalendar> savedCalendars = calendarRepository.saveAll(calendarsToSave);
     officialCalendar.updateDistributedAt(Instant.now());
+
+    return savedCalendars.stream()
+            .map(DistributedCalendarResponse::from)
+            .collect(Collectors.toList());
   }
 
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
@@ -203,6 +198,21 @@ public class CalendarService {
     }
 
     return calendar;
+  }
+
+  private OfficialCalendar getOfficialCalendarOrThrow(Long calendarId, Long adminId) {
+    User admin = getUserOrThrow(adminId);
+    validateAdminRole(admin);
+
+    OfficialCalendar officialCalendar = officialCalendarRepository.findByOriginalCalendarId(calendarId)
+            .orElseThrow(() ->
+                    new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
+
+    if (officialCalendar.getDeletedAt() != null) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
+    }
+
+    return officialCalendar;
   }
 
   // 권한/검증 관련
