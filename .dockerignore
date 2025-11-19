@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.gitattributes
+.github
+
+# Gradle
+.gradle
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+.settings
+.classpath
+.project
+.factorypath
+.apt_generated
+
+# Environment
+.env
+.env.*
+
+# Database
+data/
+*.db
+*.trace.db
+*.lock.db
+
+# Documentation
+*.md
+docs/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+*.test
+coverage/
