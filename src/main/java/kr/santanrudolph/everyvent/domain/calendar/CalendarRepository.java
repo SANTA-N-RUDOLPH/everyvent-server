@@ -19,6 +19,10 @@ public interface CalendarRepository extends JpaRepository<Calendar, Long> {
       AND c.endDate >= :startDate
       AND c.deletedAt IS NULL
       AND TYPE(c) <> DistributedCalendar
+      AND c.id NOT IN (
+                SELECT oc.id FROM OriginalCalendar oc
+                JOIN OfficialCalendar ofc ON ofc.originalCalendar.id = oc.id
+          )
     """)
     long countByUserIdInMonth(
             @Param("userId") Long userId,
