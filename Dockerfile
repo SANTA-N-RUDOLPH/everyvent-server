@@ -4,6 +4,8 @@ WORKDIR /app
 
 # Gradle wrapper와 설정 파일 먼저 복사 (캐싱 활용)
 COPY gradlew .
+RUN chmod +x gradlew && \
+    ./gradlew dependencies --no-daemon
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
