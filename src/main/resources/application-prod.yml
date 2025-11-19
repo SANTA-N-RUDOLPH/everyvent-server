@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${RDS_HOST}:${RDS_PORT}/${RDS_DB_NAME}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update # 아직 개발 중인 이슈로, 현재 테이블이 fix되지 않아 update로 두었습니다. 추후 validate로 변경할 예정입니다.
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        show_sql: false
+        default_batch_fetch_size: 100
+
+logging:
+  level:
+    org.hibernate.SQL: info
+    kr.santanrudolph.everyvent: info
