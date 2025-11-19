@@ -398,28 +398,28 @@ public class CalendarService {
 
   // DTO 변환
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
-    if (calendar instanceof OriginalCalendar oc) {
-
+    if (calendar instanceof OriginalCalendar originalCalendar) {
       Optional<OfficialCalendar> officialOpt =
-              officialCalendarRepository.findByOriginalCalendarId(oc.getId());
+              officialCalendarRepository.findByOriginalCalendarId(originalCalendar.getId());
       if (officialOpt.isPresent()) {
         return OfficialCalendarResponse.from(officialOpt.get());
+      } else {
+        return OriginalCalendarResponse.from(originalCalendar, isScrapable);
       }
-
-      return OriginalCalendarResponse.from(oc, isScrapable);
-    } else if (calendar instanceof DistributedCalendar dc) {
-      return DistributedCalendarResponse.from(dc);
+    } else if (calendar instanceof DistributedCalendar distributedCalendar) {
+      return DistributedCalendarResponse.from(distributedCalendar);
+    } else {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "지원하지 않는 캘린더 타입입니다.");
     }
-    throw new EveryventException(ErrorCode.INVALID_INPUT, "지원하지 않는 캘린더 타입입니다.");
   }
 
   private List<CalendarResponse> toCalendarResponseList(List<Calendar> calendars, User viewer, User targetUser) {
     return calendars.stream()
-            .filter(c -> canView(c, viewer, targetUser))
+            .filter(calendar -> canView(calendar, viewer, targetUser))
             .sorted(Comparator.comparingLong(Calendar::getId))
-            .map(c -> {
-              boolean isScrapable = c.isScrapable() && !c.getUser().getId().equals(viewer.getId());
-              return toCalendarResponse(c, isScrapable);
+            .map(calendar -> {
+              boolean isScrapable = calendar.isScrapable() && !calendar.getUser().getId().equals(viewer.getId());
+              return toCalendarResponse(calendar, isScrapable);
             })
             .toList();
   }
