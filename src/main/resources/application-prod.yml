@@ -11,6 +11,11 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
   jpa:
     hibernate:
       ddl-auto: update # 아직 개발 중인 이슈로, 현재 테이블이 fix되지 않아 update로 두었습니다. 추후 validate로 변경할 예정입니다.

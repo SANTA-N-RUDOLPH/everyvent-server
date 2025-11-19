@@ -9,11 +9,6 @@ spring:
     async:
       request-timeout: 60000
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
   security:
     oauth2:
       client:
