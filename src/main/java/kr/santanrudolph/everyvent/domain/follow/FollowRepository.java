@@ -14,16 +14,30 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
   boolean existsByFollowerIdAndTargetId(Long followerId, Long targetId);
 
-  @Query("SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) " +
-      "FROM Follow f " +
-      "JOIN f.follower u " +
-      "WHERE f.target.id = :targetId AND u.deletedAt IS NULL")
+  @Query("SELECT COUNT(f) FROM Follow f " +
+         "WHERE f.target.id = :targetId " +
+         "AND f.follower.deletedAt IS NULL ")
+  int countActiveFollowersByTargetId(@Param("targetId") Long targetId);
+
+  @Query("SELECT COUNT(f) FROM Follow f " +
+         "WHERE f.follower.id = :followerId " +
+         "AND f.target.deletedAt IS NULL")
+  int countActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
+
+  @Query(
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) "
+          +
+          "FROM Follow f " +
+          "JOIN f.follower u " +
+          "WHERE f.target.id = :targetId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowersByTargetId(@Param("targetId") Long targetId);
 
-  @Query("SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) " +
-      "FROM Follow f " +
-      "JOIN f.target u " +
-      "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
+  @Query(
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname) "
+          +
+          "FROM Follow f " +
+          "JOIN f.target u " +
+          "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
   Optional<Follow> findByFollowerIdAndTargetId(Long followerId, Long targetId);
@@ -32,4 +46,8 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
   @Query("DELETE FROM Follow f WHERE f.follower.id = :followerId AND f.target.id = :targetId")
   int deleteByFollowerIdAndTargetId(@Param("followerId") Long followerId,
       @Param("targetId") Long targetId);
+
+  @Modifying
+  @Query("DELETE FROM Follow f WHERE f.follower.id = :userId OR f.target.id = :userId")
+  int deleteAllByUserId(@Param("userId") Long userId);
 }

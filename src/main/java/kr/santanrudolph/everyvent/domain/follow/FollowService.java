@@ -2,6 +2,7 @@ package kr.santanrudolph.everyvent.domain.follow;
 
 
 import java.util.List;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,26 @@ public class FollowService {
         command.followerId(), command.targetId(), follow.getId());
 
     return FollowCreateResponse.from(saved);
+  }
+
+  public FollowCountDto getFollowCount(Long userId) {
+    userRepository.findByIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new EveryventException(
+            ErrorCode.NOT_FOUND, "팔로우 정보를 찾을 유저가 존재하지 않습니다.")
+        );
+
+    int followerCount = getFollowerCount(userId);
+    int followingCount = getFollowingCount(userId);
+
+    return new FollowCountDto(followerCount, followingCount);
+  }
+
+  int getFollowerCount(Long targetId) {
+    return followRepository.countActiveFollowersByTargetId(targetId);
+  }
+
+  int getFollowingCount(Long followerId) {
+    return followRepository.countActiveFollowingsByFollowerId(followerId);
   }
 
   public List<FollowResponse> getFollowers(Long targetId) {
