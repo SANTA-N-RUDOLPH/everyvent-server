@@ -9,6 +9,8 @@ import kr.santanrudolph.everyvent.domain.calendar.validator.ValidColor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Getter
 @NoArgsConstructor
 public class CalendarRequest {
@@ -21,10 +23,10 @@ public class CalendarRequest {
     private String description;
 
     @NotNull
-    private Integer year;
+    private Instant startDate;
 
     @NotNull
-    private Integer month;
+    private Instant endDate;
 
     @NotNull
     private Visibility visibility;
