@@ -2,6 +2,7 @@ package kr.santanrudolph.everyvent.domain.calendar;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 
 public class InstantRange {
@@ -26,7 +27,7 @@ public class InstantRange {
 
         return new InstantRange(
                 toStartOfDay(startLocal, koreaZone),
-                toStartOfDay(endLocal, koreaZone)
+                toEndOfDay(endLocal, koreaZone)
         );
     }
 
@@ -35,6 +36,10 @@ public class InstantRange {
 
     private static Instant toStartOfDay(LocalDate date, ZoneId zone) {
         return date.atStartOfDay(zone).toInstant();
+    }
+
+    private static Instant toEndOfDay(LocalDate date, ZoneId zone) {
+        return date.atTime(LocalTime.MAX).atZone(zone).toInstant();
     }
 
 }
