@@ -25,7 +25,7 @@ public enum ErrorCode {
   INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류입니다."),
 
   // OAuth 에러
-  OAUTH_CLIENT_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth 처리 중 오류가 발생했습니다."),
+  OAUTH_CLIENT_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "OAuth 처리 중 오류가 발생했습니다.");
 
   // 핵심 비즈니스 에러 (프론트에서 분기 필요)
 
@@ -73,21 +73,6 @@ public enum ErrorCode {
   /*                                                                                                 */
   /*=================================================================================================*/
 
-  // 캘린더 에러
-  @Deprecated CALENDAR_NOT_FOUND(HttpStatus.NOT_FOUND, "캘린더를 찾을 수 없습니다."),
-  @Deprecated MAX_CALENDAR_EXCEEDED(HttpStatus.BAD_REQUEST, "캘린더는 최대 3개까지 생성할 수 있습니다."),
-  @Deprecated CALENDAR_ACCESS_DENIED(HttpStatus.FORBIDDEN, "캘린더에 접근할 권한이 없습니다."),
-  @Deprecated CALENDAR_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "이미 삭제된 캘린더입니다."),
-  @Deprecated INVALID_CALENDAR_PERIOD(HttpStatus.BAD_REQUEST, "잘못된 캘린더 기간입니다."),
-  @Deprecated OFFICIAL_CALENDAR_CANNOT_MODIFY(HttpStatus.FORBIDDEN, "공식 캘린더는 수정할 수 없습니다."),
-
-  // 태스크 에러
-  @Deprecated TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "태스크를 찾을 수 없습니다."),
-  @Deprecated TASK_NOT_ACCESSIBLE_YET(HttpStatus.BAD_REQUEST, "아직 열람할 수 없는 태스크입니다."),
-  @Deprecated INVALID_TASK_DATE(HttpStatus.BAD_REQUEST, "유효하지 않은 태스크 날짜입니다. (1-25일)"),
-  @Deprecated TASK_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "이미 완료된 태스크입니다."),
-  @Deprecated TASK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "태스크에 접근할 권한이 없습니다.");
-
   private final HttpStatus httpStatus;
   private final String message;
 
@@ -102,5 +87,6 @@ public enum ErrorCode {
   public String getMessage() {
     return message;
   }
+
 
 }
