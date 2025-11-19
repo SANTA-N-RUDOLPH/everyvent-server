@@ -398,19 +398,10 @@ public class CalendarService {
 
   // DTO 변환
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
-    if (calendar instanceof OriginalCalendar originalCalendar) {
-      Optional<OfficialCalendar> officialOpt =
-              officialCalendarRepository.findByOriginalCalendarId(originalCalendar.getId());
-      if (officialOpt.isPresent()) {
-        return OfficialCalendarResponse.from(officialOpt.get());
-      } else {
-        return OriginalCalendarResponse.from(originalCalendar, isScrapable);
-      }
-    } else if (calendar instanceof DistributedCalendar distributedCalendar) {
-      return DistributedCalendarResponse.from(distributedCalendar);
-    } else {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "지원하지 않는 캘린더 타입입니다.");
-    }
+
+    OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
+                            .orElse(null);
+    return CalendarResponse.from(calendar, official, isScrapable);
   }
 
   private List<CalendarResponse> toCalendarResponseList(List<Calendar> calendars, User viewer, User targetUser) {
