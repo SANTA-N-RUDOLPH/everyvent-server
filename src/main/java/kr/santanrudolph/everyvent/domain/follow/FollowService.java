@@ -123,4 +123,12 @@ public class FollowService {
     log.info("Follow deleted - follower: {}, target: {}", followerId, targetId);
   }
 
+  public boolean isFollowing(Long followerId, Long targetId) {
+    return followRepository.existsByFollowerIdAndTargetId(followerId, targetId);
+  }
+
+  public boolean isMutualFollow(Long userId1, Long userId2) {
+    return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
+  }
+
 }
