@@ -1,24 +1,50 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 
 @Getter
-@SuperBuilder
 public class OriginalCalendarResponse extends CalendarResponse {
 
-    private Instant previewStartDate;
-    private Instant previewEndDate;
+    private final Instant previewStartDate;
+    private final Instant previewEndDate;
+
+    @Builder
+    private OriginalCalendarResponse(Long id,
+                                     String title,
+                                     String description,
+                                     Instant startDate,
+                                     Instant endDate,
+                                     Visibility visibility,
+                                     String color,
+                                     Category category,
+                                     Boolean isScrapable,
+                                     Instant previewStartDate,
+                                     Instant previewEndDate) {
+
+        super(id, title, description, startDate, endDate, visibility, color, category, isScrapable);
+        this.previewStartDate = previewStartDate;
+        this.previewEndDate = previewEndDate;
+    }
 
     public static OriginalCalendarResponse from(OriginalCalendar calendar, boolean isScrapable) {
-        return fillCommonFields(OriginalCalendarResponse.builder(), calendar, isScrapable)
-                .previewStartDate(calendar.getPreviewStartDate() != null
-                        ? calendar.getPreviewStartDate() : null)
-                .previewEndDate(calendar.getPreviewEndDate() != null
-                        ? calendar.getPreviewEndDate() : null)
+        return OriginalCalendarResponse.builder()
+                .id(calendar.getId())
+                .title(calendar.getTitle())
+                .description(calendar.getDescription())
+                .startDate(calendar.getStartDate())
+                .endDate(calendar.getEndDate())
+                .visibility(calendar.getVisibility())
+                .color(calendar.getColor())
+                .category(calendar.getCategory())
+                .isScrapable(isScrapable)
+                .previewStartDate(calendar.getPreviewStartDate())
+                .previewEndDate(calendar.getPreviewEndDate())
                 .build();
     }
 }

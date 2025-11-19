@@ -2,23 +2,47 @@ package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 
 @Getter
-@SuperBuilder
 public class OfficialCalendarResponse extends CalendarResponse {
 
-  private Instant distributedAt;
+  private final Instant distributedAt;
 
-  public static OfficialCalendarResponse from(OfficialCalendar officialCalendar) {
-    OriginalCalendar calendar = officialCalendar.getOriginalCalendar();
+  @Builder
+  private OfficialCalendarResponse(Long id,
+                                   String title,
+                                   String description,
+                                   Instant startDate,
+                                   Instant endDate,
+                                   Visibility visibility,
+                                   String color,
+                                   Category category,
+                                   Boolean isScrapable,
+                                   Instant distributedAt) {
+    super(id, title, description, startDate, endDate, visibility, color, category, isScrapable);
+    this.distributedAt = distributedAt;
+  }
 
-    return fillCommonFields(
-            OfficialCalendarResponse.builder(), calendar, false
-    ).distributedAt(officialCalendar.getDistributedAt())
-    .build();
+  public static OfficialCalendarResponse from(OfficialCalendar calendar) {
+
+    OriginalCalendar original = calendar.getOriginalCalendar();
+    return OfficialCalendarResponse.builder()
+            .id(original.getId())
+            .title(original.getTitle())
+            .description(original.getDescription())
+            .startDate(original.getStartDate())
+            .endDate(original.getEndDate())
+            .visibility(original.getVisibility())
+            .color(original.getColor())
+            .category(original.getCategory())
+            .isScrapable(false)
+            .distributedAt(calendar.getDistributedAt())
+            .build();
   }
 }
