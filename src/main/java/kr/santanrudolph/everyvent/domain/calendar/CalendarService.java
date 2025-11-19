@@ -43,14 +43,11 @@ public class CalendarService {
     validateCreateCalendar(request);
 
     // 한 달에 생성할 수 있는 캘린더 개수 제한 (최대 3개)
-    validateMonthlyCalendarLimit(userId, request.getYear(), request.getMonth());
-
-    // 사용자 시간대 기준으로 캘린더 기간 계산
-    InstantRange range = InstantRange.of(request.getYear(), request.getMonth());
-    log.info("캘린더 기간 범위: {} ~ {}", range.start(), range.end());
+    validateMonthlyCalendarLimit(userId, request);
+    log.info("캘린더 기간 범위: {} ~ {}", request.getStartDate(), request.getEndDate());
     log.info("미리보기 기간 범위: {} ~ {}", request.getPreviewStartDate(), request.getPreviewEndDate());
 
-    OriginalCalendar calendar = buildCalendar(user, request, range);
+    OriginalCalendar calendar = buildCalendar(user, request);
     calendarRepository.save(calendar);
 
     return OriginalCalendarResponse.from(calendar, calendar.isScrapable());
@@ -62,8 +59,7 @@ public class CalendarService {
     User admin = getUserOrThrow(adminId);
     validateAdminRole(admin);
 
-    InstantRange range = InstantRange.of(request.getYear(), request.getMonth());
-    OriginalCalendar calendar = buildCalendar(admin, request, range);
+    OriginalCalendar calendar = buildCalendar(admin, request);
     calendarRepository.save(calendar);
 
     OfficialCalendar officialCalendar = new OfficialCalendar(calendar, null);
@@ -157,13 +153,10 @@ public class CalendarService {
     // 사용자 시간대 기준으로 캘린더 및 미리보기 기간 계산
     InstantRange range = InstantRange.of(request.getYear(), request.getMonth());
 
-    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-    Instant previewStartDate = request.getPreviewStartInstant(koreaZone);
-    Instant previewEndDate = request.getPreviewEndInstant(koreaZone);
+    Instant previewStartDate = request.getPreviewStartDate();
+    Instant previewEndDate = request.getPreviewEndDate();
 
-    if (calendar instanceof OriginalCalendar oc) {
-      updateOriginalCalendar(oc, request, range, previewStartDate, previewEndDate, viewer);
-    }
+    processOriginalCalendarUpdate(originalCalendar, request, previewStartDate, previewEndDate);
 
     // TODO: 추후 ScrapCalendar 구현 시 추가
     // else if (calendar instanceof ScrapCalendar sc) { ... }
@@ -259,25 +252,24 @@ public class CalendarService {
   }
 
   // 생성/업데이트 관련
-  private OriginalCalendar buildCalendar(User user,
-                                         OriginalCalendarRequest request,
-                                         InstantRange range) {
+  private OriginalCalendar buildCalendar(User user, OriginalCalendarRequest request) {
 
-    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-    Instant previewStartDate = request.getPreviewStartInstant(koreaZone);
-    Instant previewEndDate = request.getPreviewEndInstant(koreaZone);
+    Instant startDate = request.getStartDate();
+    Instant endDate = request.getEndDate();
+    Instant previewStartDate = request.getPreviewStartDate();
+    Instant previewEndDate = request.getPreviewEndDate();
 
     if (previewStartDate != null && previewEndDate != null) {
       validateDateRange(previewStartDate, previewEndDate);
-      validateWithinCalendarPeriod(range, previewStartDate, previewEndDate);
+      validateWithinCalendarPeriod(startDate, endDate, previewStartDate, previewEndDate);
     }
 
     return new OriginalCalendar(
             user,
             request.getTitle(),
             request.getDescription(),
-            range.start(),
-            range.end(),
+            startDate,
+            endDate,
             request.getVisibility(),
             request.getColor(),
             request.getCategory(),
@@ -330,9 +322,9 @@ public class CalendarService {
   }
 
   // 검증 관련
-  private void validateMonthlyCalendarLimit(Long userId, int year, int month) {
-    InstantRange range = InstantRange.of(year, month);
-    long userMonthlyCalendarCount = calendarRepository.countByUserIdInMonth(userId, range.start(), range.end());
+  private void validateMonthlyCalendarLimit(Long userId, OriginalCalendarRequest request) {
+    long userMonthlyCalendarCount = calendarRepository
+            .countByUserIdInMonth(userId, request.getStartDate(), request.getEndDate());
 
     if (userMonthlyCalendarCount >= 3) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 최대 3개까지 생성할 수 있습니다.");
@@ -345,8 +337,8 @@ public class CalendarService {
     }
   }
 
-  private void validateWithinCalendarPeriod(InstantRange range, Instant start, Instant end) {
-    if (start.isBefore(range.start()) || end.isAfter(range.end())) {
+  private void validateWithinCalendarPeriod(Instant startDate, Instant endDate, Instant start, Instant end) {
+    if (start.isBefore(startDate) || end.isAfter(endDate)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT,
               "미리보기 기간은 캘린더 기간 안에 포함되어야 합니다.");
     }
