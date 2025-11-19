@@ -124,7 +124,7 @@ public class FollowService {
   }
 
   public boolean isFollowing(Long followerId, Long targetId) {
-    return followRepository.findByFollowerIdAndTargetId(followerId, targetId).isPresent();
+    return followRepository.existsByFollowerIdAndTargetId(followerId, targetId);
   }
 
   public boolean isMutualFollow(Long userId1, Long userId2) {
