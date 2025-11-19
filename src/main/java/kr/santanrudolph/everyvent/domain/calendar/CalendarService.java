@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ public class CalendarService {
   public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request) {
 
     User user = getUserOrThrow(userId);
+    validateCreateCalendar(request);
 
     // 한 달에 생성할 수 있는 캘린더 개수 제한 (최대 3개)
     validateMonthlyCalendarLimit(userId, request.getYear(), request.getMonth());
@@ -79,6 +81,7 @@ public class CalendarService {
     OfficialCalendar officialCalendar = officialCalendarRepository
             .findByOriginalCalendarId(calendarId)
             .orElseThrow(() -> new EveryventException(ErrorCode.INVALID_INPUT, "해당 캘린더는 공식 캘린더가 아닙니다."));
+    validateDistribution(officialCalendar);
 
     Calendar calendar = getActiveCalendarOrThrow(officialCalendar.getOriginalCalendar().getId());
     if (!(calendar instanceof OriginalCalendar originalCalendar)) {
@@ -216,24 +219,35 @@ public class CalendarService {
     }
   }
 
-  private void validateUpdateOrDeletePermission(Calendar calendar, User viewer, boolean isUpdate) {
-    boolean isAdmin = viewer.getRole() == Role.ADMIN;
-    boolean isOwner = Objects.equals(calendar.getUser().getId(), viewer.getId());
-    boolean isOriginal = calendar instanceof OriginalCalendar;
-    boolean isOfficialOriginal = false;
-    if (isOriginal) {
-      isOfficialOriginal = officialCalendarRepository.existsByOriginalCalendar((OriginalCalendar) calendar);
-    }
+  private void validateCreateCalendar(OriginalCalendarRequest request) {
+    Instant endDate = request.getEndDate();
+    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
+    YearMonth now = YearMonth.now(koreaZone);
+    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
 
-    if (isUpdate) {
-      if (isOfficialOriginal && isAdmin) return;
-      if (isOriginal && isOwner) return;
-      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더 수정 권한이 없습니다.");
+    if (!calendarMonth.isAfter(now)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "다음 달부터의 캘린더를 생성할 수 있습니다.");
     }
+  }
 
-    if (!isOwner && !isAdmin) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더 삭제 권한이 없습니다.");
+  private void validateDistribution(OfficialCalendar officialCalendar) {
+
+    Instant endDate = officialCalendar.getOriginalCalendar().getEndDate();
+    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
+    YearMonth now = YearMonth.now(koreaZone);
+    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
+
+    if (now.isAfter(calendarMonth)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더는 해당 월 이후에는 배포할 수 없습니다.");
     }
+  }
+
+  private boolean isEditableAfterStartMonth(Calendar calendar) {
+    Instant endDate = calendar.getEndDate();
+    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
+    YearMonth now = YearMonth.now(koreaZone);
+    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
+    return !calendarMonth.isAfter(now);
   }
 
   private boolean canView(Calendar calendar, User viewer, User targetUser) {
@@ -272,41 +286,47 @@ public class CalendarService {
     );
   }
 
-  private void updateOriginalCalendar(OriginalCalendar oc, OriginalCalendarRequest request,
-                                      InstantRange range,
-                                      Instant previewStartDate, Instant previewEndDate, User viewer) {
-
-    if (previewStartDate != null && previewEndDate != null) {
-      validateDateRange(previewStartDate, previewEndDate);
-      validateWithinCalendarPeriod(range, previewStartDate, previewEndDate);
-      oc.updatePreviewPeriod(previewStartDate, previewEndDate);
-    }
-
-    oc.updateTitle(request.getTitle());
-    oc.updateDescription(request.getDescription());
-    oc.updatePeriod(range.start(), range.end());
-    oc.updateVisibility(request.getVisibility());
-    oc.updateColor(request.getColor());
-    oc.updateCategory(request.getCategory());
-
-    if (viewer.getRole() == Role.ADMIN) {
-      handleOfficialStatus(oc, request.getIsOfficial());
+  private void processOriginalCalendarUpdate(OriginalCalendar calendar,
+                                             OriginalCalendarRequest request,
+                                             Instant previewStartDate,
+                                             Instant previewEndDate) {
+    if (isEditableAfterStartMonth(calendar)) {
+      updatePartialOriginalCalendar(calendar, request);
+    } else {
+      updateAllOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
     }
   }
 
-  private void handleOfficialStatus(OriginalCalendar oc, Boolean isOfficial) {
-    if (isOfficial == null) return;
+  private void updateAllOriginalCalendar(OriginalCalendar originalCalendar,
+                                         OriginalCalendarRequest request,
+                                         Instant previewStartDate,
+                                         Instant previewEndDate) {
 
-    boolean exists = officialCalendarRepository.existsByOriginalCalendar(oc);
 
-    if (isOfficial && !exists) {
-      OfficialCalendar ocEntity = new OfficialCalendar(oc, null);
-      officialCalendarRepository.save(ocEntity);
+    Instant startDate = request.getStartDate();
+    Instant endDate = request.getEndDate();
+
+    if (previewStartDate != null && previewEndDate != null) {
+      validateDateRange(previewStartDate, previewEndDate);
+      validateWithinCalendarPeriod(startDate, endDate, previewStartDate, previewEndDate);
+      originalCalendar.updatePreviewPeriod(previewStartDate, previewEndDate);
     }
 
-    if (!isOfficial && exists) {
-      officialCalendarRepository.deleteByOriginalCalendar(oc);
-    }
+    originalCalendar.updateTitle(request.getTitle());
+    originalCalendar.updateDescription(request.getDescription());
+    originalCalendar.updatePeriod(startDate, endDate);
+    originalCalendar.updateVisibility(request.getVisibility());
+    originalCalendar.updateColor(request.getColor());
+    originalCalendar.updateCategory(request.getCategory());
+  }
+
+  private void updatePartialOriginalCalendar(OriginalCalendar originalCalendar,
+                                             OriginalCalendarRequest request) {
+    originalCalendar.updateTitle(request.getTitle());
+    originalCalendar.updateDescription(request.getDescription());
+    originalCalendar.updateVisibility(request.getVisibility());
+    originalCalendar.updateColor(request.getColor());
+    originalCalendar.updateCategory(request.getCategory());
   }
 
   // 검증 관련
