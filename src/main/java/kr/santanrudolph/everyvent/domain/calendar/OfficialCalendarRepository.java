@@ -1,7 +1,6 @@
 package kr.santanrudolph.everyvent.domain.calendar;
 
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
-import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,18 +15,17 @@ public interface OfficialCalendarRepository extends JpaRepository<OfficialCalend
 
   Optional<OfficialCalendar> findByOriginalCalendarId(Long calendarId);
 
-  boolean existsByOriginalCalendar(OriginalCalendar calendar);
-
-  void deleteByOriginalCalendar(OriginalCalendar oc);
-
   @Query("""
-    SELECT oc
-    FROM OfficialCalendar oc
-    WHERE oc.originalCalendar.startDate = :start
-      AND oc.originalCalendar.endDate = :end
+    SELECT officialCalendar
+    FROM OfficialCalendar officialCalendar
+    WHERE officialCalendar.originalCalendar.startDate <= :end
+      AND officialCalendar.originalCalendar.endDate >= :start
+      AND officialCalendar.deletedAt IS NULL
   """)
   List<OfficialCalendar> findAllByPeriod(
           @Param("start") Instant start,
           @Param("end") Instant end
   );
+
+  boolean existsByOriginalCalendarId(Long calendarId);
 }
