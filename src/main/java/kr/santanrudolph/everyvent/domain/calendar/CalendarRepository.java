@@ -12,22 +12,26 @@ import java.util.List;
 @Repository
 public interface CalendarRepository extends JpaRepository<Calendar, Long> {
 
-    @Query("SELECT COUNT(c) FROM Calendar c " +
-            "WHERE c.user.id = :userId " +
-            "AND c.startDate = :startDate " +
-            "AND c.endDate = :endDate " +
-            "AND c.deletedAt IS NULL " +
-            "AND TYPE(c) <> DistributedCalendar")
+    @Query("""
+    SELECT COUNT(c) FROM Calendar c
+    WHERE c.user.id = :userId
+      AND c.startDate <= :endDate
+      AND c.endDate >= :startDate
+      AND c.deletedAt IS NULL
+      AND TYPE(c) <> DistributedCalendar
+    """)
     long countByUserIdInMonth(
             @Param("userId") Long userId,
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate);
 
-    @Query("SELECT c FROM Calendar c " +
-            "WHERE c.user.id = :userId " +
-            "AND c.startDate = :startDate " +
-            "AND c.endDate = :endDate " +
-            "AND c.deletedAt IS NULL")
+    @Query("""
+    SELECT c FROM Calendar c
+    WHERE c.user.id = :userId
+      AND c.startDate <= :endDate
+      AND c.endDate >= :startDate
+      AND c.deletedAt IS NULL
+    """)
     List<Calendar> findAllByUserIdInMonth(
             @Param("userId") Long userId,
             @Param("startDate") Instant startDate,
