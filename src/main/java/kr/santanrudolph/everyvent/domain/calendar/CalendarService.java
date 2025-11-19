@@ -24,7 +24,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -110,17 +109,7 @@ public class CalendarService {
     InstantRange range = InstantRange.of(year, month);
     log.info("조회 범위: {} ~ {}", range.start(), range.end());
 
-    List<Calendar> calendars = calendarRepository.findAllByUserIdInMonth(user.getId(), range.start(), range.end());
-
-    if (user.getRole() == Role.ADMIN) {
-      // 관리자일 경우, 본인 캘린더 외에도 공식 캘린더를 함께 조회
-      List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(range.start(), range.end());
-      List<Calendar> officialCalendars = officialEntities.stream()
-              .map(OfficialCalendar::getOriginalCalendar)
-              .collect(Collectors.toList());
-
-      calendars = Stream.concat(calendars.stream(), officialCalendars.stream()).distinct().toList();
-    }
+    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(user.getId(), range.start(), range.end());
 
     return toCalendarResponseList(calendars, user, user);
   }
@@ -132,53 +121,106 @@ public class CalendarService {
 
     InstantRange range = InstantRange.of(year, month);
 
-    List<Calendar> calendars = calendarRepository.findAllByUserIdInMonth(targetUser.getId(), range.start(), range.end());
+    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(targetUser.getId(), range.start(), range.end());
 
     return toCalendarResponseList(calendars, viewer, targetUser);
   }
 
-  @Transactional
-  public CalendarResponse updateCalendar(Long userId, Long calendarId, OriginalCalendarRequest request) {
-
-    Calendar calendar = getActiveCalendarOrThrow(calendarId);
+  public List<CalendarResponse> getDistributedCalendars(Long userId, Long targetId, int year, int month) {
 
     User viewer = getUserOrThrow(userId);
-    validateUpdateOrDeletePermission(calendar, viewer, true);
+    User targetUser = getUserOrThrow(targetId);
 
-    // 사용자 시간대 기준으로 캘린더 및 미리보기 기간 계산
-    InstantRange range = InstantRange.of(request.getYear(), request.getMonth());
+    InstantRange range = InstantRange.of(year, month);
+
+    List<DistributedCalendar> distributedCalendars = calendarRepository
+            .findDistributedCalendarsByUserIdInMonth(targetUser.getId(), range.start(), range.end());
+
+    return toCalendarResponseList(new ArrayList<>(distributedCalendars), viewer, targetUser);
+  }
+
+  public List<CalendarResponse> getOfficialCalendars(int year, int month, Long adminId) {
+
+    User admin = getUserOrThrow(adminId);
+    validateAdminRole(admin);
+
+    InstantRange range = InstantRange.of(year, month);
+
+    List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(range.start(), range.end());
+    List<Calendar> officialCalendars = officialEntities.stream()
+            .map(OfficialCalendar::getOriginalCalendar)
+            .collect(Collectors.toList());
+
+    return toCalendarResponseList(officialCalendars, admin, admin);
+  }
+
+  @Transactional
+  public CalendarResponse updateOriginalCalendar(Long userId, Long calendarId, OriginalCalendarRequest request) {
+
+    Calendar calendar = getActiveCalendarOrThrow(calendarId);
+    if (!(calendar instanceof OriginalCalendar originalCalendar)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "원본 캘린더만 수정할 수 있습니다.");
+    }
+
+    if (officialCalendarRepository.existsByOriginalCalendarId(calendarId)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 원본은 일반 수정 API에서 수정할 수 없습니다.");
+    }
+
+    User user = getUserOrThrow(userId);
+    if (!Objects.equals(calendar.getUser().getId(), user.getId())) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더 수정 권한이 없습니다.");
+    }
 
     Instant previewStartDate = request.getPreviewStartDate();
     Instant previewEndDate = request.getPreviewEndDate();
 
     processOriginalCalendarUpdate(originalCalendar, request, previewStartDate, previewEndDate);
 
-    // TODO: 추후 ScrapCalendar 구현 시 추가
-    // else if (calendar instanceof ScrapCalendar sc) { ... }
-
-    return toCalendarResponse(calendar, calendar.isScrapable());
+    return toCalendarResponse(originalCalendar, originalCalendar.isScrapable());
   }
 
   @Transactional
-  public void deleteCalendar(Long userId, Long calendarId) {
+  public CalendarResponse updateOfficialCalendar(Long adminId, Long calendarId, OriginalCalendarRequest request) {
+
+    OriginalCalendar calendar = getOfficialCalendarOrThrow(calendarId, adminId).getOriginalCalendar();
+
+    processOriginalCalendarUpdate(calendar, request, null, null);
+
+    return toCalendarResponse(calendar, false);
+  }
+
+  // TODO: 추후 ScrapCalendar 구현 시, updateScrapedCalendar 추가
+
+  @Transactional
+  public void deleteOriginalCalendar(Long userId, Long calendarId) {
 
     Calendar calendar = getActiveCalendarOrThrow(calendarId);
+    User user = getUserOrThrow(userId);
 
-    User viewer = getUserOrThrow(userId);
-    validateUpdateOrDeletePermission(calendar, viewer, false);
-
-    if (calendar instanceof OriginalCalendar oc) {
-      oc.softDelete();
-      calendarRepository.save(oc);
-      officialCalendarRepository.findByOriginalCalendarId(oc.getId())
-              .ifPresent(official -> {
-                official.softDelete();
-                officialCalendarRepository.save(official);
-              });
-    } else {
-      calendar.softDelete();
-      calendarRepository.save(calendar);
+    if (calendar instanceof OriginalCalendar originalCalendar &&
+            officialCalendarRepository.existsByOriginalCalendarId(originalCalendar.getId())) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 원본은 일반 삭제 API에서 삭제할 수 없습니다.");
     }
+
+    if (!Objects.equals(calendar.getUser().getId(), user.getId()) && user.getRole() != Role.ADMIN) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 삭제할 권한이 없습니다.");
+    }
+
+    calendar.softDelete();
+    calendarRepository.save(calendar);
+  }
+
+  @Transactional
+  public void deleteOfficialCalendar(Long adminId, Long calendarId) {
+
+    OfficialCalendar official = getOfficialCalendarOrThrow(calendarId, adminId);
+    OriginalCalendar calendar = official.getOriginalCalendar();
+
+    calendar.softDelete();
+    official.softDelete();
+
+    calendarRepository.save(calendar);
+    officialCalendarRepository.save(official);
   }
 
   // ==================== Private Helper Methods ====================
@@ -194,7 +236,7 @@ public class CalendarService {
             .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
 
     if (calendar.getDeletedAt() != null) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "이미 삭제된 캘린더입니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "이미 삭제된 캘린더입니다.");
     }
 
     return calendar;
