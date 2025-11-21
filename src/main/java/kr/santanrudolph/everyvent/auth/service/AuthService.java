@@ -70,6 +70,32 @@ public class AuthService {
         userId);
   }
 
+  /**
+   * 일회성 인증 코드를 토큰으로 교환 (OAuth2 로그인 콜백용)
+   * @param authCode 일회성 인증 코드
+   * @return TokenResponse (accessToken, refreshToken)
+   */
+  public TokenResponse exchangeAuthCode(String authCode) {
+    String[] tokens = redisTokenRepository.getAndDeleteAuthCode(authCode);
+
+    if (tokens == null || tokens.length != 2) {
+      log.warn("AuthCode not found or expired: {}", authCode);
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "유효하지 않거나 만료된 인증 코드입니다.");
+    }
+
+    String accessToken = tokens[0];
+    String refreshToken = tokens[1];
+
+    log.info("AuthCode exchanged successfully");
+
+    return TokenResponse.builder()
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .tokenType("Bearer")
+        .expiresIn(toSeconds(accessTokenExpiration))
+        .build();
+  }
+
   private long toSeconds(long milliseconds) {
     return milliseconds / 1000;
   }

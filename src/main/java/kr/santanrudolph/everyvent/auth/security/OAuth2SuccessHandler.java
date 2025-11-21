@@ -4,9 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.UUID;
 import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
   private final JwtTokenProvider jwtTokenProvider;
   private final RedisTokenRepository redisTokenRepository;
 
+  @Value("${frontend.url:http://localhost:3030}")
+  private String frontendUrl;
+
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
       Authentication authentication) throws IOException {
@@ -28,6 +33,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     log.info("OAuth2 Login Success - User ID: {}", userId);
 
+    // JWT 토큰 생성
     String accessToken = jwtTokenProvider.createAccessToken(userId);
     String refreshToken = jwtTokenProvider.createRefreshToken(userId);
     Instant refreshTokenExpiration = jwtTokenProvider.getExpirationDate(refreshToken).toInstant();
@@ -35,11 +41,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     redisTokenRepository.saveRefreshToken(userId, refreshToken, refreshTokenExpiration);
     log.info("RefreshToken saved to Redis for User ID: {}", userId);
 
-    // 테스트용 콜백 엔드포인트로 리다이렉트 (토큰을 쿼리 파라미터로 전달하여, 로그인 시 프론트 없이도 토큰 확인 가능)
-    // TODO: 프론트 연동 시에는 삭제 필요
-    String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/oauth/callback")
-        .queryParam("accessToken", accessToken)
-        .queryParam("refreshToken", refreshToken)
+    // 일회성 인증 코드 생성 (보안 강화)
+    String authCode = UUID.randomUUID().toString();
+    redisTokenRepository.saveAuthCode(authCode, accessToken, refreshToken);
+    log.info("AuthCode generated for User ID: {}", userId);
+
+    // 프론트엔드로 인증 코드만 전달 (토큰은 URL에 노출되지 않음)
+    String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth/callback")
+        .queryParam("code", authCode)
         .build().toUriString();
 
     log.info("Redirecting to: {}", targetUrl);

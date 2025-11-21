@@ -16,14 +16,18 @@ import org.springframework.stereotype.Repository;
 public class RedisTokenRepository {
 
   private final RedisTemplate<String, String> redisTemplate;
+  private final long authCodeExpiration;
 
   // TODO: RedisKeyConstants 상수로 분리
   private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
   private static final String BLACKLIST_TOKEN_PREFIX = "blacklist_token:";
+  private static final String AUTH_CODE_PREFIX = "auth_code:";
 
   public RedisTokenRepository(
-      @Qualifier("tokenRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+      @Qualifier("tokenRedisTemplate") RedisTemplate<String, String> redisTemplate,
+      @org.springframework.beans.factory.annotation.Value("${jwt.auth-code-expiration}") long authCodeExpiration) {
     this.redisTemplate = redisTemplate;
+    this.authCodeExpiration = authCodeExpiration;
   }
 
   public void saveRefreshToken(Long userId, String refreshToken, Instant expiresAt) {
@@ -80,6 +84,46 @@ public class RedisTokenRepository {
             Boolean.TRUE.equals(redisTemplate.hasKey(key)),
         "Blacklist를 조회할 수 없습니다."
     );
+  }
+
+  /**
+   * 일회성 인증 코드 저장 (OAuth2 로그인 성공 시 토큰 안전 전달용)
+   * @param authCode 일회성 인증 코드
+   * @param accessToken Access Token
+   * @param refreshToken Refresh Token
+   */
+  public void saveAuthCode(String authCode, String accessToken, String refreshToken) {
+    String key = AUTH_CODE_PREFIX + authCode;
+    String value = accessToken + ":" + refreshToken;
+
+    executeRedisOperation(() -> {
+      redisTemplate.opsForValue().set(key, value, authCodeExpiration, TimeUnit.SECONDS);
+      log.info("AuthCode saved - TTL: {}s", authCodeExpiration);
+      return null;
+    }, "인증 코드를 저장할 수 없습니다.");
+  }
+
+  /**
+   * 인증 코드로 토큰 조회 및 삭제 (1회용)
+   * @param authCode 일회성 인증 코드
+   * @return [accessToken, refreshToken] 배열 (존재하지 않으면 null)
+   */
+  public String[] getAndDeleteAuthCode(String authCode) {
+    String key = AUTH_CODE_PREFIX + authCode;
+
+    return executeRedisOperation(() -> {
+      String value = redisTemplate.opsForValue().get(key);
+      if (value == null) {
+        log.warn("AuthCode not found or expired: {}", authCode);
+        return null;
+      }
+
+      // 1회용이므로 즉시 삭제
+      redisTemplate.delete(key);
+      log.info("AuthCode used and deleted: {}", authCode);
+
+      return value.split(":");
+    }, "인증 코드를 조회할 수 없습니다.");
   }
 
   private <T> T executeRedisOperation(Supplier<T> operation, String errorMessage) {

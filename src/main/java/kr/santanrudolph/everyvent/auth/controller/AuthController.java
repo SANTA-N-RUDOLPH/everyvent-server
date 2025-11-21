@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
+import kr.santanrudolph.everyvent.auth.dto.AuthCodeExchangeRequest;
 import kr.santanrudolph.everyvent.auth.dto.TokenRefreshRequest;
 import kr.santanrudolph.everyvent.auth.dto.TokenResponse;
 import kr.santanrudolph.everyvent.auth.security.JwtTokenProvider;
@@ -29,6 +30,21 @@ public class AuthController {
 
   private final AuthService authService;
   private final JwtTokenProvider jwtTokenProvider;
+
+  @Operation(
+      summary = "인증 코드로 토큰 교환",
+      description = "OAuth2 로그인 성공 후 발급된 일회성 인증 코드를 Access Token과 Refresh Token으로 교환합니다."
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "토큰 교환 성공"),
+      @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 유효하지 않거나 만료된 인증 코드")
+  })
+  @PostMapping("/exchange")
+  public ResponseEntity<TokenResponse> exchangeAuthCode(
+      @Valid @RequestBody AuthCodeExchangeRequest request) {
+    TokenResponse response = authService.exchangeAuthCode(request.getCode());
+    return ResponseEntity.ok(response);
+  }
 
   @Operation(
       summary = "토큰 재발급",
