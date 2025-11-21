@@ -94,7 +94,7 @@ public class CalendarService {
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
 
     User viewer = getUserOrThrow(userId);
-    Calendar calendar = getActiveCalendarOrThrow(calendarId);
+    Calendar calendar =   getActiveCalendarOrThrow(calendarId);
 
     if (!canView(calendar, viewer, calendar.getUser())) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
@@ -278,7 +278,6 @@ public class CalendarService {
   }
 
   private void validateDistribution(OfficialCalendar officialCalendar) {
-
     Instant endDate = officialCalendar.getOriginalCalendar().getEndDate();
     ZoneId koreaZone = ZoneId.of("Asia/Seoul");
     YearMonth now = YearMonth.now(koreaZone);
@@ -289,12 +288,15 @@ public class CalendarService {
     }
   }
 
-  private boolean isEditableAfterStartMonth(Calendar calendar) {
+  private void validateEditCalendar(Calendar calendar) {
     Instant endDate = calendar.getEndDate();
     ZoneId koreaZone = ZoneId.of("Asia/Seoul");
     YearMonth now = YearMonth.now(koreaZone);
     YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
-    return !calendarMonth.isAfter(now);
+
+    if(!now.isBefore(calendarMonth)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 시작월 이후에는 수정할 수 없습니다.");
+    }
   }
 
   private boolean canView(Calendar calendar, User viewer, User targetUser) {
@@ -337,17 +339,15 @@ public class CalendarService {
                                              OriginalCalendarRequest request,
                                              Instant previewStartDate,
                                              Instant previewEndDate) {
-    if (isEditableAfterStartMonth(calendar)) {
-      updatePartialOriginalCalendar(calendar, request);
-    } else {
-      updateAllOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
-    }
+
+    validateEditCalendar(calendar);
+    updateOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
   }
 
-  private void updateAllOriginalCalendar(OriginalCalendar originalCalendar,
-                                         OriginalCalendarRequest request,
-                                         Instant previewStartDate,
-                                         Instant previewEndDate) {
+  private void updateOriginalCalendar(OriginalCalendar originalCalendar,
+                                      OriginalCalendarRequest request,
+                                      Instant previewStartDate,
+                                      Instant previewEndDate) {
 
 
     Instant startDate = request.getStartDate();
@@ -362,15 +362,6 @@ public class CalendarService {
     originalCalendar.updateTitle(request.getTitle());
     originalCalendar.updateDescription(request.getDescription());
     originalCalendar.updatePeriod(startDate, endDate);
-    originalCalendar.updateVisibility(request.getVisibility());
-    originalCalendar.updateColor(request.getColor());
-    originalCalendar.updateCategory(request.getCategory());
-  }
-
-  private void updatePartialOriginalCalendar(OriginalCalendar originalCalendar,
-                                             OriginalCalendarRequest request) {
-    originalCalendar.updateTitle(request.getTitle());
-    originalCalendar.updateDescription(request.getDescription());
     originalCalendar.updateVisibility(request.getVisibility());
     originalCalendar.updateColor(request.getColor());
     originalCalendar.updateCategory(request.getCategory());
@@ -403,7 +394,7 @@ public class CalendarService {
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
 
     OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
-                            .orElse(null);
+            .orElse(null);
     return CalendarResponse.from(calendar, official, isScrapable);
   }
 
