@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -11,14 +12,19 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig {
 
+  @Value("${frontend.url}")
+  private String frontendUrl;
+
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
 
-    // 허용할 출처
+    // 허용할 출처 (로컬 개발 + 배포 환경)
     configuration.setAllowedOrigins(Arrays.asList(
         "http://localhost:3000",
-        "http://localhost:3001"
+        "http://localhost:3001",
+        "http://localhost:3030",
+        frontendUrl  // 환경별 프론트엔드 URL
     ));
 
     // 허용할 HTTP 메서드
