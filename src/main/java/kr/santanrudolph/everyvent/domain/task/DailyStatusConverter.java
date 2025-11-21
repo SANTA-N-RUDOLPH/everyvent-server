@@ -1,6 +1,7 @@
 package kr.santanrudolph.everyvent.domain.task;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -34,7 +35,7 @@ public class DailyStatusConverter implements AttributeConverter<Map<String, Bool
       return new HashMap<>();
     }
     try {
-      return objectMapper.readValue(dbData, HashMap.class);
+      return objectMapper.readValue(dbData, new TypeReference<HashMap<String, Boolean>>() {});
     } catch (IOException e) {
       throw new EveryventException(ErrorCode.INTERNAL_SERVER_ERROR, "JSON을 Map으로 변환하지 못했습니다.");
     }
