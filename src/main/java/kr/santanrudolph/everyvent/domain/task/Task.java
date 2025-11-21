@@ -42,16 +42,18 @@ public class Task extends BaseEntity {
   private Map<String, Boolean> dailyStatus;
 
   public void markCompleted(Instant date) {
-    validateAndPutStatus(date, true);
+    String key = validateTaskPeriod(date);
+    dailyStatus.put(key, true);
   }
 
   public void unmarkCompleted(Instant date) {
-    validateAndPutStatus(date, false);
+    String key = validateTaskPeriod(date);
+    dailyStatus.put(key, false);
   }
 
   public boolean isCompleted(Instant date) {
-    String key = date.truncatedTo(ChronoUnit.DAYS).toString();
-    return dailyStatus.getOrDefault(key, false);
+    String key = validateTaskPeriod(date);
+    return dailyStatus.get(key);
   }
 
   private Task(Calendar calendar, String name, Instant startDate, Instant endDate) {
@@ -98,12 +100,12 @@ public class Task extends BaseEntity {
   }
 
   // 검증 메서드
-  private void validateAndPutStatus(Instant date, boolean status) {
+  private String validateTaskPeriod(Instant date) {
     String key = date.truncatedTo(ChronoUnit.DAYS).toString();
     if (!dailyStatus.containsKey(key)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "해당 날짜는 태스크 기간에 포함되지 않습니다.");
     }
-    dailyStatus.put(key, status);
+    return key;
   }
 
   private static void validateName(String name) {
