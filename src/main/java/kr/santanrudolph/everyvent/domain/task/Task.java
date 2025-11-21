@@ -37,7 +37,7 @@ public class Task extends BaseEntity {
   @Column(nullable = false)
   private Instant endDate;
 
-  @Column(columnDefinition = "jsonb")
+  @Column(nullable = false, columnDefinition = "jsonb")
   @Convert(converter = DailyStatusConverter.class)
   private Map<String, Boolean> dailyStatus;
 
