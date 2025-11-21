@@ -9,6 +9,7 @@ import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.DistributedCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -34,6 +35,7 @@ public class CalendarService {
   private final CalendarRepository calendarRepository;
   private final OfficialCalendarRepository officialCalendarRepository;
   private final UserRepository userRepository;
+  private final FollowService followService;
 
   @Transactional
   public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request) {
@@ -298,8 +300,9 @@ public class CalendarService {
   private boolean canView(Calendar calendar, User viewer, User targetUser) {
     return switch (calendar.getVisibility()) {
       case PUBLIC -> true;
+      case MUTUAL -> followService.isMutualFollow(viewer.getId(), targetUser.getId());
+      case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
       case PRIVATE -> viewer.getId().equals(targetUser.getId());
-      default -> false;
     };
   }
 
