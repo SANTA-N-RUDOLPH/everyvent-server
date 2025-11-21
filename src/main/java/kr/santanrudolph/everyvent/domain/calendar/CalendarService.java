@@ -299,14 +299,19 @@ public class CalendarService {
     }
   }
 
-  private boolean canView(Calendar calendar, User viewer, User targetUser) {
-    return switch (calendar.getVisibility()) {
-      case PUBLIC -> true;
-      case MUTUAL -> followService.isMutualFollow(viewer.getId(), targetUser.getId());
-      case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
-      case PRIVATE -> viewer.getId().equals(targetUser.getId());
-    };
-  }
+    private boolean canView(Calendar calendar, User viewer, User targetUser) {
+
+      if (viewer.getId().equals(targetUser.getId())) {
+        return true;
+      }
+
+      return switch (calendar.getVisibility()) {
+        case PUBLIC -> true;
+        case MUTUAL -> followService.isMutualFollow(viewer.getId(), targetUser.getId());
+        case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
+        case PRIVATE -> viewer.getId().equals(targetUser.getId());
+      };
+    }
 
   // 생성/업데이트 관련
   private OriginalCalendar buildCalendar(User user, OriginalCalendarRequest request) {
