@@ -309,7 +309,7 @@ public class CalendarService {
         case PUBLIC -> true;
         case MUTUAL -> followService.isMutualFollow(viewer.getId(), targetUser.getId());
         case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
-        case PRIVATE -> viewer.getId().equals(targetUser.getId());
+        case PRIVATE -> false;
       };
     }
 
