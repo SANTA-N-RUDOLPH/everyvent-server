@@ -57,6 +57,9 @@ public class Task extends BaseEntity {
   }
 
   private Task(Calendar calendar, String name, Instant startDate, Instant endDate) {
+    if (calendar == null) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 필수입니다.");
+    }
     validateName(name);
     validateDate(startDate, endDate);
 
