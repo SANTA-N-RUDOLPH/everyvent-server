@@ -3,6 +3,8 @@ package kr.santanrudolph.everyvent.domain.task;
 import jakarta.persistence.*;
 import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
+import kr.santanrudolph.everyvent.global.exception.ErrorCode;
+import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,15 +35,19 @@ public class Task extends BaseEntity {
   @Column(nullable = false)
   private Instant endDate;
 
-  @Builder
-  public Task(
-          Calendar calendar,
-          String name,
-          Instant startDate,
-          Instant endDate) {
+  private Task(Calendar calendar, String name, Instant startDate, Instant endDate) {
     this.calendar = calendar;
     this.name = name;
     this.startDate = startDate;
-    this.endDate = endDate; }
+    this.endDate = endDate;
+  }
+
+  public static Task create(Calendar calendar, String name, Instant startDate, Instant endDate) {
+
+    if (startDate.isAfter(endDate)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "종료일은 시작일과 같거나 이후의 날짜여야 합니다.");
+    }
+    return new Task(calendar, name, startDate, endDate);
+  }
 
 }
