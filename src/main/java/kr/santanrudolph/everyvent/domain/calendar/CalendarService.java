@@ -294,7 +294,7 @@ public class CalendarService {
     YearMonth now = YearMonth.now(koreaZone);
     YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
 
-    if(!now.isBefore(calendarMonth)) {
+    if (!now.isBefore(calendarMonth)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 해당 월부터는 수정할 수 없습니다.");
     }
   }
