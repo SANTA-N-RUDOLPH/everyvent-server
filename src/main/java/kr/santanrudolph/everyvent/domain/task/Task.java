@@ -74,6 +74,9 @@ public class Task extends BaseEntity {
   }
 
   private static void validateDate(Instant startDate, Instant endDate) {
+    if (startDate == null || endDate == null) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "시작일과 종료일은 필수입니다.");
+    }
     if (startDate.isAfter(endDate)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "종료일은 시작일과 같거나 이후의 날짜여야 합니다.");
     }
