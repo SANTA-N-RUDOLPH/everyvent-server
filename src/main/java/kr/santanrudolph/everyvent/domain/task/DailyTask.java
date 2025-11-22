@@ -13,6 +13,9 @@ import java.time.Instant;
   indexes = {
     @Index(name = "idx_task_date", columnList = "task_id, date"),
     @Index(name = "idx_date_isCompleted", columnList = "date, isCompleted")
+  },
+  uniqueConstraints = {
+          @UniqueConstraint(name = "uk_dt_task_id_date", columnNames = {"task_id", "date"})
   }
 )
 @Getter
