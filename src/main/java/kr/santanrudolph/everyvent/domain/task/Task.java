@@ -37,25 +37,6 @@ public class Task extends BaseEntity {
   @Column(nullable = false)
   private Instant endDate;
 
-  @Column(nullable = false, columnDefinition = "jsonb")
-  @Convert(converter = DailyStatusConverter.class)
-  private Map<String, Boolean> dailyStatus;
-
-  public void markCompleted(Instant date) {
-    String key = validateTaskPeriod(date);
-    dailyStatus.put(key, true);
-  }
-
-  public void unmarkCompleted(Instant date) {
-    String key = validateTaskPeriod(date);
-    dailyStatus.put(key, false);
-  }
-
-  public boolean isCompleted(Instant date) {
-    String key = validateTaskPeriod(date);
-    return dailyStatus.get(key);
-  }
-
   private Task(Calendar calendar, String name, Instant startDate, Instant endDate) {
     if (calendar == null) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 필수입니다.");
@@ -70,23 +51,7 @@ public class Task extends BaseEntity {
   }
 
   public static Task create(Calendar calendar, String name, Instant startDate, Instant endDate) {
-    Task task = new Task(calendar, name, startDate, endDate);
-    task.dailyStatus = task.generateDailyStatus(startDate, endDate);
-    return task;
-  }
-
-  private Map<String, Boolean> generateDailyStatus(Instant start, Instant end) {
-    Map<String, Boolean> status = new HashMap<>();
-
-    Instant current = start.truncatedTo(ChronoUnit.DAYS);
-    Instant endDay = end.truncatedTo(ChronoUnit.DAYS);
-
-    while (!current.isAfter(endDay)) {
-      status.put(current.toString(), false);
-      current = current.plus(1, ChronoUnit.DAYS);
-    }
-
-    return status;
+    return new Task(calendar, name, startDate, endDate);
   }
 
   // 필드 업데이트 메서드
@@ -99,18 +64,9 @@ public class Task extends BaseEntity {
     validateDate(startDate, endDate);
     this.startDate = startDate;
     this.endDate = endDate;
-    this.dailyStatus = generateDailyStatus(startDate, endDate);
   }
 
   // 검증 메서드
-  private String validateTaskPeriod(Instant date) {
-    String key = date.truncatedTo(ChronoUnit.DAYS).toString();
-    if (!dailyStatus.containsKey(key)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "해당 날짜는 태스크 기간에 포함되지 않습니다.");
-    }
-    return key;
-  }
-
   private static void validateName(String name) {
     if (name == null || name.isBlank()) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "태스크 이름은 필수입니다.");
