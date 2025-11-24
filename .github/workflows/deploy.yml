@@ -1,0 +1,43 @@
+name: Deploy to Test Server
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: EC2에 배포
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/everyvent-server
+
+            # 최신 코드 가져오기
+            git pull origin develop
+
+            # Docker Compose로 재배포
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+
+            # 로그 확인 (최근 50줄)
+            sleep 10
+            docker-compose logs --tail=50
+
+      - name: 배포 성공 알림
+        if: success()
+        run: echo "🚀 EC2 배포가 성공했습니다!"
+
+      - name: 배포 실패 알림
+        if: failure()
+        run: echo "❌ EC2 배포가 실패했습니다."
