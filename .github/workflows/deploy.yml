@@ -23,16 +23,27 @@ jobs:
             cd /home/ec2-user/everyvent-server
 
             # 최신 코드 가져오기
-            git pull origin develop
+            git pull origin develop || { echo "❌ Git pull failed"; exit 1; }
 
             # Docker Compose로 재배포
-            docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
+            docker-compose down || true
+            docker-compose build --no-cache || { echo "❌ Build failed"; exit 1; }
+            docker-compose up -d || { echo "❌ Services failed to start"; exit 1; }
 
-            # 로그 확인 (최근 50줄)
-            sleep 10
-            docker-compose logs --tail=50
+            # 서비스 안정화 대기 및 상태 확인
+            echo "⏳ Waiting for services to stabilize..."
+            sleep 5
+            for i in {1..30}; do
+              if docker-compose ps --services --filter "status=running" | grep -q .; then
+                echo "✅ Services are running"
+                docker-compose logs --tail=50
+                exit 0
+              fi
+              sleep 1
+            done
+            echo "❌ Services failed to start within timeout"
+            docker-compose logs --tail=100
+            exit 1
 
       - name: 배포 성공 알림
         if: success()
