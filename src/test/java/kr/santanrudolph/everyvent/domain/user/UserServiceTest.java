@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
 import java.util.Optional;
+
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -14,12 +15,14 @@ import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+@Tag("unit")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 단위 테스트")
 class UserServiceTest {

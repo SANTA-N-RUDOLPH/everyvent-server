@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 import java.util.List;
+
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
@@ -11,12 +12,14 @@ import kr.santanrudolph.everyvent.domain.user.UserRepository;
 import kr.santanrudolph.everyvent.global.config.JpaConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+@Tag("unit")
 @DataJpaTest
 @DisplayName("FollowRepository 테스트")
 @Import(JpaConfig.class) // DataJpaTest는 JPA 관련 빈만 로딩한다. Config 빈은 따로 임포트 필요
