@@ -27,6 +27,9 @@ spring:
 frontend:
   url: http://localhost:3030  # 로컬 프론트엔드 URL
 
+server:
+  url: http://localhost:8080
+
 logging:
   level:
     org.hibernate.SQL: debug
