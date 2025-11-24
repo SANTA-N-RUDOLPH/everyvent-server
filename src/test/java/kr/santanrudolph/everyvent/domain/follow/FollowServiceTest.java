@@ -523,34 +523,30 @@ class FollowServiceTest {
     @Test
     void isFollowing_whenFollowing_thenReturnsTrue() {
       // given
-      follower = createUser(FOLLOWER_ID, "follower");
-      target = createUser(TARGET_ID, "target");
-      Follow follow = createFollow(follower, target, FOLLOW_ID);
-
-      given(followRepository.findByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID))
-          .willReturn(Optional.of(follow));
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID))
+          .willReturn(true);
 
       // when
       boolean result = followService.isFollowing(FOLLOWER_ID, TARGET_ID);
 
       // then
       assertThat(result).isTrue();
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
     }
 
     @DisplayName("팔로우 중이 아니면 false를 반환한다.")
     @Test
     void isFollowing_whenNotFollowing_thenReturnsFalse() {
       // given
-      given(followRepository.findByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID))
-          .willReturn(Optional.empty());
+      given(followRepository.existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID))
+          .willReturn(false);
 
       // when
       boolean result = followService.isFollowing(FOLLOWER_ID, TARGET_ID);
 
       // then
       assertThat(result).isFalse();
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(FOLLOWER_ID, TARGET_ID);
     }
 
   }
@@ -566,62 +562,53 @@ class FollowServiceTest {
     @Test
     void isMutualFollow_whenMutual_thenReturnsTrue() {
       // given
-      User user1 = createUser(USER_ID_1, "user1");
-      User user2 = createUser(USER_ID_2, "user2");
-      Follow follow1 = createFollow(user1, user2, 1L);
-      Follow follow2 = createFollow(user2, user1, 2L);
-
-      given(followRepository.findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
-          .willReturn(Optional.of(follow1));
-      given(followRepository.findByFollowerIdAndTargetId(USER_ID_2, USER_ID_1))
-          .willReturn(Optional.of(follow2));
+      given(followRepository.existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
+          .willReturn(true);
+      given(followRepository.existsByFollowerIdAndTargetId(USER_ID_2, USER_ID_1))
+          .willReturn(true);
 
       // when
       boolean result = followService.isMutualFollow(USER_ID_1, USER_ID_2);
 
       // then
       assertThat(result).isTrue();
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
     }
 
     @DisplayName("일방향 팔로우만 있으면 false를 반환한다.")
     @Test
     void isMutualFollow_whenOneWay_thenReturnsFalse() {
       // given
-      User user1 = createUser(USER_ID_1, "user1");
-      User user2 = createUser(USER_ID_2, "user2");
-      Follow follow1 = createFollow(user1, user2, 1L);
-
-      given(followRepository.findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
-          .willReturn(Optional.of(follow1));
-      given(followRepository.findByFollowerIdAndTargetId(USER_ID_2, USER_ID_1))
-          .willReturn(Optional.empty());
+      given(followRepository.existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
+          .willReturn(true);
+      given(followRepository.existsByFollowerIdAndTargetId(USER_ID_2, USER_ID_1))
+          .willReturn(false);
 
       // when
       boolean result = followService.isMutualFollow(USER_ID_1, USER_ID_2);
 
       // then
       assertThat(result).isFalse();
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
     }
 
     @DisplayName("팔로우 관계가 전혀 없으면 false를 반환한다.")
     @Test
     void isMutualFollow_whenNoFollow_thenReturnsFalse() {
       // given
-      given(followRepository.findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
-          .willReturn(Optional.empty());
+      given(followRepository.existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2))
+          .willReturn(false);
 
       // when
       boolean result = followService.isMutualFollow(USER_ID_1, USER_ID_2);
 
       // then
       assertThat(result).isFalse();
-      then(followRepository).should(times(1)).findByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
+      then(followRepository).should(times(1)).existsByFollowerIdAndTargetId(USER_ID_1, USER_ID_2);
       // Short-circuit으로 두 번째 쿼리는 실행되지 않음
-      then(followRepository).should(never()).findByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
+      then(followRepository).should(never()).existsByFollowerIdAndTargetId(USER_ID_2, USER_ID_1);
     }
 
   }
