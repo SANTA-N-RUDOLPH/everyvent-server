@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.Date;
+
 import kr.santanrudolph.everyvent.auth.dto.TokenResponse;
 import kr.santanrudolph.everyvent.auth.security.JwtTokenProvider;
 import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
@@ -17,6 +18,7 @@ import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+@Tag("unit")
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService 단위 테스트")
 class AuthServiceTest {
