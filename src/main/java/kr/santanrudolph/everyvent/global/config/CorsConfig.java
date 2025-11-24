@@ -15,6 +15,9 @@ public class CorsConfig {
   @Value("${frontend.url}")
   private String frontendUrl;
 
+  @Value("${server.url}")
+  private String serverUrl;
+
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
@@ -24,7 +27,8 @@ public class CorsConfig {
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3030",
-        frontendUrl  // 환경별 프론트엔드 URL
+        frontendUrl,      // 환경별 프론트엔드 URL
+        serverUrl   // 배포 서버 URL (Swagger용)
     ));
 
     // 허용할 HTTP 메서드
