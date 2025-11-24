@@ -58,5 +58,10 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        if (System.getProperty('includeTags')) {
+            includeTags System.getProperty('includeTags')
+        }
+    }
 }
+
