@@ -25,7 +25,7 @@ spring:
         show_sql: true
 
 frontend:
-  url: http://localhost:3030  # 로컬 프론트엔드 URL
+  url: http://localhost:5173  # 로컬 프론트엔드 URL
 
 logging:
   level:
