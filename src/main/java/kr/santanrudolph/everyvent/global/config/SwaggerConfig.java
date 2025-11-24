@@ -39,7 +39,7 @@ public class SwaggerConfig {
                 .url("http://localhost:8080")
                 .description("로컬 개발 서버"),
             new Server()
-                .url("http://43.201.101.45:8080")
+                .url("http://52.79.177.171:8080")
                 .description("배포 서버")
         ))
         .addSecurityItem(securityRequirement)
