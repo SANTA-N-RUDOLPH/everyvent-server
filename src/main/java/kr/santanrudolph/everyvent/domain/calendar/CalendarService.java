@@ -94,7 +94,7 @@ public class CalendarService {
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
 
     User viewer = getUserOrThrow(userId);
-    Calendar calendar =   getActiveCalendarOrThrow(calendarId);
+    Calendar calendar = getActiveCalendarOrThrow(calendarId);
 
     if (!canView(calendar, viewer, calendar.getUser())) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
