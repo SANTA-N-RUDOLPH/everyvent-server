@@ -12,7 +12,18 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 @Entity
-@Table(name = "tasks")
+@Table(
+  name = "tasks",
+  indexes = {
+          @Index(name = "idx_calendar_date", columnList = "calendar_id, date")
+  },
+  uniqueConstraints = {
+          @UniqueConstraint(
+                  name = "uk_task_calendar_date_name",
+                  columnNames = {"calendar_id", "date", "name"}
+          )
+  }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Task extends BaseEntity {
@@ -25,30 +36,30 @@ public class Task extends BaseEntity {
   @JoinColumn(name = "calendar_id", nullable = false)
   private Calendar calendar;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 30)
   private String name;
 
   @Column(nullable = false)
-  private Instant startDate;
+  private Instant date;
 
   @Column(nullable = false)
-  private Instant endDate;
+  private boolean isCompleted;
 
-  private Task(Calendar calendar, String name, Instant startDate, Instant endDate) {
+  private Task(Calendar calendar, String name, Instant date) {
     if (calendar == null) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 필수입니다.");
     }
     validateName(name);
-    validateDate(startDate, endDate);
+    validateDate(date, calendar);
 
     this.calendar = calendar;
     this.name = name;
-    this.startDate = startDate;
-    this.endDate = endDate;
+    this.date = date;
+    this.isCompleted = false;
   }
 
-  public static Task create(Calendar calendar, String name, Instant startDate, Instant endDate) {
-    return new Task(calendar, name, startDate, endDate);
+  public static Task create(Calendar calendar, String name, Instant date) {
+    return new Task(calendar, name, date);
   }
 
   // 필드 업데이트 메서드
@@ -57,10 +68,17 @@ public class Task extends BaseEntity {
     this.name = name;
   }
 
-  public void updatePeriod(Instant startDate, Instant endDate) {
-    validateDate(startDate, endDate);
-    this.startDate = startDate;
-    this.endDate = endDate;
+  public void updateDate(Instant date) {
+    validateDate(date, this.calendar);
+    this.date = date;
+  }
+
+  public void markCompleted() {
+    this.isCompleted = true;
+  }
+
+  public void unmarkCompleted() {
+    this.isCompleted = false;
   }
 
   // 검증 메서드
@@ -68,14 +86,17 @@ public class Task extends BaseEntity {
     if (name == null || name.isBlank()) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "태스크 이름은 필수입니다.");
     }
+    if (name.length() > 30) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "태스크 이름은 30자를 초과할 수 없습니다.");
+    }
   }
 
-  private static void validateDate(Instant startDate, Instant endDate) {
-    if (startDate == null || endDate == null) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "시작일과 종료일은 필수입니다.");
+  private static void validateDate(Instant date, Calendar calendar) {
+    if (date == null) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "날짜는 필수입니다.");
     }
-    if (startDate.isAfter(endDate)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "종료일은 시작일과 같거나 이후의 날짜여야 합니다.");
+    if (date.isBefore(calendar.getStartDate()) || date.isAfter(calendar.getEndDate())) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 범위 내 날짜여야 합니다.");
     }
   }
 
