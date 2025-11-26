@@ -9,6 +9,7 @@ import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.DistributedCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -34,6 +35,7 @@ public class CalendarService {
   private final CalendarRepository calendarRepository;
   private final OfficialCalendarRepository officialCalendarRepository;
   private final UserRepository userRepository;
+  private final FollowService followService;
 
   @Transactional
   public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request) {
@@ -98,7 +100,7 @@ public class CalendarService {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
     }
 
-    boolean isScrapable = calendar.isScrapable() && !calendar.getUser().getId().equals(viewer.getId());
+    boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
     return toCalendarResponse(calendar, isScrapable);
   }
 
@@ -167,7 +169,7 @@ public class CalendarService {
     }
 
     User user = getUserOrThrow(userId);
-    if (!Objects.equals(calendar.getUser().getId(), user.getId())) {
+    if (!isCalendarOwner(user, calendar)) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더 수정 권한이 없습니다.");
     }
 
@@ -202,7 +204,7 @@ public class CalendarService {
       throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 원본은 일반 삭제 API에서 삭제할 수 없습니다.");
     }
 
-    if (!Objects.equals(calendar.getUser().getId(), user.getId()) && user.getRole() != Role.ADMIN) {
+    if (!isCalendarOwner(user, calendar) && user.getRole() != Role.ADMIN) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 삭제할 권한이 없습니다.");
     }
 
@@ -276,7 +278,6 @@ public class CalendarService {
   }
 
   private void validateDistribution(OfficialCalendar officialCalendar) {
-
     Instant endDate = officialCalendar.getOriginalCalendar().getEndDate();
     ZoneId koreaZone = ZoneId.of("Asia/Seoul");
     YearMonth now = YearMonth.now(koreaZone);
@@ -287,19 +288,58 @@ public class CalendarService {
     }
   }
 
-  private boolean isEditableAfterStartMonth(Calendar calendar) {
+  private void validateEditCalendar(Calendar calendar) {
     Instant endDate = calendar.getEndDate();
     ZoneId koreaZone = ZoneId.of("Asia/Seoul");
     YearMonth now = YearMonth.now(koreaZone);
     YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
-    return !calendarMonth.isAfter(now);
+
+    if (!now.isBefore(calendarMonth)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 해당 월부터는 수정할 수 없습니다.");
+    }
+  }
+
+  private void validateMonthlyCalendarLimit(Long userId, OriginalCalendarRequest request) {
+    long userMonthlyCalendarCount = calendarRepository
+            .countByUserIdInMonth(userId, request.getStartDate(), request.getEndDate());
+
+    if (userMonthlyCalendarCount >= 3) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 최대 3개까지 생성할 수 있습니다.");
+    }
+  }
+
+  private void validateDateRange(Instant startDate, Instant endDate) {
+    if (startDate.isAfter(endDate)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 기간의 시작일은 종료일보다 앞서야 합니다.");
+    }
+  }
+
+  private void validateWithinCalendarPeriod(Instant startDate, Instant endDate, Instant start, Instant end) {
+    if (start.isBefore(startDate) || end.isAfter(endDate)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT,
+              "미리보기 기간은 캘린더 기간 안에 포함되어야 합니다.");
+    }
+  }
+
+  private boolean isOwner(User viewer, User targetUser) {
+    return viewer.getId().equals(targetUser.getId());
+  }
+
+  private boolean isCalendarOwner(User user, Calendar calendar) {
+    return Objects.equals(calendar.getUser().getId(), user.getId());
   }
 
   private boolean canView(Calendar calendar, User viewer, User targetUser) {
+
+    if (isOwner(viewer, targetUser)) {
+      return true;
+    }
+
     return switch (calendar.getVisibility()) {
       case PUBLIC -> true;
-      case PRIVATE -> viewer.getId().equals(targetUser.getId());
-      default -> false;
+      case MUTUAL -> followService.isMutualFollow(viewer.getId(), targetUser.getId());
+      case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
+      case PRIVATE -> false;
     };
   }
 
@@ -334,17 +374,15 @@ public class CalendarService {
                                              OriginalCalendarRequest request,
                                              Instant previewStartDate,
                                              Instant previewEndDate) {
-    if (isEditableAfterStartMonth(calendar)) {
-      updatePartialOriginalCalendar(calendar, request);
-    } else {
-      updateAllOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
-    }
+
+    validateEditCalendar(calendar);
+    updateOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
   }
 
-  private void updateAllOriginalCalendar(OriginalCalendar originalCalendar,
-                                         OriginalCalendarRequest request,
-                                         Instant previewStartDate,
-                                         Instant previewEndDate) {
+  private void updateOriginalCalendar(OriginalCalendar originalCalendar,
+                                      OriginalCalendarRequest request,
+                                      Instant previewStartDate,
+                                      Instant previewEndDate) {
 
 
     Instant startDate = request.getStartDate();
@@ -364,43 +402,11 @@ public class CalendarService {
     originalCalendar.updateCategory(request.getCategory());
   }
 
-  private void updatePartialOriginalCalendar(OriginalCalendar originalCalendar,
-                                             OriginalCalendarRequest request) {
-    originalCalendar.updateTitle(request.getTitle());
-    originalCalendar.updateDescription(request.getDescription());
-    originalCalendar.updateVisibility(request.getVisibility());
-    originalCalendar.updateColor(request.getColor());
-    originalCalendar.updateCategory(request.getCategory());
-  }
-
-  // 검증 관련
-  private void validateMonthlyCalendarLimit(Long userId, OriginalCalendarRequest request) {
-    long userMonthlyCalendarCount = calendarRepository
-            .countByUserIdInMonth(userId, request.getStartDate(), request.getEndDate());
-
-    if (userMonthlyCalendarCount >= 3) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 최대 3개까지 생성할 수 있습니다.");
-    }
-  }
-
-  private void validateDateRange(Instant startDate, Instant endDate) {
-    if (startDate.isAfter(endDate)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 기간의 시작일은 종료일보다 앞서야 합니다.");
-    }
-  }
-
-  private void validateWithinCalendarPeriod(Instant startDate, Instant endDate, Instant start, Instant end) {
-    if (start.isBefore(startDate) || end.isAfter(endDate)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT,
-              "미리보기 기간은 캘린더 기간 안에 포함되어야 합니다.");
-    }
-  }
-
   // DTO 변환
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
 
     OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
-                            .orElse(null);
+            .orElse(null);
     return CalendarResponse.from(calendar, official, isScrapable);
   }
 
@@ -409,7 +415,7 @@ public class CalendarService {
             .filter(calendar -> canView(calendar, viewer, targetUser))
             .sorted(Comparator.comparingLong(Calendar::getId))
             .map(calendar -> {
-              boolean isScrapable = calendar.isScrapable() && !calendar.getUser().getId().equals(viewer.getId());
+              boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
               return toCalendarResponse(calendar, isScrapable);
             })
             .toList();
