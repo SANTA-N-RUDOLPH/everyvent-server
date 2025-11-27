@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @DiscriminatorValue("ORIGINAL")
@@ -17,20 +17,20 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OriginalCalendar extends Calendar {
 
-  private Instant previewStartDate; // 공개할 task 시작일
-  private Instant previewEndDate; // 공개할 task 종료일
+  private LocalDate previewStartDate; // 공개할 task 시작일
+  private LocalDate previewEndDate; // 공개할 task 종료일
 
   @Builder
   public OriginalCalendar(User user,
                           String title,
                           String description,
-                          Instant startDate,
-                          Instant endDate,
+                          LocalDate startDate,
+                          LocalDate endDate,
                           Visibility visibility,
                           String color,
                           Category category,
-                          Instant previewStartDate,
-                          Instant previewEndDate) {
+                          LocalDate previewStartDate,
+                          LocalDate previewEndDate) {
     super(user, title, description, startDate, endDate, visibility, color, category);
     updatePreviewPeriod(previewStartDate, previewEndDate);
   }
@@ -40,7 +40,7 @@ public class OriginalCalendar extends Calendar {
     return getVisibility() != Visibility.PRIVATE;
   }
 
-  public void updatePreviewPeriod(Instant previewStartDate, Instant previewEndDate) {
+  public void updatePreviewPeriod(LocalDate previewStartDate, LocalDate previewEndDate) {
     if (previewStartDate == null || previewEndDate == null) {
       this.previewStartDate = null;
       this.previewEndDate = null;

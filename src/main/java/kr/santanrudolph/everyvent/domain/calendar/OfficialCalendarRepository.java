@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,13 +18,11 @@ public interface OfficialCalendarRepository extends JpaRepository<OfficialCalend
   @Query("""
     SELECT officialCalendar
     FROM OfficialCalendar officialCalendar
-    WHERE officialCalendar.originalCalendar.startDate <= :end
-      AND officialCalendar.originalCalendar.endDate >= :start
+    WHERE officialCalendar.originalCalendar.startDate = :start
       AND officialCalendar.deletedAt IS NULL
   """)
   List<OfficialCalendar> findAllByPeriod(
-          @Param("start") Instant start,
-          @Param("end") Instant end
+          @Param("start") LocalDate start
   );
 
   boolean existsByOriginalCalendarId(Long calendarId);

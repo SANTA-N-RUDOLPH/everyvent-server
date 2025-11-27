@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,7 +45,7 @@ public class CalendarService {
 
     // 한 달에 생성할 수 있는 캘린더 개수 제한 (최대 3개)
     validateMonthlyCalendarLimit(userId, request);
-    log.info("캘린더 기간 범위: {} ~ {}", request.getStartDate(), request.getEndDate());
+    log.info("캘린더 기간 시작일: {}", request.getStartDate());
     log.info("미리보기 기간 범위: {} ~ {}", request.getPreviewStartDate(), request.getPreviewEndDate());
 
     OriginalCalendar calendar = buildCalendar(user, request);
@@ -87,8 +87,8 @@ public class CalendarService {
     officialCalendar.updateDistributedAt(Instant.now());
 
     return savedCalendars.stream()
-            .map(DistributedCalendarResponse::from)
-            .collect(Collectors.toList());
+        .map(DistributedCalendarResponse::from)
+        .collect(Collectors.toList());
   }
 
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
@@ -108,10 +108,10 @@ public class CalendarService {
 
     User user = getUserOrThrow(userId);
 
-    InstantRange range = InstantRange.of(year, month);
-    log.info("조회 범위: {} ~ {}", range.start(), range.end());
+    LocalDate date = LocalDate.of(year, month, 1);
+    log.info("조회 캘린더 기간 시작일: {}", date);
 
-    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(user.getId(), range.start(), range.end());
+    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(user.getId(), date);
 
     return toCalendarResponseList(calendars, user, user);
   }
@@ -121,9 +121,8 @@ public class CalendarService {
     User viewer = getUserOrThrow(userId);
     User targetUser = getUserOrThrow(targetId);
 
-    InstantRange range = InstantRange.of(year, month);
-
-    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(targetUser.getId(), range.start(), range.end());
+    LocalDate date = LocalDate.of(year, month, 1);
+    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(targetUser.getId(), date);
 
     return toCalendarResponseList(calendars, viewer, targetUser);
   }
@@ -133,10 +132,9 @@ public class CalendarService {
     User viewer = getUserOrThrow(userId);
     User targetUser = getUserOrThrow(targetId);
 
-    InstantRange range = InstantRange.of(year, month);
-
+    LocalDate date = LocalDate.of(year, month, 1);
     List<DistributedCalendar> distributedCalendars = calendarRepository
-            .findDistributedCalendarsByUserIdInMonth(targetUser.getId(), range.start(), range.end());
+        .findDistributedCalendarsByUserIdInMonth(targetUser.getId(), date);
 
     return toCalendarResponseList(new ArrayList<>(distributedCalendars), viewer, targetUser);
   }
@@ -146,12 +144,11 @@ public class CalendarService {
     User admin = getUserOrThrow(adminId);
     validateAdminRole(admin);
 
-    InstantRange range = InstantRange.of(year, month);
-
-    List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(range.start(), range.end());
+    LocalDate date = LocalDate.of(year, month, 1);
+    List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(date);
     List<Calendar> officialCalendars = officialEntities.stream()
-            .map(OfficialCalendar::getOriginalCalendar)
-            .collect(Collectors.toList());
+        .map(OfficialCalendar::getOriginalCalendar)
+        .collect(Collectors.toList());
 
     return toCalendarResponseList(officialCalendars, admin, admin);
   }
@@ -173,10 +170,11 @@ public class CalendarService {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더 수정 권한이 없습니다.");
     }
 
-    Instant previewStartDate = request.getPreviewStartDate();
-    Instant previewEndDate = request.getPreviewEndDate();
+    LocalDate previewStartDate = request.getPreviewStartDate();
+    LocalDate previewEndDate = request.getPreviewEndDate();
 
-    processOriginalCalendarUpdate(originalCalendar, request, previewStartDate, previewEndDate);
+    validateEditCalendar(originalCalendar);
+    updateOriginalCalendar(originalCalendar, request, previewStartDate, previewEndDate);
 
     return toCalendarResponse(originalCalendar, originalCalendar.isScrapable());
   }
@@ -186,7 +184,8 @@ public class CalendarService {
 
     OriginalCalendar calendar = getOfficialCalendarOrThrow(calendarId, adminId).getOriginalCalendar();
 
-    processOriginalCalendarUpdate(calendar, request, null, null);
+    validateEditCalendar(calendar);
+    updateOriginalCalendar(calendar, request, null, null);
 
     return toCalendarResponse(calendar, false);
   }
@@ -200,7 +199,7 @@ public class CalendarService {
     User user = getUserOrThrow(userId);
 
     if (calendar instanceof OriginalCalendar originalCalendar &&
-            officialCalendarRepository.existsByOriginalCalendarId(originalCalendar.getId())) {
+        officialCalendarRepository.existsByOriginalCalendarId(originalCalendar.getId())) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 원본은 일반 삭제 API에서 삭제할 수 없습니다.");
     }
 
@@ -230,12 +229,12 @@ public class CalendarService {
   // 엔티티/객체 관련
   private User getUserOrThrow(Long userId) {
     return userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
   }
 
   private Calendar getActiveCalendarOrThrow(Long calendarId) {
     Calendar calendar = calendarRepository.findById(calendarId)
-            .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
 
     if (calendar.getDeletedAt() != null) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "이미 삭제된 캘린더입니다.");
@@ -249,8 +248,8 @@ public class CalendarService {
     validateAdminRole(admin);
 
     OfficialCalendar officialCalendar = officialCalendarRepository.findByOriginalCalendarId(calendarId)
-            .orElseThrow(() ->
-                    new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
+        .orElseThrow(() ->
+            new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
 
     if (officialCalendar.getDeletedAt() != null) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
@@ -267,10 +266,8 @@ public class CalendarService {
   }
 
   private void validateCreateCalendar(OriginalCalendarRequest request) {
-    Instant endDate = request.getEndDate();
-    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-    YearMonth now = YearMonth.now(koreaZone);
-    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
+    YearMonth now = YearMonth.now();
+    YearMonth calendarMonth = YearMonth.from(request.getStartDate());
 
     if (!calendarMonth.isAfter(now)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "다음 달부터의 캘린더를 생성할 수 있습니다.");
@@ -278,10 +275,9 @@ public class CalendarService {
   }
 
   private void validateDistribution(OfficialCalendar officialCalendar) {
-    Instant endDate = officialCalendar.getOriginalCalendar().getEndDate();
-    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-    YearMonth now = YearMonth.now(koreaZone);
-    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
+    LocalDate startDate = officialCalendar.getOriginalCalendar().getStartDate();
+    YearMonth now = YearMonth.now();
+    YearMonth calendarMonth = YearMonth.from(startDate);
 
     if (now.isAfter(calendarMonth)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더는 해당 월 이후에는 배포할 수 없습니다.");
@@ -289,10 +285,8 @@ public class CalendarService {
   }
 
   private void validateEditCalendar(Calendar calendar) {
-    Instant endDate = calendar.getEndDate();
-    ZoneId koreaZone = ZoneId.of("Asia/Seoul");
-    YearMonth now = YearMonth.now(koreaZone);
-    YearMonth calendarMonth = YearMonth.from(endDate.atZone(koreaZone));
+    YearMonth now = YearMonth.now();
+    YearMonth calendarMonth = YearMonth.from(calendar.getStartDate());
 
     if (!now.isBefore(calendarMonth)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 해당 월부터는 수정할 수 없습니다.");
@@ -301,23 +295,26 @@ public class CalendarService {
 
   private void validateMonthlyCalendarLimit(Long userId, OriginalCalendarRequest request) {
     long userMonthlyCalendarCount = calendarRepository
-            .countByUserIdInMonth(userId, request.getStartDate(), request.getEndDate());
+            .countByUserIdInMonth(userId, request.getStartDate());
 
     if (userMonthlyCalendarCount >= 3) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 최대 3개까지 생성할 수 있습니다.");
     }
   }
 
-  private void validateDateRange(Instant startDate, Instant endDate) {
+  private void validateDateRange(LocalDate startDate, LocalDate endDate) {
     if (startDate.isAfter(endDate)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 기간의 시작일은 종료일보다 앞서야 합니다.");
     }
   }
 
-  private void validateWithinCalendarPeriod(Instant startDate, Instant endDate, Instant start, Instant end) {
+  private void validateWithinCalendarPeriod(LocalDate startDate, LocalDate endDate, LocalDate start, LocalDate end) {
     if (start.isBefore(startDate) || end.isAfter(endDate)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT,
-              "미리보기 기간은 캘린더 기간 안에 포함되어야 합니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 기간은 캘린더 기간 안에 포함되어야 합니다.");
+    }
+
+    if (end.getDayOfMonth() > 7) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 종료일은 해당 월의 7일 이내여야 합니다.");
     }
   }
 
@@ -346,10 +343,10 @@ public class CalendarService {
   // 생성/업데이트 관련
   private OriginalCalendar buildCalendar(User user, OriginalCalendarRequest request) {
 
-    Instant startDate = request.getStartDate();
-    Instant endDate = request.getEndDate();
-    Instant previewStartDate = request.getPreviewStartDate();
-    Instant previewEndDate = request.getPreviewEndDate();
+    LocalDate startDate = request.getStartDate();
+    LocalDate endDate = startDate.withDayOfMonth(25);
+    LocalDate previewStartDate = request.getPreviewStartDate();
+    LocalDate previewEndDate = request.getPreviewEndDate();
 
     if (previewStartDate != null && previewEndDate != null) {
       validateDateRange(previewStartDate, previewEndDate);
@@ -357,36 +354,27 @@ public class CalendarService {
     }
 
     return new OriginalCalendar(
-            user,
-            request.getTitle(),
-            request.getDescription(),
-            startDate,
-            endDate,
-            request.getVisibility(),
-            request.getColor(),
-            request.getCategory(),
-            previewStartDate,
-            previewEndDate
+        user,
+        request.getTitle(),
+        request.getDescription(),
+        startDate,
+        endDate,
+        request.getVisibility(),
+        request.getColor(),
+        request.getCategory(),
+        previewStartDate,
+        previewEndDate
     );
-  }
-
-  private void processOriginalCalendarUpdate(OriginalCalendar calendar,
-                                             OriginalCalendarRequest request,
-                                             Instant previewStartDate,
-                                             Instant previewEndDate) {
-
-    validateEditCalendar(calendar);
-    updateOriginalCalendar(calendar, request, previewStartDate, previewEndDate);
   }
 
   private void updateOriginalCalendar(OriginalCalendar originalCalendar,
                                       OriginalCalendarRequest request,
-                                      Instant previewStartDate,
-                                      Instant previewEndDate) {
+                                      LocalDate previewStartDate,
+                                      LocalDate previewEndDate) {
 
 
-    Instant startDate = request.getStartDate();
-    Instant endDate = request.getEndDate();
+    LocalDate startDate = request.getStartDate();
+    LocalDate endDate = startDate.withDayOfMonth(25);
 
     if (previewStartDate != null && previewEndDate != null) {
       validateDateRange(previewStartDate, previewEndDate);
@@ -406,19 +394,19 @@ public class CalendarService {
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
 
     OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
-            .orElse(null);
+        .orElse(null);
     return CalendarResponse.from(calendar, official, isScrapable);
   }
 
   private List<CalendarResponse> toCalendarResponseList(List<Calendar> calendars, User viewer, User targetUser) {
     return calendars.stream()
-            .filter(calendar -> canView(calendar, viewer, targetUser))
-            .sorted(Comparator.comparingLong(Calendar::getId))
-            .map(calendar -> {
-              boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
-              return toCalendarResponse(calendar, isScrapable);
-            })
-            .toList();
+        .filter(calendar -> canView(calendar, viewer, targetUser))
+        .sorted(Comparator.comparingLong(Calendar::getId))
+        .map(calendar -> {
+          boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
+          return toCalendarResponse(calendar, isScrapable);
+        })
+        .toList();
   }
 
 }
