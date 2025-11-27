@@ -34,16 +34,16 @@ public class OfficialCalendarResponse extends CalendarResponse {
 
     OriginalCalendar original = calendar.getOriginalCalendar();
     return OfficialCalendarResponse.builder()
-            .id(original.getId())
-            .title(original.getTitle())
-            .description(original.getDescription())
-            .startDate(original.getStartDate())
-            .endDate(original.getEndDate())
-            .visibility(original.getVisibility())
-            .color(original.getColor())
-            .category(original.getCategory())
-            .isScrapable(false)
-            .distributedAt(calendar.getDistributedAt())
-            .build();
+        .id(original.getId())
+        .title(original.getTitle())
+        .description(original.getDescription())
+        .startDate(original.getStartDate())
+        .endDate(original.getEndDate())
+        .visibility(original.getVisibility())
+        .color(original.getColor())
+        .category(original.getCategory())
+        .isScrapable(false)
+        .distributedAt(calendar.getDistributedAt())
+        .build();
   }
 }

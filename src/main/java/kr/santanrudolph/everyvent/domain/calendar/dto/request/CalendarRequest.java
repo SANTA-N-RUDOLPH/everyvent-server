@@ -15,23 +15,23 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class CalendarRequest {
 
-    @NotBlank
-    @Size(max = 20, message = "제목은 최대 20자까지 입력할 수 있습니다.")
-    private String title;
+  @NotBlank
+  @Size(max = 20, message = "제목은 최대 20자까지 입력할 수 있습니다.")
+  private String title;
 
-    @Size(max = 150, message = "설명은 최대 150자까지 입력할 수 있습니다.")
-    private String description;
+  @Size(max = 150, message = "설명은 최대 150자까지 입력할 수 있습니다.")
+  private String description;
 
-    @NotNull
-    private LocalDate startDate;
+  @NotNull
+  private LocalDate startDate;
 
-    @NotNull
-    private Visibility visibility;
+  @NotNull
+  private Visibility visibility;
 
-    @NotBlank
-    @ValidColor
-    private String color;
+  @NotBlank
+  @ValidColor
+  private String color;
 
-    @NotNull
-    private Category category;
+  @NotNull
+  private Category category;
 }

@@ -26,15 +26,15 @@ public class DistributedCalendarResponse extends CalendarResponse {
 
   public static DistributedCalendarResponse from(DistributedCalendar calendar) {
     return DistributedCalendarResponse.builder()
-            .id(calendar.getId())
-            .title(calendar.getTitle())
-            .description(calendar.getDescription())
-            .startDate(calendar.getStartDate())
-            .endDate(calendar.getEndDate())
-            .visibility(calendar.getVisibility())
-            .color(calendar.getColor())
-            .category(calendar.getCategory())
-            .isScrapable(false)
-            .build();
+        .id(calendar.getId())
+        .title(calendar.getTitle())
+        .description(calendar.getDescription())
+        .startDate(calendar.getStartDate())
+        .endDate(calendar.getEndDate())
+        .visibility(calendar.getVisibility())
+        .color(calendar.getColor())
+        .category(calendar.getCategory())
+        .isScrapable(false)
+        .build();
   }
 }

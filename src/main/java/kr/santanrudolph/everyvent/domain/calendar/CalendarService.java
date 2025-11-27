@@ -87,8 +87,8 @@ public class CalendarService {
     officialCalendar.updateDistributedAt(Instant.now());
 
     return savedCalendars.stream()
-            .map(DistributedCalendarResponse::from)
-            .collect(Collectors.toList());
+        .map(DistributedCalendarResponse::from)
+        .collect(Collectors.toList());
   }
 
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
@@ -134,7 +134,7 @@ public class CalendarService {
 
     LocalDate date = LocalDate.of(year, month, 1);
     List<DistributedCalendar> distributedCalendars = calendarRepository
-            .findDistributedCalendarsByUserIdInMonth(targetUser.getId(), date);
+        .findDistributedCalendarsByUserIdInMonth(targetUser.getId(), date);
 
     return toCalendarResponseList(new ArrayList<>(distributedCalendars), viewer, targetUser);
   }
@@ -147,8 +147,8 @@ public class CalendarService {
     LocalDate date = LocalDate.of(year, month, 1);
     List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(date);
     List<Calendar> officialCalendars = officialEntities.stream()
-            .map(OfficialCalendar::getOriginalCalendar)
-            .collect(Collectors.toList());
+        .map(OfficialCalendar::getOriginalCalendar)
+        .collect(Collectors.toList());
 
     return toCalendarResponseList(officialCalendars, admin, admin);
   }
@@ -199,7 +199,7 @@ public class CalendarService {
     User user = getUserOrThrow(userId);
 
     if (calendar instanceof OriginalCalendar originalCalendar &&
-            officialCalendarRepository.existsByOriginalCalendarId(originalCalendar.getId())) {
+        officialCalendarRepository.existsByOriginalCalendarId(originalCalendar.getId())) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 원본은 일반 삭제 API에서 삭제할 수 없습니다.");
     }
 
@@ -229,12 +229,12 @@ public class CalendarService {
   // 엔티티/객체 관련
   private User getUserOrThrow(Long userId) {
     return userRepository.findByIdAndDeletedAtIsNull(userId)
-            .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."));
   }
 
   private Calendar getActiveCalendarOrThrow(Long calendarId) {
     Calendar calendar = calendarRepository.findById(calendarId)
-            .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
 
     if (calendar.getDeletedAt() != null) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "이미 삭제된 캘린더입니다.");
@@ -248,8 +248,8 @@ public class CalendarService {
     validateAdminRole(admin);
 
     OfficialCalendar officialCalendar = officialCalendarRepository.findByOriginalCalendarId(calendarId)
-            .orElseThrow(() ->
-                    new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
+        .orElseThrow(() ->
+            new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
 
     if (officialCalendar.getDeletedAt() != null) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
@@ -354,16 +354,16 @@ public class CalendarService {
     }
 
     return new OriginalCalendar(
-            user,
-            request.getTitle(),
-            request.getDescription(),
-            startDate,
-            endDate,
-            request.getVisibility(),
-            request.getColor(),
-            request.getCategory(),
-            previewStartDate,
-            previewEndDate
+        user,
+        request.getTitle(),
+        request.getDescription(),
+        startDate,
+        endDate,
+        request.getVisibility(),
+        request.getColor(),
+        request.getCategory(),
+        previewStartDate,
+        previewEndDate
     );
   }
 
@@ -394,19 +394,19 @@ public class CalendarService {
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
 
     OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
-            .orElse(null);
+        .orElse(null);
     return CalendarResponse.from(calendar, official, isScrapable);
   }
 
   private List<CalendarResponse> toCalendarResponseList(List<Calendar> calendars, User viewer, User targetUser) {
     return calendars.stream()
-            .filter(calendar -> canView(calendar, viewer, targetUser))
-            .sorted(Comparator.comparingLong(Calendar::getId))
-            .map(calendar -> {
-              boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
-              return toCalendarResponse(calendar, isScrapable);
-            })
-            .toList();
+        .filter(calendar -> canView(calendar, viewer, targetUser))
+        .sorted(Comparator.comparingLong(Calendar::getId))
+        .map(calendar -> {
+          boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
+          return toCalendarResponse(calendar, isScrapable);
+        })
+        .toList();
   }
 
 }

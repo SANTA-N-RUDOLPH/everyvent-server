@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidColor {
-    String message() default "유효한 HEX 색상 코드여야 합니다 (예: #FFF, #FFFFFF)";
-    Class<?>[] groups() default {};
-    Class<? extends Payload>[] payload() default {};
+  String message() default "유효한 HEX 색상 코드여야 합니다 (예: #FFF, #FFFFFF)";
+  Class<?>[] groups() default {};
+  Class<? extends Payload>[] payload() default {};
 }

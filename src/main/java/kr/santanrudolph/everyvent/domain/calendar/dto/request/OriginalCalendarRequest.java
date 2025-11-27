@@ -9,8 +9,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class OriginalCalendarRequest extends CalendarRequest {
 
-    private LocalDate previewStartDate;
+  private LocalDate previewStartDate;
 
-    private LocalDate previewEndDate;
+  private LocalDate previewEndDate;
 
 }
