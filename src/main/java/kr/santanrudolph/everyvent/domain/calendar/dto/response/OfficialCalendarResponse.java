@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 public class OfficialCalendarResponse extends CalendarResponse {
@@ -18,8 +19,8 @@ public class OfficialCalendarResponse extends CalendarResponse {
   private OfficialCalendarResponse(Long id,
                                    String title,
                                    String description,
-                                   Instant startDate,
-                                   Instant endDate,
+                                   LocalDate startDate,
+                                   LocalDate endDate,
                                    Visibility visibility,
                                    String color,
                                    Category category,

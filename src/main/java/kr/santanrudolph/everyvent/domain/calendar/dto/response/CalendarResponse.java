@@ -10,7 +10,7 @@ import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.Getter;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 public abstract class CalendarResponse {
@@ -18,8 +18,8 @@ public abstract class CalendarResponse {
     private Long id;
     private String title;
     private String description;
-    private Instant startDate;
-    private Instant endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private Visibility visibility;
     private String color;
     private Category category;
@@ -28,8 +28,8 @@ public abstract class CalendarResponse {
     protected CalendarResponse(Long id,
                                String title,
                                String description,
-                               Instant startDate,
-                               Instant endDate,
+                               LocalDate startDate,
+                               LocalDate endDate,
                                Visibility visibility,
                                String color,
                                Category category,

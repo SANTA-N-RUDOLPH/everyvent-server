@@ -6,26 +6,26 @@ import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 public class OriginalCalendarResponse extends CalendarResponse {
 
-    private final Instant previewStartDate;
-    private final Instant previewEndDate;
+    private final LocalDate previewStartDate;
+    private final LocalDate previewEndDate;
 
     @Builder
     private OriginalCalendarResponse(Long id,
                                      String title,
                                      String description,
-                                     Instant startDate,
-                                     Instant endDate,
+                                     LocalDate startDate,
+                                     LocalDate endDate,
                                      Visibility visibility,
                                      String color,
                                      Category category,
                                      Boolean isScrapable,
-                                     Instant previewStartDate,
-                                     Instant previewEndDate) {
+                                     LocalDate previewStartDate,
+                                     LocalDate previewEndDate) {
 
         super(id, title, description, startDate, endDate, visibility, color, category, isScrapable);
         this.previewStartDate = previewStartDate;

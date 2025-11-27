@@ -9,7 +9,7 @@ import kr.santanrudolph.everyvent.domain.calendar.validator.ValidColor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
@@ -23,10 +23,7 @@ public class CalendarRequest {
     private String description;
 
     @NotNull
-    private Instant startDate;
-
-    @NotNull
-    private Instant endDate;
+    private LocalDate startDate;
 
     @NotNull
     private Visibility visibility;

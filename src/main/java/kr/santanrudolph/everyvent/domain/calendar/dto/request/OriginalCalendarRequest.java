@@ -3,14 +3,14 @@ package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @NoArgsConstructor
 public class OriginalCalendarRequest extends CalendarRequest {
 
-    private Instant previewStartDate;
+    private LocalDate previewStartDate;
 
-    private Instant previewEndDate;
+    private LocalDate previewEndDate;
 
 }

@@ -6,7 +6,7 @@ import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 public class DistributedCalendarResponse extends CalendarResponse {
@@ -15,8 +15,8 @@ public class DistributedCalendarResponse extends CalendarResponse {
   private DistributedCalendarResponse(Long id,
                                       String title,
                                       String description,
-                                      Instant startDate,
-                                      Instant endDate,
+                                      LocalDate startDate,
+                                      LocalDate endDate,
                                       Visibility visibility,
                                       String color,
                                       Category category,
