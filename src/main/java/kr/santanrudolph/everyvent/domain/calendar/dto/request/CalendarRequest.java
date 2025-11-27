@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
+import kr.santanrudolph.everyvent.domain.calendar.validator.ValidFirstDayOfMonth;
 import kr.santanrudolph.everyvent.domain.calendar.validator.ValidColor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class CalendarRequest {
   private String description;
 
   @NotNull
+  @ValidFirstDayOfMonth
   private LocalDate startDate;
 
   @NotNull
