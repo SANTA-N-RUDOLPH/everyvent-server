@@ -314,7 +314,7 @@ public class CalendarService {
     }
 
     if (end.getDayOfMonth() > 7) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 종료일은 7일을 초과할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "미리보기 종료일은 해당 월의 7일 이내여야 합니다.");
     }
   }
 
