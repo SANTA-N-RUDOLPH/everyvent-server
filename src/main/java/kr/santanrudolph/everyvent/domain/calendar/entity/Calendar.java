@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -35,10 +36,10 @@ public abstract class Calendar extends BaseEntity {
   private String description;
 
   @Column(nullable = false)
-  private Instant startDate;
+  private LocalDate startDate;
 
   @Column(nullable = false)
-  private Instant endDate;
+  private LocalDate endDate;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -57,8 +58,8 @@ public abstract class Calendar extends BaseEntity {
   protected Calendar(User user,
                      String title,
                      String description,
-                     Instant startDate,
-                     Instant endDate,
+                     LocalDate startDate,
+                     LocalDate endDate,
                      Visibility visibility,
                      String color,
                      Category category) {
@@ -85,10 +86,10 @@ public abstract class Calendar extends BaseEntity {
   }
 
   public void updateDescription(String description) {
-      this.description = description != null ? description : "";
+    this.description = description != null ? description : "";
   }
 
-  public void updatePeriod(Instant startDate, Instant endDate) {
+  public void updatePeriod(LocalDate startDate, LocalDate endDate) {
     this.startDate = startDate;
     this.endDate = endDate;
   }
