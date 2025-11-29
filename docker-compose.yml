@@ -17,7 +17,7 @@ services:
       retries: 3
 
   app:
-    image: ghcr.io/hyeblee/everyvent-server:develop-latest
+    image: ghcr.io/santa-n-rudolph/everyvent-server:develop-latest
     container_name: everyvent-app
     ports:
       - "8080:8080"
