@@ -11,13 +11,15 @@ services:
     command: redis-server --appendonly yes
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
 
   app:
-    image: ghcr.io/hyeblee/everyvent-server:develop-latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: everyvent-app
     ports:
       - "8080:8080"
