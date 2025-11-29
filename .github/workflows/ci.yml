@@ -30,8 +30,11 @@ jobs:
       - name: Gradle 실행 권한 부여
         run: chmod +x gradlew
 
-      - name: 빌드 및 단위 테스트
-        run: ./gradlew clean build --tests '*Test' -DincludeTags=unit
+      - name: 클린 빌드 및 단위 테스트
+        run: |
+          ./gradlew clean
+          ./gradlew test -DincludeTags=unit
+          ./gradlew build -x test
 
       - name: 테스트 결과 리포트
         uses: EnricoMi/publish-unit-test-result-action@v2
