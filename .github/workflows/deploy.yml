@@ -22,12 +22,11 @@ jobs:
           script: |
             cd /home/ec2-user/everyvent-server
 
-            # 최신 코드 가져오기
-            git pull origin develop || { echo "❌ Git pull failed"; exit 1; }
+            # GHCR에서 최신 이미지 pull
+            docker pull ghcr.io/hyeblee/everyvent-server:develop-latest || { echo "❌ Image pull failed"; exit 1; }
 
-            # Docker Compose로 재배포
+            # Docker Compose로 재시작
             docker-compose down || true
-            docker-compose build --no-cache || { echo "❌ Build failed"; exit 1; }
             docker-compose up -d || { echo "❌ Services failed to start"; exit 1; }
 
             # 서비스 안정화 대기 및 상태 확인
