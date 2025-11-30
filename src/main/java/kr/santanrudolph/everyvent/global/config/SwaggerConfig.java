@@ -36,11 +36,11 @@ public class SwaggerConfig {
             .version("1.0.0"))
         .servers(List.of(
             new Server()
-                .url("http://localhost:8080")
-                .description("로컬 개발 서버"),
+                .url("https://api.everyvent.cloud")
+                .description("배포 서버"),
             new Server()
-                .url("http://52.79.177.171:8080")
-                .description("배포 서버")
+                .url("http://localhost:8080")
+                .description("로컬 개발 서버")
         ))
         .addSecurityItem(securityRequirement)
         .components(components);
