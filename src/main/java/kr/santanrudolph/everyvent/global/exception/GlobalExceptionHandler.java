@@ -1,15 +1,18 @@
 package kr.santanrudolph.everyvent.global.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @RestControllerAdvice
@@ -56,6 +59,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(HttpStatus.BAD_REQUEST)
         .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, detail));
+  }
+
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException e) {
+    log.debug("No static resource found: {}", e.getMessage());
+    return ResponseEntity.notFound().build();
   }
 
   @ExceptionHandler(Exception.class)
