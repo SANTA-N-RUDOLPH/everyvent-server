@@ -26,12 +26,19 @@ jobs:
           script: |
             cd /home/ec2-user/everyvent-server
 
-            # GHCR에서 최신 이미지 pull
+            git pull origin develop
+
+            # 기존 컨테이너 중지
+            docker-compose down
+
+            # 옛날 이미지 삭제 (강제)
+            docker image prune -af
+
+            # 최신 이미지 pull
             docker pull ghcr.io/santa-n-rudolph/everyvent-server:develop-latest || { echo "❌ Image pull failed"; exit 1; }
 
             # Docker Compose로 재시작
-            docker-compose down || true
-            docker-compose up -d || { echo "❌ Services failed to start"; exit 1; }
+            docker-compose up -d --force-recreate || { echo "❌ Services failed to start"; exit 1; }
 
             # 서비스 안정화 대기 및 상태 확인
             echo "⏳ Waiting for services to stabilize..."
