@@ -9,6 +9,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Entity
 @Table(
         name = "tasks",
@@ -43,6 +45,8 @@ public class Task extends BaseEntity {
   @Column(nullable = false)
   private boolean isCompleted = false;
 
+  private Instant deletedAt;
+
   private Task(Calendar calendar, String name, int day) {
     if (calendar == null) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 필수입니다.");
@@ -57,6 +61,10 @@ public class Task extends BaseEntity {
 
   public static Task create(Calendar calendar, String name, int day) {
     return new Task(calendar, name, day);
+  }
+
+  public void softDelete() {
+    this.deletedAt = Instant.now();
   }
 
   // 필드 업데이트 메서드
