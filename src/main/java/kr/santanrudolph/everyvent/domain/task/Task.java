@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "tasks",
         indexes = {
-                @Index(name = "idx_calendar_day", columnList = "calendar_id, day")
+                @Index(name = "idx_calendar_day", columnList = "calendar_id, day_of_month")
         },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_task_calendar_day_name",
-                        columnNames = {"calendar_id", "day", "name"}
+                        columnNames = {"calendar_id", "day_of_month", "name"}
                 )
         }
 )
@@ -37,7 +37,7 @@ public class Task extends BaseEntity {
   @Column(nullable = false, length = 30)
   private String name;
 
-  @Column(nullable = false)
+  @Column(name = "day_of_month", nullable = false)
   private int day;
 
   @Column(nullable = false)
