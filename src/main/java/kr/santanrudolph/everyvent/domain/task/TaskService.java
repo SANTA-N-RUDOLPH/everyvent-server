@@ -3,7 +3,6 @@ package kr.santanrudolph.everyvent.domain.task;
 import kr.santanrudolph.everyvent.domain.calendar.CalendarRepository;
 import kr.santanrudolph.everyvent.domain.calendar.OfficialCalendarRepository;
 import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
-import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.task.command.TaskUpdateCommand;
 import kr.santanrudolph.everyvent.domain.task.dto.request.TaskCreateRequest;
 import kr.santanrudolph.everyvent.domain.task.dto.response.TaskResponse;
@@ -294,6 +293,9 @@ public class TaskService {
       task.updateName(command.name());
     }
     if (command.day() != null) {
+      YearMonth yearMonth = YearMonth.from(task.getCalendar().getStartDate());
+      LocalDate changedDate = yearMonth.atDay(command.day());
+      validateDailyTaskLimit(task.getCalendar(), changedDate, changedDate);
       task.updateDay(command.day());
     }
   }
