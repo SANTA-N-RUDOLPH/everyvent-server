@@ -34,6 +34,9 @@ public class TaskService {
   @Transactional
   public TaskResponses createTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
+    if (isOfficialCalendar(calendar)) {
+      throw new EveryventException(ErrorCode.NOT_FOUND, "공식 캘린더 태스크는 일반 생성 API에서 생성할 수 없습니다.");
+    }
 
     if (isPastOrSameStartMonth(calendar)) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더의 월이 시작되면 일반 태스크는 생성할 수 없습니다.");
