@@ -35,7 +35,7 @@ public class TaskService {
   public TaskResponses createTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
     if (isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.NOT_FOUND, "공식 캘린더 태스크는 일반 생성 API에서 생성할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 태스크는 일반 생성 API에서 생성할 수 없습니다.");
     }
 
     if (isPastOrSameStartMonth(calendar)) {
@@ -57,7 +57,7 @@ public class TaskService {
   public TaskResponses createOfficialTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.NOT_FOUND, "일반 캘린더 태스크는 공식 생성 API에서 생성할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "일반 캘린더 태스크는 공식 생성 API에서 생성할 수 없습니다.");
     }
     if (isDeletedOfficialCalendar(calendar)) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
