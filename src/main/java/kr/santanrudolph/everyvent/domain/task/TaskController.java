@@ -90,7 +90,7 @@ public class TaskController {
   @PutMapping("/{taskId}")
   public ResponseEntity<TaskResponse> updateTaskDetails(
           @PathVariable Long taskId,
-          @RequestBody TaskUpdateCommand command
+          @Valid @RequestBody TaskUpdateCommand command
   ) {
     Long userId = AuthenticationUtil.getCurrentUserId();
     TaskResponse response = taskService.updateTaskDetails(userId, taskId, command);
@@ -106,7 +106,7 @@ public class TaskController {
   @PutMapping("/official/{taskId}")
   public ResponseEntity<TaskResponse> updateOfficialTaskDetails(
           @PathVariable Long taskId,
-          @RequestBody TaskUpdateCommand command
+          @Valid @RequestBody TaskUpdateCommand command
   ) {
     Long userId = AuthenticationUtil.getCurrentUserId();
     TaskResponse response = taskService.updateOfficialTaskDetails(userId, taskId, command);
