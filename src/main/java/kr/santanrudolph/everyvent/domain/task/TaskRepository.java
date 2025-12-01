@@ -12,11 +12,7 @@ import java.util.Optional;
 public interface TaskRepository extends JpaRepository<Task, Long> {
   Optional<Task> findByIdAndDeletedAtIsNull(Long taskId);
 
-  List<Task> findByCalendarIdAndDeletedAtIsNull(Long id);
-
-  @Query("SELECT t FROM Task t WHERE t.calendar.id = :calendarId AND t.deletedAt IS NULL")
-  List<Task> findByCalendarId(
-      @Param("calendarId") Long calendarId);
+  List<Task> findByCalendarIdAndDeletedAtIsNull(Long calendarId);
 
   @Query("""
     SELECT t
