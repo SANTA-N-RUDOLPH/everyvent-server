@@ -30,13 +30,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
       @Param("day") int day);
 
   @Query("""
-    SELECT COUNT(t)
+    SELECT t.day
     FROM Task t
     WHERE t.calendar.id = :calendarId
-      AND t.day = :day
+      AND t.day BETWEEN :start AND :end
       AND t.deletedAt IS NULL
-  """)
-  int countByCalendarIdAndDay(
-      @Param("calendarId") Long calendarId,
-      @Param("day") int day);
+    GROUP BY t.day
+    HAVING COUNT(t) >= 3
+    """)
+  List<Integer> findDaysWithLimitExceeded(
+          @Param("calendarId") Long calendarId,
+          @Param("start") int start,
+          @Param("end") int end
+  );
 }

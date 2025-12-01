@@ -247,12 +247,9 @@ public class TaskService {
     int start = startDate.getDayOfMonth();
     int end = endDate.getDayOfMonth();
 
-    for (int day = start; day <= end; day++) {
-      int count = taskRepository.countByCalendarIdAndDay(calendar.getId(), day);
-
-      if (count >= 3) {
-        throw new EveryventException(ErrorCode.FORBIDDEN, "태스크는 각 일자에 최대 3개까지 생성할 수 있습니다.");
-      }
+    List<Integer> exceededDays = taskRepository.findDaysWithLimitExceeded(calendar.getId(), start, end);
+    if (!exceededDays.isEmpty()) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "태스크는 각 일자에 최대 3개까지 생성할 수 있습니다.");
     }
   }
 
