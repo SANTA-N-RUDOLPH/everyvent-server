@@ -55,7 +55,7 @@ public class TaskService {
   public TaskResponses createOfficialTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 공식 캘린더가 아닙니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 공식 캘린더가 아니거나 삭제된 캘린더입니다.");
     }
 
     if (isPastStartMonth(calendar)) {
@@ -254,15 +254,10 @@ public class TaskService {
   }
 
   private boolean isOfficialCalendar(Calendar calendar) {
-    OfficialCalendar officialCalendar = officialCalendarRepository
+    return officialCalendarRepository
             .findByOriginalCalendarId(calendar.getId())
-            .orElse(null);
-
-    if (officialCalendar != null && officialCalendar.getDeletedAt() != null) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
-    }
-
-    return officialCalendar != null;
+            .map(oc -> oc.getDeletedAt() == null)
+            .orElse(false);
   }
 
   private boolean isPastOrSameStartMonth(Calendar calendar) {
