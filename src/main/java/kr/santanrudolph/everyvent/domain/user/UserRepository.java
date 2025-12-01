@@ -1,9 +1,13 @@
 package kr.santanrudolph.everyvent.domain.user;
 
+import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,4 +32,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 //    )
 //  """)
 //  List<User> findTargetUsersForDistribution(@Param("originalId") Long originalId);
+
+  @Query("""
+      SELECT u FROM User u
+      WHERE u.deletedAt IS NULL
+      AND (
+          LOWER(u.nickname) LIKE CONCAT('%', :keyword, '%')
+          OR LOWER(u.introduction) LIKE CONCAT('%', :keyword, '%')
+          )
+      """)
+  List<User> searchByKeyword(@Param("keyword") String keyword);
 }
