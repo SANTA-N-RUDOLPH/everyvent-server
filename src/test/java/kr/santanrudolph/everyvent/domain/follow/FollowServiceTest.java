@@ -228,8 +228,8 @@ class FollowServiceTest {
       target = createUser(TARGET_ID, "target");
 
       List<FollowResponse> expectedFollowers = List.of(
-          new FollowResponse(FOLLOW_ID, FOLLOWER_ID, "follower1"),
-          new FollowResponse(FOLLOW_ID2, FOLLOWER_ID2, "follower2")
+          new FollowResponse(FOLLOW_ID, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(FOLLOWER_ID, "follower1", "introduction1")),
+          new FollowResponse(FOLLOW_ID2, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(FOLLOWER_ID2, "follower2", "introduction2"))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
@@ -242,10 +242,10 @@ class FollowServiceTest {
       // then
       assertThat(result)
           .hasSize(2)
-          .extracting("id", "user.id", "user.nickname")
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
           .containsExactly(
-              tuple(FOLLOW_ID, FOLLOWER_ID, "follower1"),
-              tuple(FOLLOW_ID2, FOLLOWER_ID2, "follower2"));
+              tuple(FOLLOW_ID, FOLLOWER_ID, "follower1", "introduction1"),
+              tuple(FOLLOW_ID2, FOLLOWER_ID2, "follower2", "introduction2"));
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(TARGET_ID);
       then(followRepository).should(times(1)).findActiveFollowersByTargetId(TARGET_ID);
     }
@@ -299,8 +299,8 @@ class FollowServiceTest {
       follower = createUser(FOLLOWER_ID, "follower");
 
       List<FollowResponse> expectedFollowings = List.of(
-          new FollowResponse(FOLLOW_ID, TARGET_ID, "target1"),
-          new FollowResponse(FOLLOW_ID2, TARGET_ID2, "target2")
+          new FollowResponse(FOLLOW_ID, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(TARGET_ID, "target1", "introduction1")),
+          new FollowResponse(FOLLOW_ID2, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(TARGET_ID2, "target2", "introduction2"))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(
@@ -314,10 +314,10 @@ class FollowServiceTest {
       // then
       assertThat(result)
           .hasSize(2)
-          .extracting("id", "user.id", "user.nickname")
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
           .containsExactly(
-              tuple(FOLLOW_ID, TARGET_ID, "target1"),
-              tuple(FOLLOW_ID2, TARGET_ID2, "target2"));
+              tuple(FOLLOW_ID, TARGET_ID, "target1", "introduction1"),
+              tuple(FOLLOW_ID2, TARGET_ID2, "target2", "introduction2"));
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
       then(followRepository).should(times(1)).findActiveFollowingsByFollowerId(FOLLOWER_ID);
     }

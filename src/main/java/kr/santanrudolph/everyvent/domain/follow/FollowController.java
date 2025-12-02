@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 @Tag(name = "팔로우", description = "팔로우 관련 API")
@@ -65,7 +66,7 @@ public class FollowController {
 
   @Operation(
       summary = "특정 사용자의 팔로워 목록 조회",
-      description = "특정 사용자를 팔로우하는 사용자 목록을 조회합니다."
+      description = "특정 사용자를 팔로우하는 Follow 관계 Id와 사용자 목록을 조회합니다."
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "팔로워 목록 조회 성공"),
@@ -84,7 +85,7 @@ public class FollowController {
 
   @Operation(
       summary = "특정 사용자의 팔로잉 목록 조회",
-      description = "특정 사용자가 팔로우하는 사용자 목록을 조회합니다."
+      description = "특정 사용자가 팔로우하는 Follow 관계 Id와 사용자 목록을 조회합니다."
   )
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "팔로잉 목록 조회 성공"),

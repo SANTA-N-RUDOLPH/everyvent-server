@@ -6,8 +6,4 @@ public record FollowResponse(
     Long id,
     UserBasicResponse user
 ) {
-
-  public FollowResponse(Long id, Long userId, String userNickname) {
-    this(id, new UserBasicResponse(userId, userNickname));
-  }
 }
