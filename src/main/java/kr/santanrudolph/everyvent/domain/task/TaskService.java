@@ -316,7 +316,7 @@ public class TaskService {
     if (command.name() != null && !command.name().isBlank()) {
       task.updateName(command.name());
     }
-    if (command.day() != null) {
+    if (command.day() != null && !command.day().equals(task.getDay())) {
       YearMonth yearMonth = YearMonth.from(task.getCalendar().getStartDate());
       LocalDate changedDate = yearMonth.atDay(command.day());
       validateDailyTaskLimit(task.getCalendar(), changedDate, changedDate);
