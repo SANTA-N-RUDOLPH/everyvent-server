@@ -1,11 +1,9 @@
 package kr.santanrudolph.everyvent.domain.follow;
 
 import java.util.List;
-
-import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
-
 import java.util.Optional;
 
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -28,7 +26,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
   int countActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
   @Query(
-      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(u.id, u.nickname, u.introduction)) "
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction) "
           +
           "FROM Follow f " +
           "JOIN f.follower u " +
@@ -36,7 +34,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
   List<FollowResponse> findActiveFollowersByTargetId(@Param("targetId") Long targetId);
 
   @Query(
-      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(u.id, u.nickname, u.introduction)) "
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction) "
           +
           "FROM Follow f " +
           "JOIN f.target u " +
