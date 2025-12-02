@@ -9,16 +9,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Entity
 @Table(
         name = "tasks",
         indexes = {
-                @Index(name = "idx_calendar_day", columnList = "calendar_id, day")
+                @Index(name = "idx_calendar_day", columnList = "calendar_id, day_of_month")
         },
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_task_calendar_day_name",
-                        columnNames = {"calendar_id", "day", "name"}
+                        columnNames = {"calendar_id", "day_of_month", "name"}
                 )
         }
 )
@@ -37,11 +39,13 @@ public class Task extends BaseEntity {
   @Column(nullable = false, length = 30)
   private String name;
 
-  @Column(nullable = false)
+  @Column(name = "day_of_month", nullable = false)
   private int day;
 
   @Column(nullable = false)
   private boolean isCompleted = false;
+
+  private Instant deletedAt;
 
   private Task(Calendar calendar, String name, int day) {
     if (calendar == null) {
@@ -57,6 +61,10 @@ public class Task extends BaseEntity {
 
   public static Task create(Calendar calendar, String name, int day) {
     return new Task(calendar, name, day);
+  }
+
+  public void softDelete() {
+    this.deletedAt = Instant.now();
   }
 
   // 필드 업데이트 메서드
