@@ -35,7 +35,7 @@ public class TaskService {
   public TaskResponses createTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
     if (isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 태스크는 일반 생성 API에서 생성할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더 태스크는 일반 생성 API에서 생성할 수 없습니다.");
     }
 
     if (isPastOrSameStartMonth(calendar)) {
@@ -57,10 +57,10 @@ public class TaskService {
   public TaskResponses createOfficialTask(Long userId, TaskCreateRequest request) {
     Calendar calendar = getActiveCalendarOrThrow(request.calendarId());
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "일반 캘린더 태스크는 공식 생성 API에서 생성할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "일반 캘린더 태스크는 공식 생성 API에서 생성할 수 없습니다.");
     }
     if (isDeletedOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
     }
 
     if (isPastStartMonth(calendar)) {
@@ -84,7 +84,7 @@ public class TaskService {
 
     Calendar calendar = task.getCalendar();
     if (isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 태스크는 일반 조회 API에서 조회할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더 태스크는 일반 조회 API에서 조회할 수 없습니다.");
     }
 
     User user = getUserOrThrow(userId);
@@ -98,10 +98,10 @@ public class TaskService {
 
     Calendar calendar = task.getCalendar();
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "일반 캘린더 태스크는 공식 조회 API에서 조회할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "일반 캘린더 태스크는 공식 조회 API에서 조회할 수 없습니다.");
     }
     if (isDeletedOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
     }
 
     User user = getUserOrThrow(userId);
@@ -115,7 +115,7 @@ public class TaskService {
     Task task = getTaskOrThrow(taskId);
 
     if (isOfficialCalendar(task.getCalendar())) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 태스크는 일반 수정 API에서 수정할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더 태스크는 일반 수정 API에서 수정할 수 없습니다.");
     }
 
     if (isPastOrSameStartMonth(task.getCalendar())) {
@@ -136,10 +136,10 @@ public class TaskService {
 
     Calendar calendar = task.getCalendar();
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "일반 캘린더 태스크는 공식 수정 API에서 수정할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "일반 캘린더 태스크는 공식 수정 API에서 수정할 수 없습니다.");
     }
     if (isDeletedOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
     }
 
     if (isPastStartMonth(task.getCalendar())) {
@@ -176,7 +176,7 @@ public class TaskService {
 
     Calendar calendar = task.getCalendar();
     if (isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "공식 캘린더 태스크는 일반 삭제 API에서 삭제할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "공식 캘린더 태스크는 일반 삭제 API에서 삭제할 수 없습니다.");
     }
 
     if (isPastOrSameStartMonth(task.getCalendar())) {
@@ -195,10 +195,10 @@ public class TaskService {
 
     Calendar calendar = task.getCalendar();
     if (!isOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "일반 캘린더 태스크는 공식 삭제 API에서 삭제할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "일반 캘린더 태스크는 공식 삭제 API에서 삭제할 수 없습니다.");
     }
     if (isDeletedOfficialCalendar(calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 공식 캘린더에는 접근할 수 없습니다.");
     }
 
     User user = getUserOrThrow(userId);
@@ -219,7 +219,7 @@ public class TaskService {
             .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
 
     if (calendar.getDeletedAt() != null) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "이미 삭제된 캘린더입니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "이미 삭제된 캘린더입니다.");
     }
 
     return calendar;
