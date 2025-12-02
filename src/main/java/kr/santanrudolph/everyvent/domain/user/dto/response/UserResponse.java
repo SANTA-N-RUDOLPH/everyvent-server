@@ -10,17 +10,20 @@ public record UserResponse(
     String email,
     String introduction,
     String socialProvider,
-    String role
+    String role,
+    boolean isNicknameRequired
 ) {
 
   public static UserResponse from(User user) {
+
     return new UserResponse(
         user.getId(),
         user.getNickname(),
         user.getEmail(),
         user.getIntroduction(),
         user.getSocialProvider().name(),
-        user.getRole().name()
+        user.getRole().name(),
+        user.isNicknameRequired()
     );
   }
 }
