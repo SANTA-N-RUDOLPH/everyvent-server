@@ -67,7 +67,7 @@ class FollowRepositoryTest {
   @DisplayName("팔로워 목록 조회 테스트")
   class FindFollowersTest {
 
-    @DisplayName("follow_id, follower_id, follower_nickname 목록을 조회한다.")
+    @DisplayName("follow_id, follower_id, follower_nickname, follower_introduction 목록을 조회한다.")
     @Test
     void findFollowers_Success() {
       // given
@@ -84,10 +84,10 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname")
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
-              tuple(follow1.getId(), follower1.getId(), "follower1"),
-              tuple(follow2.getId(), follower2.getId(), "follower2"));
+              tuple(follow1.getId(), follower1.getId(), "follower1", null),
+              tuple(follow2.getId(), follower2.getId(), "follower2", null));
     }
 
     @DisplayName("팔로워가 없으면 빈 리스트를 반환한다.")
@@ -121,8 +121,8 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname")
-          .containsExactly(tuple(follow1.getId(), activeUser.getId(), activeUser.getNickname()));
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .containsExactly(tuple(follow1.getId(), activeUser.getId(), activeUser.getNickname(), null));
 
     }
 
@@ -149,10 +149,10 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname")
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
-              tuple(follow1.getId(), target1.getId(), target1.getNickname()),
-              tuple(follow2.getId(), target2.getId(), target2.getNickname()));
+              tuple(follow1.getId(), target1.getId(), target1.getNickname(), null),
+              tuple(follow2.getId(), target2.getId(), target2.getNickname(), null));
     }
 
     @DisplayName("팔로잉 하는 사람이 없으면 빈 리스트를 반환한다.")
@@ -186,8 +186,8 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname")
-          .containsExactly(tuple(follow1.getId(), target1.getId(), target1.getNickname()));
+          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .containsExactly(tuple(follow1.getId(), target1.getId(), target1.getNickname(), null));
     }
 
   }
