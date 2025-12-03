@@ -148,15 +148,7 @@ public class CalendarService {
     List<Calendar> calendars = calendarRepository.findCalendarsByUserIdInMonth(targetId, date);
 
     return calendars.stream()
-        .filter(calendar -> {
-          // 비회원: PUBLIC 캘린더만 접근 가능
-          if (viewer == null) {
-            return calendar.getVisibility() == Visibility.PUBLIC;
-          }
-
-          // 회원: 권한 확인
-          return canView(calendar, viewer, targetUser);
-        })
+        .filter(calendar -> canView(calendar, viewer, targetUser))
         .map(calendar -> toMonthlyAllCalendarStatsResponse(calendar, viewer))
         .toList();
   }
@@ -184,15 +176,7 @@ public class CalendarService {
     List<Calendar> calendars = calendarRepository.findCalendarsByUserIdInMonth(targetId, startDate);
 
     return calendars.stream()
-        .filter(calendar -> {
-          // 비회원: PUBLIC 캘린더만 접근 가능
-          if (viewer == null) {
-            return calendar.getVisibility() == Visibility.PUBLIC;
-          }
-
-          // 회원: 권한 확인
-          return canView(calendar, viewer, targetUser);
-        })
+        .filter(calendar -> canView(calendar, viewer, targetUser))
         .map(calendar -> toDailyTasksOfCalendarResponse(calendar, date, viewer, true))
         .toList();
   }
@@ -476,6 +460,10 @@ public class CalendarService {
   }
 
   private boolean canView(Calendar calendar, User viewer, User targetUser) {
+    // 비회원: PUBLIC 캘린더만 허용
+    if (viewer == null) {
+      return calendar.getVisibility() == Visibility.PUBLIC;
+    }
 
     if (isOwner(viewer, targetUser)) {
       return true;
