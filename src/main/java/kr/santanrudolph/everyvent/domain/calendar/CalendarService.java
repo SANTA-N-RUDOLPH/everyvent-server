@@ -104,14 +104,12 @@ public class CalendarService {
     return toCalendarResponse(calendar, isScrapable);
   }
 
-  public List<CalendarResponse> getMyCalendars(Long userId, int year, int month) {
+  public List<CalendarResponse> getMyCalendars(Long userId) {
 
     User user = getUserOrThrow(userId);
 
-    LocalDate date = LocalDate.of(year, month, 1);
-    log.info("조회 캘린더 기간 시작일: {}", date);
-
-    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserIdInMonth(user.getId(), date);
+    // TODO: ScrapedCalendar 구현 시, ScrapedCalendar도 response에 추가
+    List<Calendar> calendars = calendarRepository.findOriginalCalendarsByUserId(user.getId());
 
     return toCalendarResponseList(calendars, user, user);
   }

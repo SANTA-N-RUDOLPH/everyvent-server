@@ -1,6 +1,7 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Builder;
@@ -16,6 +17,8 @@ public class OriginalCalendarResponse extends CalendarResponse {
 
   @Builder
   private OriginalCalendarResponse(Long id,
+                                   Long userId,
+                                   CalendarType type,
                                    String title,
                                    String description,
                                    LocalDate startDate,
@@ -27,7 +30,7 @@ public class OriginalCalendarResponse extends CalendarResponse {
                                    LocalDate previewStartDate,
                                    LocalDate previewEndDate) {
 
-    super(id, title, description, startDate, endDate, visibility, color, category, isScrapable);
+    super(id, userId, type, title, description, startDate, endDate, visibility, color, category, isScrapable);
     this.previewStartDate = previewStartDate;
     this.previewEndDate = previewEndDate;
   }
@@ -35,6 +38,8 @@ public class OriginalCalendarResponse extends CalendarResponse {
   public static OriginalCalendarResponse from(OriginalCalendar calendar, boolean isScrapable) {
     return OriginalCalendarResponse.builder()
         .id(calendar.getId())
+        .userId(calendar.getUser().getId())
+        .type(CalendarType.ORIGINAL)
         .title(calendar.getTitle())
         .description(calendar.getDescription())
         .startDate(calendar.getStartDate())

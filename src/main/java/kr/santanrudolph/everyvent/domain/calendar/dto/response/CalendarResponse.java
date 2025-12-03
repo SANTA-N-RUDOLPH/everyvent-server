@@ -4,6 +4,7 @@ import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.DistributedCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -16,6 +17,8 @@ import java.time.LocalDate;
 public abstract class CalendarResponse {
 
   private Long id;
+  private Long userId;
+  private CalendarType type;
   private String title;
   private String description;
   private LocalDate startDate;
@@ -26,6 +29,8 @@ public abstract class CalendarResponse {
   private Boolean isScrapable;
 
   protected CalendarResponse(Long id,
+                             Long userId,
+                             CalendarType type,
                              String title,
                              String description,
                              LocalDate startDate,
@@ -35,6 +40,8 @@ public abstract class CalendarResponse {
                              Category category,
                              Boolean isScrapable) {
       this.id = id;
+      this.userId = userId;
+      this.type = type;
       this.title = title;
       this.description = description;
       this.startDate = startDate;
