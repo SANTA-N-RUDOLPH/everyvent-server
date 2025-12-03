@@ -246,7 +246,7 @@ public class CalendarService {
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더를 찾을 수 없습니다."));
 
     if (calendar.getDeletedAt() != null) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "이미 삭제된 캘린더입니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "이미 삭제된 캘린더입니다.");
     }
 
     return calendar;
