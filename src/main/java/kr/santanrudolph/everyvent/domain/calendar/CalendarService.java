@@ -140,12 +140,12 @@ public class CalendarService {
   }
 
   public List<CalendarResponse> getOfficialCalendars(int year, int month, Long adminId) {
+  public List<CalendarResponse> getOfficialCalendars(Long adminId) {
 
     User admin = getUserOrThrow(adminId);
     validateAdminRole(admin);
 
-    LocalDate date = LocalDate.of(year, month, 1);
-    List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllByPeriod(date);
+    List<OfficialCalendar> officialEntities = officialCalendarRepository.findAllOfficialCalendars();
     List<Calendar> officialCalendars = officialEntities.stream()
         .map(OfficialCalendar::getOriginalCalendar)
         .collect(Collectors.toList());

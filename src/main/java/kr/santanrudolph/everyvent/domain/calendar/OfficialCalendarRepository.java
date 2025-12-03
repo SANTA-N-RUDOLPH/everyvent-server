@@ -18,12 +18,9 @@ public interface OfficialCalendarRepository extends JpaRepository<OfficialCalend
   @Query("""
     SELECT officialCalendar
     FROM OfficialCalendar officialCalendar
-    WHERE officialCalendar.originalCalendar.startDate = :start
-      AND officialCalendar.deletedAt IS NULL
+    WHERE officialCalendar.deletedAt IS NULL
   """)
-  List<OfficialCalendar> findAllByPeriod(
-          @Param("start") LocalDate start
-  );
+  List<OfficialCalendar> findAllOfficialCalendars();
 
   boolean existsByOriginalCalendarId(Long calendarId);
 }
