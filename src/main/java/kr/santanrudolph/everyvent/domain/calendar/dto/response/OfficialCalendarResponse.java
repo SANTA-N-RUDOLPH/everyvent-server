@@ -2,6 +2,7 @@ package kr.santanrudolph.everyvent.domain.calendar.dto.response;
 
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.Builder;
@@ -17,6 +18,8 @@ public class OfficialCalendarResponse extends CalendarResponse {
 
   @Builder
   private OfficialCalendarResponse(Long id,
+                                   Long userId,
+                                   CalendarType type,
                                    String title,
                                    String description,
                                    LocalDate startDate,
@@ -26,7 +29,7 @@ public class OfficialCalendarResponse extends CalendarResponse {
                                    Category category,
                                    Boolean isScrapable,
                                    Instant distributedAt) {
-    super(id, title, description, startDate, endDate, visibility, color, category, isScrapable);
+    super(id, userId, type, title, description, startDate, endDate, visibility, color, category, isScrapable);
     this.distributedAt = distributedAt;
   }
 
@@ -35,6 +38,8 @@ public class OfficialCalendarResponse extends CalendarResponse {
     OriginalCalendar original = calendar.getOriginalCalendar();
     return OfficialCalendarResponse.builder()
         .id(original.getId())
+        .userId(original.getUser().getId())
+        .type(CalendarType.OFFICIAL)
         .title(original.getTitle())
         .description(original.getDescription())
         .startDate(original.getStartDate())
