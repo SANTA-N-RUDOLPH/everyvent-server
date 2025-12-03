@@ -35,7 +35,9 @@ public class SecurityConfig {
           auth
               .requestMatchers("/", "/error", "/favicon.ico").permitAll()
               .requestMatchers("/h2-console/**").permitAll()
-              .requestMatchers("/api/auth/**").permitAll();
+              .requestMatchers("/api/auth/**").permitAll()
+              .requestMatchers("/api/calendars/stats/monthly/user/**").permitAll()
+              .requestMatchers("/api/calendars/tasks/daily/user/**").permitAll();
 
           // dev 또는 local 프로파일일 때만 개발용 API 허용 (활성/기본 프로파일 모두 고려)
           if (environment.acceptsProfiles("dev", "local")) {
