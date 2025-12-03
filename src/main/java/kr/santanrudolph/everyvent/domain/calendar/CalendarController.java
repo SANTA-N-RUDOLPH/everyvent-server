@@ -137,6 +137,7 @@ public class CalendarController {
   }
 
   @Operation(summary = "공식 캘린더 목록 조회 (관리자용)", description = "관리자가 특정 년/월의 공식 캘린더 목록을 조회합니다.")
+  @Operation(summary = "공식 캘린더 목록 조회 (관리자용)", description = "관리자가 생성한 모든 공식 캘린더 목록을 조회합니다.")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "조회 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 요청 형식 오류"),
@@ -144,12 +145,9 @@ public class CalendarController {
       @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
   })
   @GetMapping("/official")
-  public ResponseEntity<List<CalendarResponse>> getOfficialCalendars(
-      @RequestParam int year,
-      @RequestParam int month
-  ) {
+  public ResponseEntity<List<CalendarResponse>> getOfficialCalendars() {
     Long adminId = AuthenticationUtil.getCurrentUserId();
-    List<CalendarResponse> responses = calendarService.getOfficialCalendars(year, month, adminId);
+    List<CalendarResponse> responses = calendarService.getOfficialCalendars(adminId);
     return ResponseEntity.ok(responses);
   }
 
