@@ -37,6 +37,29 @@ public class AuthenticationUtil {
     }
   }
 
+  public static Long getCurrentUserIdOrNull() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication == null || !authentication.isAuthenticated()) {
+      return null;
+    }
+
+    Object principal = authentication.getPrincipal();
+    if (principal == null || ANONYMOUS_USER.equals(principal)) {
+      return null;
+    }
+
+    try {
+      return (Long) principal;
+    } catch (ClassCastException e) {
+      throw new EveryventException(
+          ErrorCode.INTERNAL_SERVER_ERROR,
+          "인증 정보의 Principal이 예상 타입(Long)이 아닙니다. 현재 타입: "
+              + authentication.getPrincipal().getClass().getSimpleName()
+      );
+    }
+  }
+
   public static boolean isAuthenticated() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
