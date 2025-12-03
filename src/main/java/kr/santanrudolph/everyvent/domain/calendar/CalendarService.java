@@ -207,8 +207,13 @@ public class CalendarService {
       throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 삭제할 권한이 없습니다.");
     }
 
+    List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
+
     calendar.softDelete();
+    tasks.forEach(Task::softDelete);
+
     calendarRepository.save(calendar);
+    taskRepository.saveAll(tasks);
   }
 
   @Transactional
@@ -217,11 +222,15 @@ public class CalendarService {
     OfficialCalendar official = getOfficialCalendarOrThrow(calendarId, adminId);
     OriginalCalendar calendar = official.getOriginalCalendar();
 
+    List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
+
     calendar.softDelete();
     official.softDelete();
+    tasks.forEach(Task::softDelete);
 
     calendarRepository.save(calendar);
     officialCalendarRepository.save(official);
+    taskRepository.saveAll(tasks);
   }
 
   // ==================== Private Helper Methods ====================
