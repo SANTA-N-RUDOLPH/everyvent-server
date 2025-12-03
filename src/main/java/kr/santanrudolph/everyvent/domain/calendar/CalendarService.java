@@ -357,11 +357,11 @@ public class CalendarService {
         request.getDescription(),
         startDate,
         endDate,
+        previewStartDate,
+        previewEndDate,
         request.getVisibility(),
         request.getColor(),
-        request.getCategory(),
-        previewStartDate,
-        previewEndDate
+        request.getCategory()
     );
   }
 

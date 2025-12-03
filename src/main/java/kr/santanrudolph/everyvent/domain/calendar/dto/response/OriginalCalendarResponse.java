@@ -23,12 +23,12 @@ public class OriginalCalendarResponse extends CalendarResponse {
                                    String description,
                                    LocalDate startDate,
                                    LocalDate endDate,
+                                   LocalDate previewStartDate,
+                                   LocalDate previewEndDate,
                                    Visibility visibility,
                                    String color,
                                    Category category,
-                                   Boolean isScrapable,
-                                   LocalDate previewStartDate,
-                                   LocalDate previewEndDate) {
+                                   Boolean isScrapable) {
 
     super(id, userId, type, title, description, startDate, endDate, visibility, color, category, isScrapable);
     this.previewStartDate = previewStartDate;
@@ -44,12 +44,12 @@ public class OriginalCalendarResponse extends CalendarResponse {
         .description(calendar.getDescription())
         .startDate(calendar.getStartDate())
         .endDate(calendar.getEndDate())
+        .previewStartDate(calendar.getPreviewStartDate())
+        .previewEndDate(calendar.getPreviewEndDate())
         .visibility(calendar.getVisibility())
         .color(calendar.getColor())
         .category(calendar.getCategory())
         .isScrapable(isScrapable)
-        .previewStartDate(calendar.getPreviewStartDate())
-        .previewEndDate(calendar.getPreviewEndDate())
         .build();
   }
 }
