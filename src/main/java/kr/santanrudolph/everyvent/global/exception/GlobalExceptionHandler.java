@@ -18,22 +18,11 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  private static final String LOG_FORMAT = """
-      \n\t{
-          "RequestURI": "{} {}",
-          "RequestBody": {},
-          "ErrorMessage": "{}"
-      \t}
-      """;
-
   @ExceptionHandler(EveryventException.class)
-  public ResponseEntity<ErrorResponse> handleEveryventException(
-      HttpServletRequest request,
-      EveryventException e
+  public ResponseEntity<ErrorResponse> handleEveryventException(EveryventException e
   ) {
     ErrorCode errorCode = e.getErrorCode();
-    log.warn(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request),
-        e.getMessage());
+    log.warn(e.getMessage(), e.getDetail());
 
     ErrorResponse response = e.getDetail() != null
         ? ErrorResponse.of(errorCode, e.getDetail())
@@ -53,7 +42,7 @@ public class GlobalExceptionHandler {
         .map(error -> error.getField() + ": " + error.getDefaultMessage())
         .collect(Collectors.joining(", "));
 
-    log.warn(LOG_FORMAT, request.getMethod(), request.getRequestURI(),
+    log.warn(request.getMethod(), request.getRequestURI(),
         getRequestBody(request), detail);
 
     return ResponseEntity
@@ -69,7 +58,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleException(HttpServletRequest request, Exception e) {
-    log.error(LOG_FORMAT, request.getMethod(), request.getRequestURI(), getRequestBody(request),
+    log.error(request.getMethod(), request.getRequestURI(), getRequestBody(request),
         e.getMessage(), e);
 
     return ResponseEntity
