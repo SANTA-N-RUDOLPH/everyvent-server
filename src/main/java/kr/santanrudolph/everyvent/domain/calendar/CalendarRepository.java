@@ -31,6 +31,16 @@ public interface CalendarRepository extends JpaRepository<Calendar, Long> {
   @Query("""
   SELECT c FROM OriginalCalendar c
   WHERE c.user.id = :userId
+    AND c.deletedAt IS NULL
+    AND NOT EXISTS (
+        SELECT 1 FROM OfficialCalendar o WHERE o.originalCalendar.id = c.id
+    )
+  """)
+  List<Calendar> findOriginalCalendarsByUserId(@Param("userId") Long userId);
+
+  @Query("""
+  SELECT c FROM OriginalCalendar c
+  WHERE c.user.id = :userId
     AND c.startDate = :startDate
     AND c.deletedAt IS NULL
     AND NOT EXISTS (
