@@ -26,11 +26,11 @@ public class OriginalCalendar extends Calendar {
                           String description,
                           LocalDate startDate,
                           LocalDate endDate,
+                          LocalDate previewStartDate,
+                          LocalDate previewEndDate,
                           Visibility visibility,
                           String color,
-                          Category category,
-                          LocalDate previewStartDate,
-                          LocalDate previewEndDate) {
+                          Category category) {
     super(user, title, description, startDate, endDate, visibility, color, category);
     updatePreviewPeriod(previewStartDate, previewEndDate);
   }
