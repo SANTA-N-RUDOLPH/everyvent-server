@@ -7,14 +7,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.domain.calendar.dto.request.OriginalCalendarRequest;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.CalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.DistributedCalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.OfficialCalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.OriginalCalendarResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.response.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "캘린더", description = "캘린더 관련 API")
@@ -136,7 +134,81 @@ public class CalendarController {
     return ResponseEntity.ok(responses);
   }
 
-  @Operation(summary = "공식 캘린더 목록 조회 (관리자용)", description = "관리자가 특정 년/월의 공식 캘린더 목록을 조회합니다.")
+  @Operation(
+      summary = "모든 캘린더 월간 통계 조회",
+      description = """
+       특정 사용자가 가진 모든 캘린더의 월간 태스크 통계 정보(태스크 개수 및 완료 여부)를 조회합니다.
+       로그인하지 않아도 데이터를 확인할 수 있습니다.
+       """
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 조회 권한 없음"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
+  })
+  @GetMapping("/stats/monthly/user/{targetId}")
+  public ResponseEntity<List<MonthlyCalendarStatsResponse>> getAllMonthlyStats(
+      @PathVariable Long targetId,
+      @RequestParam int year,
+      @RequestParam int month
+  ) {
+    Long viewerId = AuthenticationUtil.getCurrentUserIdOrNull();
+    List<MonthlyCalendarStatsResponse> responses = calendarService.getAllMonthlyStats(viewerId, targetId, year, month);
+    return ResponseEntity.ok(responses);
+  }
+
+  @Operation(summary = "단일 캘린더 월간 통계 조회", description = "특정 캘린더의 월간 태스크 통계 정보(태스크 개수)를 조회합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 조회 권한 없음"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자/캘린더를 찾을 수 없음")
+  })
+  @GetMapping("/stats/monthly/calendar/{calendarId}")
+  public ResponseEntity<MonthlyCalendarResponse> getMonthlyStats(
+      @PathVariable Long calendarId
+  ) {
+    Long viewerId = AuthenticationUtil.getCurrentUserId();
+    MonthlyCalendarResponse response = calendarService.getMonthlyStats(viewerId, calendarId);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "모든 캘린더 특정 날짜 태스크 조회",
+      description = """
+       특정 사용자가 가진 모든 캘린더에서 지정한 날짜의 태스크를 조회합니다.
+       로그인하지 않아도 데이터를 확인할 수 있습니다.
+       """
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 조회 권한 없음"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
+  })
+  @GetMapping("/tasks/daily/user/{targetId}")
+  public ResponseEntity<List<DailyTasksOfCalendarResponse>> getDailyTasksOfAllCalendars(
+      @PathVariable Long targetId,
+      @RequestParam LocalDate date
+  ) {
+    Long viewerId = AuthenticationUtil.getCurrentUserIdOrNull();
+    List<DailyTasksOfCalendarResponse> responses = calendarService.getDailyTasksOfAllCalendars(viewerId, targetId, date);
+    return ResponseEntity.ok(responses);
+  }
+
+  @Operation(summary = "단일 캘린더 특정 날짜 태스크 조회", description = "특정 캘린더에서 지정한 날짜의 태스크를 조회합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 조회 권한 없음"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자/캘린더를 찾을 수 없음")
+  })
+  @GetMapping("/tasks/daily/calendar/{calendarId}")
+  public ResponseEntity<DailyTasksOfCalendarResponse> getDailyTasksOfCalendar(
+      @PathVariable Long calendarId,
+      @RequestParam LocalDate date
+  ) {
+    Long viewerId = AuthenticationUtil.getCurrentUserId();
+    DailyTasksOfCalendarResponse response = calendarService.getDailyTasksOfCalendar(viewerId, calendarId, date);
+    return ResponseEntity.ok(response);
+  }
+
   @Operation(summary = "공식 캘린더 목록 조회 (관리자용)", description = "관리자가 생성한 모든 공식 캘린더 목록을 조회합니다.")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -149,6 +221,39 @@ public class CalendarController {
     Long adminId = AuthenticationUtil.getCurrentUserId();
     List<CalendarResponse> responses = calendarService.getOfficialCalendars(adminId);
     return ResponseEntity.ok(responses);
+  }
+
+  @Operation(summary = "공식 캘린더 월간 통계 조회 (관리자용)",
+      description = "관리자가 등록한 특정 공식 캘린더의 월간 태스크 통계 정보(태스크 개수)를 조회합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자만 조회 가능"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
+  })
+  @GetMapping("/official/stats/monthly/{calendarId}")
+  public ResponseEntity<MonthlyCalendarResponse> getOfficialMonthlyStats(
+      @PathVariable Long calendarId
+  ) {
+    Long adminId = AuthenticationUtil.getCurrentUserId();
+    MonthlyCalendarResponse response = calendarService.getOfficialMonthlyStats(adminId, calendarId);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "공식 캘린더 특정 날짜 태스크 조회 (관리자용)",
+      description = "관리자가 등록한 특정 공식 캘린더에서 지정한 날짜의 태스크를 조회합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자만 조회 가능"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자/캘린더를 찾을 수 없음")
+  })
+  @GetMapping("/official/tasks/daily/{calendarId}")
+  public ResponseEntity<DailyTasksOfCalendarResponse> getOfficialDailyTasksOfCalendar(
+      @PathVariable Long calendarId,
+      @RequestParam LocalDate date
+  ) {
+    Long adminId = AuthenticationUtil.getCurrentUserId();
+    DailyTasksOfCalendarResponse response = calendarService.getOfficialDailyTasksOfCalendar(adminId, calendarId, date);
+    return ResponseEntity.ok(response);
   }
 
   @Operation(summary = "원본 캘린더 수정", description = "로그인한 사용자가 생성한 원본 캘린더를 수정합니다.")
