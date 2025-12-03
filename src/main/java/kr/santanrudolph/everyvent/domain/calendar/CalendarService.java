@@ -1,17 +1,17 @@
 package kr.santanrudolph.everyvent.domain.calendar;
 
 import kr.santanrudolph.everyvent.domain.calendar.dto.request.OriginalCalendarRequest;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.CalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.DistributedCalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.OfficialCalendarResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.response.OriginalCalendarResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.response.*;
 import kr.santanrudolph.everyvent.domain.calendar.entity.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.DistributedCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
+import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.task.Task;
 import kr.santanrudolph.everyvent.domain.task.TaskRepository;
+import kr.santanrudolph.everyvent.domain.task.dto.response.TaskResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -139,7 +139,77 @@ public class CalendarService {
     return toCalendarResponseList(new ArrayList<>(distributedCalendars), viewer, targetUser);
   }
 
-  public List<CalendarResponse> getOfficialCalendars(int year, int month, Long adminId) {
+  public List<MonthlyCalendarStatsResponse> getAllMonthlyStats(Long userId, Long targetId, int year, int month) {
+
+    User viewer = userId != null ? getUserOrThrow(userId) : null;
+    User targetUser = getUserOrThrow(targetId);
+
+    LocalDate date = LocalDate.of(year, month, 1);
+    List<Calendar> calendars = calendarRepository.findCalendarsByUserIdInMonth(targetId, date);
+
+    return calendars.stream()
+        .filter(calendar -> {
+          // 비회원: PUBLIC 캘린더만 접근 가능
+          if (viewer == null) {
+            return calendar.getVisibility() == Visibility.PUBLIC;
+          }
+
+          // 회원: 권한 확인
+          return canView(calendar, viewer, targetUser);
+        })
+        .map(calendar -> toMonthlyAllCalendarStatsResponse(calendar, viewer))
+        .toList();
+  }
+
+  public MonthlyCalendarResponse getMonthlyStats(Long userId, Long calendarId) {
+
+    User viewer = getUserOrThrow(userId);
+
+    Calendar calendar = getActiveCalendarOrThrow(calendarId);
+
+    if (!canView(calendar, viewer, calendar.getUser())) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
+    }
+
+    return toMonthlyCalendarStatsResponse(calendar, viewer, true);
+  }
+
+  public List<DailyTasksOfCalendarResponse> getDailyTasksOfAllCalendars(Long userId, Long targetId, LocalDate date) {
+
+    User viewer = userId != null ? getUserOrThrow(userId) : null;
+    User targetUser = getUserOrThrow(targetId);
+
+    LocalDate startDate = LocalDate.of(date.getYear(), date.getMonth(), 1);
+
+    List<Calendar> calendars = calendarRepository.findCalendarsByUserIdInMonth(targetId, startDate);
+
+    return calendars.stream()
+        .filter(calendar -> {
+          // 비회원: PUBLIC 캘린더만 접근 가능
+          if (viewer == null) {
+            return calendar.getVisibility() == Visibility.PUBLIC;
+          }
+
+          // 회원: 권한 확인
+          return canView(calendar, viewer, targetUser);
+        })
+        .map(calendar -> toDailyTasksOfCalendarResponse(calendar, date, viewer, true))
+        .toList();
+  }
+
+  public DailyTasksOfCalendarResponse getDailyTasksOfCalendar(Long userId, Long calendarId, LocalDate date) {
+
+    User viewer = getUserOrThrow(userId);
+
+    Calendar calendar = getActiveCalendarOrThrow(calendarId);
+
+    if (!canView(calendar, viewer, calendar.getUser())) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더를 조회할 권한이 없습니다.");
+    }
+
+    return toDailyTasksOfCalendarResponse(calendar, date, viewer, true);
+  }
+
   public List<CalendarResponse> getOfficialCalendars(Long adminId) {
 
     User admin = getUserOrThrow(adminId);
@@ -151,6 +221,26 @@ public class CalendarService {
         .collect(Collectors.toList());
 
     return toCalendarResponseList(officialCalendars, admin, admin);
+  }
+
+  public MonthlyCalendarResponse getOfficialMonthlyStats(Long adminId, Long calendarId) {
+
+    User admin = getUserOrThrow(adminId);
+
+    OfficialCalendar officialCalendar = getOfficialCalendarOrThrow(calendarId, adminId);
+    Calendar calendar = officialCalendar.getOriginalCalendar();
+
+    return toMonthlyCalendarStatsResponse(calendar, admin, false);
+  }
+
+  public DailyTasksOfCalendarResponse getOfficialDailyTasksOfCalendar(Long adminId, Long calendarId, LocalDate date) {
+
+    User admin = getUserOrThrow(adminId);
+
+    OfficialCalendar officialCalendar = getOfficialCalendarOrThrow(calendarId, adminId);
+    Calendar calendar = officialCalendar.getOriginalCalendar();
+
+    return toDailyTasksOfCalendarResponse(calendar, date, admin, false);
   }
 
   @Transactional
@@ -190,7 +280,7 @@ public class CalendarService {
     return toCalendarResponse(calendar, false);
   }
 
-  // TODO: 추후 ScrapCalendar 구현 시, updateScrapedCalendar 추가
+  // TODO: 추후 ScrapedCalendar 구현 시, updateScrapedCalendar 추가
 
   @Transactional
   public void deleteOriginalCalendar(Long userId, Long calendarId) {
@@ -304,7 +394,7 @@ public class CalendarService {
 
   private void validateMonthlyCalendarLimit(Long userId, OriginalCalendarRequest request) {
     long userMonthlyCalendarCount = calendarRepository
-            .countByUserIdInMonth(userId, request.getStartDate());
+        .countByUserIdInMonth(userId, request.getStartDate());
 
     if (userMonthlyCalendarCount >= 3) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더는 최대 3개까지 생성할 수 있습니다.");
@@ -327,11 +417,61 @@ public class CalendarService {
     }
   }
 
+  private List<Task> filterTasksByCalendarMonth(Calendar calendar, List<Task> tasks, User viewer) {
+
+    LocalDate now = LocalDate.now();
+    YearMonth calendarMonth = YearMonth.from(calendar.getStartDate());
+    YearMonth nowMonth = YearMonth.from(now);
+
+    boolean isOwner = isCalendarOwner(viewer, calendar);
+
+    // 1) 현재 달 → 오늘 날짜까지만 공개
+    if (calendarMonth.equals(nowMonth)) {
+      int today = now.getDayOfMonth();
+      return tasks.stream()
+          .filter(task -> task.getDay() <= today)
+          .toList();
+    }
+
+    // 2) 과거 달 → 전체 공개
+    if (calendarMonth.isBefore(nowMonth)) {
+      return tasks;
+    }
+
+    // 3) 미래 달
+    // 3-1) 자신의 캘린더 → 전체 공개
+    if (isOwner) {
+      return tasks;
+    }
+
+    // 3-2) 다른 사용자의 캘린더 → preview 기간만 공개
+    LocalDate previewStartTemp = null;
+    LocalDate previewEndTemp = null;
+
+    if (calendar instanceof OriginalCalendar originalCalendar) {
+      previewStartTemp = originalCalendar.getPreviewStartDate();
+      previewEndTemp = originalCalendar.getPreviewEndDate();
+    }
+
+    final LocalDate previewStart = previewStartTemp;
+    final LocalDate previewEnd = previewEndTemp;
+
+    return tasks.stream()
+        .filter(task -> {
+          LocalDate taskDate = calendar.getStartDate().withDayOfMonth(task.getDay());
+          return !taskDate.isBefore(previewStart) && !taskDate.isAfter(previewEnd);
+        })
+        .toList();
+  }
+
   private boolean isOwner(User viewer, User targetUser) {
     return viewer.getId().equals(targetUser.getId());
   }
 
   private boolean isCalendarOwner(User user, Calendar calendar) {
+    if(user == null){
+      return false;
+    }
     return Objects.equals(calendar.getUser().getId(), user.getId());
   }
 
@@ -347,6 +487,18 @@ public class CalendarService {
       case FOLLOWER -> followService.isFollowing(viewer.getId(), targetUser.getId());
       case PRIVATE -> false;
     };
+  }
+
+  private CalendarType determineCalendarType(Calendar calendar) {
+    if (calendar instanceof OriginalCalendar) {
+      OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
+          .orElse(null);
+      return (official != null) ? CalendarType.OFFICIAL : CalendarType.ORIGINAL;
+    } else if (calendar instanceof DistributedCalendar) {
+      return CalendarType.DISTRIBUTED;
+    } else {
+      return CalendarType.SCRAPED;
+    }
   }
 
   // 생성/업데이트 관련
@@ -420,6 +572,23 @@ public class CalendarService {
     originalCalendar.updateCategory(request.getCategory());
   }
 
+  private Map<Integer, DailyTaskStats> aggregateDailyTaskStats(List<Task> tasks) {
+    return tasks.stream()
+        .collect(Collectors.groupingBy(
+            Task::getDay,
+            TreeMap::new,
+            Collectors.collectingAndThen(
+                Collectors.toList(),
+                list -> {
+                  int total = list.size();
+                  int completed = (int) list.stream().filter(Task::isCompleted).count();
+                  int pending = total - completed;
+                  return new DailyTaskStats(total, completed, pending);
+                }
+            )
+        ));
+  }
+
   // DTO 변환
   private CalendarResponse toCalendarResponse(Calendar calendar, boolean isScrapable) {
 
@@ -440,6 +609,65 @@ public class CalendarService {
           return toCalendarResponse(calendar, isScrapable);
         })
         .toList();
+  }
+
+  private MonthlyCalendarStatsResponse toMonthlyAllCalendarStatsResponse(Calendar calendar, User viewer) {
+
+    List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
+    tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+    Map<Integer, DailyTaskStats> dayStatus = aggregateDailyTaskStats(tasks);
+
+    CalendarType type = determineCalendarType(calendar);
+
+    boolean isScrapable = type == CalendarType.ORIGINAL
+        && calendar.isScrapable()
+        && !isCalendarOwner(viewer, calendar);
+
+    return MonthlyCalendarStatsResponse.from(calendar, type, isScrapable, dayStatus);
+  }
+
+  private MonthlyCalendarResponse toMonthlyCalendarStatsResponse(Calendar calendar, User viewer, boolean filtering) {
+
+    List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
+    if (filtering) {
+      tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+    }
+    Map<Integer, Integer> dayTaskCount = tasks.stream()
+        .collect(Collectors.groupingBy(
+            Task::getDay,
+            TreeMap::new,
+            Collectors.collectingAndThen(Collectors.toList(), List::size)
+        ));
+
+    CalendarType type = determineCalendarType(calendar);
+
+    boolean isScrapable = type == CalendarType.ORIGINAL
+        && calendar.isScrapable()
+        && !isCalendarOwner(viewer, calendar);
+
+    return MonthlyCalendarResponse.from(calendar, type, isScrapable, dayTaskCount);
+  }
+
+  private DailyTasksOfCalendarResponse toDailyTasksOfCalendarResponse(Calendar calendar,
+                                                                      LocalDate date,
+                                                                      User viewer,
+                                                                      boolean filtering) {
+
+    List<Task> tasks = taskRepository.findByCalendarIdAndDay(calendar.getId(), date.getDayOfMonth());
+    if (filtering) {
+      tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+    }
+    List<TaskResponse> taskResponses = tasks.stream()
+        .map(TaskResponse::from)
+        .toList();
+
+    CalendarType type = determineCalendarType(calendar);
+
+    boolean isScrapable = type == CalendarType.ORIGINAL
+        && calendar.isScrapable()
+        && !isCalendarOwner(viewer, calendar);
+
+    return DailyTasksOfCalendarResponse.from(calendar, type, date, isScrapable, taskResponses);
   }
 
 }

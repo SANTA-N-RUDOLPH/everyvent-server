@@ -29,6 +29,20 @@ public interface CalendarRepository extends JpaRepository<Calendar, Long> {
       @Param("startDate") LocalDate startDate);
 
   @Query("""
+    SELECT c FROM Calendar c
+    WHERE c.user.id = :userId
+      AND c.startDate = :startDate
+      AND c.deletedAt IS NULL
+      AND c.id NOT IN (
+        SELECT oc.id FROM OriginalCalendar oc
+        JOIN OfficialCalendar ofc ON ofc.originalCalendar.id = oc.id
+      )
+  """)
+  List<Calendar> findCalendarsByUserIdInMonth(
+      @Param("userId") Long userId,
+      @Param("startDate") LocalDate startDate);
+
+  @Query("""
   SELECT c FROM OriginalCalendar c
   WHERE c.user.id = :userId
     AND c.deletedAt IS NULL
