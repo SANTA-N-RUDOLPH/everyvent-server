@@ -351,7 +351,7 @@ public class CalendarService {
             new EveryventException(ErrorCode.NOT_FOUND, "해당 캘린더는 존재하지 않거나 공식 캘린더가 아닙니다."));
 
     if (officialCalendar.getDeletedAt() != null) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
+      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 원본 캘린더엔 더 이상 접근할 수 없습니다.");
     }
 
     return officialCalendar;
