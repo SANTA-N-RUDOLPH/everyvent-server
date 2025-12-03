@@ -10,6 +10,8 @@ import kr.santanrudolph.everyvent.domain.calendar.entity.DistributedCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OfficialCalendar;
 import kr.santanrudolph.everyvent.domain.calendar.entity.OriginalCalendar;
 import kr.santanrudolph.everyvent.domain.follow.FollowService;
+import kr.santanrudolph.everyvent.domain.task.Task;
+import kr.santanrudolph.everyvent.domain.task.TaskRepository;
 import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -36,6 +38,7 @@ public class CalendarService {
   private final OfficialCalendarRepository officialCalendarRepository;
   private final UserRepository userRepository;
   private final FollowService followService;
+  private final TaskRepository taskRepository;
 
   @Transactional
   public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request) {
@@ -73,22 +76,21 @@ public class CalendarService {
   public List<DistributedCalendarResponse> distributeOfficialCalendar(Long adminId, Long calendarId) {
 
     OfficialCalendar officialCalendar = getOfficialCalendarOrThrow(calendarId, adminId);
-    OriginalCalendar originalCalendar = officialCalendar.getOriginalCalendar();
     validateDistribution(officialCalendar);
+
+    OriginalCalendar originalCalendar = officialCalendar.getOriginalCalendar();
 
     // 탈퇴하지 않은 사용자 중, 아직 해당 공식 캘린더 복제본을 가지지 않은 대상에게 배포
     List<User> targetUsers = userRepository.findTargetUsersForDistribution(originalCalendar.getId());
 
-    List<DistributedCalendar> calendarsToSave = targetUsers.stream()
-            .map(user -> DistributedCalendar.of(user, originalCalendar))
-            .collect(Collectors.toList());
+    List<DistributedCalendar> copies = createCalendarCopies(targetUsers, originalCalendar);
+    copyTasks(originalCalendar, copies);
 
-    List<DistributedCalendar> savedCalendars = calendarRepository.saveAll(calendarsToSave);
     officialCalendar.updateDistributedAt(Instant.now());
 
-    return savedCalendars.stream()
+    return copies.stream()
         .map(DistributedCalendarResponse::from)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public CalendarResponse getCalendar(Long calendarId, Long userId) {
@@ -363,6 +365,27 @@ public class CalendarService {
         request.getColor(),
         request.getCategory()
     );
+  }
+
+  private List<DistributedCalendar> createCalendarCopies(List<User> users, OriginalCalendar original) {
+    List<DistributedCalendar> list = users.stream()
+        .map(user -> DistributedCalendar.of(user, original))
+        .toList();
+    return calendarRepository.saveAll(list);
+  }
+
+  private void copyTasks(OriginalCalendar original, List<DistributedCalendar> copies) {
+    List<Task> originalTasks =
+        taskRepository.findByCalendarIdAndDeletedAtIsNull(original.getId());
+
+    List<Task> saveList = new ArrayList<>();
+    for (DistributedCalendar copy : copies) {
+      for (Task t : originalTasks) {
+        saveList.add(Task.create(copy, t.getName(), t.getDay()));
+      }
+    }
+
+    taskRepository.saveAll(saveList);
   }
 
   private void updateOriginalCalendar(OriginalCalendar originalCalendar,

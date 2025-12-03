@@ -56,7 +56,7 @@ public class CalendarController {
     return ResponseEntity.ok(response);
   }
 
-  @Operation(summary = "공식 캘린더 배포", description = "관리자가 생성한 공식 캘린더를 모든 일반 사용자에게 배포합니다.")
+  @Operation(summary = "공식 캘린더 배포 (관리자용)", description = "관리자가 생성한 공식 캘린더를 모든 일반 사용자에게 배포합니다.")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "공식 캘린더 배포 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 캘린더 배포 가능 기간 제한"),
