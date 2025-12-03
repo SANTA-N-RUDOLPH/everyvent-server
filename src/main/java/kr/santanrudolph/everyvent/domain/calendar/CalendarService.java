@@ -431,7 +431,10 @@ public class CalendarService {
   private List<CalendarResponse> toCalendarResponseList(List<Calendar> calendars, User viewer, User targetUser) {
     return calendars.stream()
         .filter(calendar -> canView(calendar, viewer, targetUser))
-        .sorted(Comparator.comparingLong(Calendar::getId))
+        .sorted(
+            Comparator.comparing(Calendar::getStartDate)
+                .thenComparingLong(Calendar::getId)
+        )
         .map(calendar -> {
           boolean isScrapable = calendar.isScrapable() && !isCalendarOwner(viewer, calendar);
           return toCalendarResponse(calendar, isScrapable);
