@@ -19,6 +19,7 @@ import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class CalendarService {
   private final UserRepository userRepository;
   private final FollowService followService;
   private final TaskRepository taskRepository;
+  private final JdbcTemplate jdbcTemplate;
 
   @Transactional
   public OriginalCalendarResponse createCalendar(Long userId, OriginalCalendarRequest request) {
@@ -84,7 +86,7 @@ public class CalendarService {
     List<User> targetUsers = userRepository.findTargetUsersForDistribution(originalCalendar.getId());
 
     List<DistributedCalendar> copies = createCalendarCopies(targetUsers, originalCalendar);
-    copyTasks(originalCalendar, copies);
+    copyTasksBulk(originalCalendar.getId());
 
     officialCalendar.updateDistributedAt(Instant.now());
 
@@ -524,18 +526,19 @@ public class CalendarService {
     return calendarRepository.saveAll(list);
   }
 
-  private void copyTasks(OriginalCalendar original, List<DistributedCalendar> copies) {
-    List<Task> originalTasks =
-        taskRepository.findByCalendarIdAndDeletedAtIsNull(original.getId());
-
-    List<Task> saveList = new ArrayList<>();
-    for (DistributedCalendar copy : copies) {
-      for (Task t : originalTasks) {
-        saveList.add(Task.create(copy, t.getName(), t.getDay()));
-      }
-    }
-
-    taskRepository.saveAll(saveList);
+  private void copyTasksBulk(Long originalCalendarId) {
+    String sql = """
+        INSERT INTO tasks (calendar_id, name, day_of_month, is_completed, created_at, updated_at)
+        SELECT c.id, t.name, t.day_of_month, t.is_completed, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM tasks t
+        JOIN calendar c
+          ON c.original_calendar_id = t.calendar_id
+        LEFT JOIN tasks existing
+          ON existing.calendar_id = c.id
+        WHERE t.calendar_id = ?
+          AND existing.id IS NULL;
+        """;
+    jdbcTemplate.update(sql, originalCalendarId);
   }
 
   private void updateOriginalCalendar(OriginalCalendar originalCalendar,
