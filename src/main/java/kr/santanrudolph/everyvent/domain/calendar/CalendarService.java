@@ -401,53 +401,6 @@ public class CalendarService {
     }
   }
 
-  private List<Task> filterTasksByCalendarMonth(Calendar calendar, List<Task> tasks, User viewer) {
-
-    LocalDate now = LocalDate.now();
-    YearMonth calendarMonth = YearMonth.from(calendar.getStartDate());
-    YearMonth nowMonth = YearMonth.from(now);
-
-    boolean isOwner = isCalendarOwner(viewer, calendar);
-
-    // 1) 현재 달 → 오늘 날짜까지만 공개
-    if (calendarMonth.equals(nowMonth)) {
-      int today = now.getDayOfMonth();
-      return tasks.stream()
-          .filter(task -> task.getDay() <= today)
-          .toList();
-    }
-
-    // 2) 과거 달 → 전체 공개
-    if (calendarMonth.isBefore(nowMonth)) {
-      return tasks;
-    }
-
-    // 3) 미래 달
-    // 3-1) 자신의 캘린더 → 전체 공개
-    if (isOwner) {
-      return tasks;
-    }
-
-    // 3-2) 다른 사용자의 캘린더 → preview 기간만 공개
-    LocalDate previewStartTemp = null;
-    LocalDate previewEndTemp = null;
-
-    if (calendar instanceof OriginalCalendar originalCalendar) {
-      previewStartTemp = originalCalendar.getPreviewStartDate();
-      previewEndTemp = originalCalendar.getPreviewEndDate();
-    }
-
-    final LocalDate previewStart = previewStartTemp;
-    final LocalDate previewEnd = previewEndTemp;
-
-    return tasks.stream()
-        .filter(task -> {
-          LocalDate taskDate = calendar.getStartDate().withDayOfMonth(task.getDay());
-          return !taskDate.isBefore(previewStart) && !taskDate.isAfter(previewEnd);
-        })
-        .toList();
-  }
-
   private boolean isOwner(User viewer, User targetUser) {
     return viewer.getId().equals(targetUser.getId());
   }
@@ -477,6 +430,45 @@ public class CalendarService {
     };
   }
 
+  private boolean canViewDate(Calendar calendar, LocalDate date, User viewer) {
+
+    LocalDate now = LocalDate.now();
+    YearMonth calendarMonth = YearMonth.from(calendar.getStartDate());
+    YearMonth nowMonth = YearMonth.from(now);
+
+    boolean isOwner = isCalendarOwner(viewer, calendar);
+
+    // 1) 현재 달 → 오늘 날짜까지만 공개
+    if (calendarMonth.equals(nowMonth)) {
+      return date.getDayOfMonth() <= now.getDayOfMonth();
+    }
+
+    // 2) 과거 달 → 전체 공개
+    if (calendarMonth.isBefore(nowMonth)) {
+      return true;
+    }
+
+    // 3) 미래 달
+    // 3-1) 자신의 캘린더 → 전체 공개
+    if (isOwner) {
+      return true;
+    }
+
+    // 3-2) 다른 사용자의 캘린더 → preview 기간만 공개
+    if (calendar instanceof OriginalCalendar originalCalendar) {
+      LocalDate previewStart = originalCalendar.getPreviewStartDate();
+      LocalDate previewEnd = originalCalendar.getPreviewEndDate();
+
+      if (previewStart == null || previewEnd == null) {
+        return false;
+      }
+
+      return !date.isBefore(previewStart) && !date.isAfter(previewEnd);
+    }
+
+    return false;
+  }
+
   private CalendarType determineCalendarType(Calendar calendar) {
     if (calendar instanceof OriginalCalendar) {
       OfficialCalendar official = officialCalendarRepository.findByOriginalCalendarId(calendar.getId())
@@ -487,6 +479,15 @@ public class CalendarService {
     } else {
       return CalendarType.SCRAPED;
     }
+  }
+
+  private List<Task> filterMonthlyTasks(Calendar calendar, List<Task> tasks, User viewer) {
+    return tasks.stream()
+        .filter(task -> {
+          LocalDate taskDate = calendar.getStartDate().withDayOfMonth(task.getDay());
+          return canViewDate(calendar, taskDate, viewer);
+        })
+        .toList();
   }
 
   // 생성/업데이트 관련
@@ -602,7 +603,7 @@ public class CalendarService {
   private MonthlyCalendarStatsResponse toMonthlyAllCalendarStatsResponse(Calendar calendar, User viewer) {
 
     List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
-    tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+    tasks = filterMonthlyTasks(calendar, tasks, viewer);
     Map<Integer, DailyTaskStats> dayStatus = aggregateDailyTaskStats(tasks);
 
     CalendarType type = determineCalendarType(calendar);
@@ -618,7 +619,7 @@ public class CalendarService {
 
     List<Task> tasks = taskRepository.findByCalendarIdAndDeletedAtIsNull(calendar.getId());
     if (filtering) {
-      tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+      tasks = filterMonthlyTasks(calendar, tasks, viewer);
     }
     Map<Integer, Integer> dayTaskCount = tasks.stream()
         .collect(Collectors.groupingBy(
@@ -642,8 +643,8 @@ public class CalendarService {
                                                                       boolean filtering) {
 
     List<Task> tasks = taskRepository.findByCalendarIdAndDay(calendar.getId(), date.getDayOfMonth());
-    if (filtering) {
-      tasks = filterTasksByCalendarMonth(calendar, tasks, viewer);
+    if (filtering && !canViewDate(calendar, date, viewer)) {
+      tasks = List.of();
     }
     List<TaskResponse> taskResponses = tasks.stream()
         .map(TaskResponse::from)
