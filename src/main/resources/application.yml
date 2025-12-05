@@ -10,6 +10,9 @@ spring:
       request-timeout: 60000
 
   security:
+    user:
+      name: ${SWAGGER_USERNAME}
+      password: ${SWAGGER_PASSWORD}
     oauth2:
       client:
         registration:

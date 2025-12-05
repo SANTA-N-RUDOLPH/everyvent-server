@@ -4,12 +4,19 @@ import kr.santanrudolph.everyvent.auth.security.JwtAuthenticationFilter;
 import kr.santanrudolph.everyvent.auth.service.KakaoOAuthService;
 import kr.santanrudolph.everyvent.auth.security.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -23,39 +30,80 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final Environment environment;
 
+  @Value("${SWAGGER_USERNAME}")
+  private String swaggerUsername;
+
+  @Value("${SWAGGER_PASSWORD}")
+  private String swaggerPassword;
+
+  @Order(1)
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfig corsConfig)
+  public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .securityMatcher("/swagger-ui/**", "/v3/api-docs/**")
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .httpBasic(httpBasic -> httpBasic.realmName("Swagger UI"))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+    return http.build();
+  }
+
+  @Order(2)
+  @Bean
+  public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfig corsConfig)
       throws Exception {
+
     http
         .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> {
-          auth
-              .requestMatchers("/", "/error", "/favicon.ico").permitAll()
-              .requestMatchers("/h2-console/**").permitAll()
-              .requestMatchers("/api/auth/**").permitAll();
 
-          // dev 또는 local 프로파일일 때만 개발용 API 허용 (활성/기본 프로파일 모두 고려)
+        .authorizeHttpRequests(auth -> {
+
+          auth.requestMatchers(
+              "/", "/error", "/favicon.ico",
+              "/h2-console/**",
+              "/api/auth/**",
+              "/oauth2/**", "/login/**",
+              "/oauth/callback", "/oauth/test"
+          ).permitAll();
+
           if (environment.acceptsProfiles("dev", "local")) {
             auth.requestMatchers("/api/dev/**").permitAll();
           }
 
-          auth
-              .requestMatchers("/oauth2/**").permitAll()
-              .requestMatchers("/login/**").permitAll()
-              .requestMatchers("/oauth/callback", "/oauth/test").permitAll()
-              .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-              .anyRequest().authenticated();
+          // 나머지 API는 JWT 인증 필요
+          auth.anyRequest().authenticated();
         })
+
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
         .headers(headers -> headers
-            .frameOptions(frameOptions -> frameOptions.sameOrigin()))
+            .frameOptions(frame -> frame.sameOrigin()))
+
         .oauth2Login(oauth2 -> oauth2
-            .userInfoEndpoint(userInfo -> userInfo
-                .userService(kakaoOAuthService))
-            .successHandler(oAuth2SuccessHandler))
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .userInfoEndpoint(info -> info.userService(kakaoOAuthService))
+            .successHandler(oAuth2SuccessHandler));
+
     return http.build();
+  }
+
+  @Bean
+  public UserDetailsService userDetailsService() {
+    return new InMemoryUserDetailsManager(
+        User.builder()
+            .username(swaggerUsername)
+            .password(passwordEncoder().encode(swaggerPassword))
+            .roles("SWAGGER")
+            .build()
+    );
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 }
