@@ -30,10 +30,10 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final Environment environment;
 
-  @Value("${spring.security.user.name}")
+  @Value("${SWAGGER_USERNAME}")
   private String swaggerUsername;
 
-  @Value("${spring.security.user.password}")
+  @Value("${SWAGGER_PASSWORD}")
   private String swaggerPassword;
 
   @Order(1)
@@ -50,6 +50,7 @@ public class SecurityConfig {
     return http.build();
   }
 
+  @Order(2)
   @Bean
   public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, CorsConfig corsConfig)
       throws Exception {
@@ -90,7 +91,6 @@ public class SecurityConfig {
     return http.build();
   }
 
-  @Order(2)
   @Bean
   public UserDetailsService userDetailsService() {
     return new InMemoryUserDetailsManager(
