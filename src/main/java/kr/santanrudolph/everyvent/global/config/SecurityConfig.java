@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,7 +36,7 @@ public class SecurityConfig {
   @Value("${spring.security.user.password}")
   private String swaggerPassword;
 
-
+  @Order(1)
   @Bean
   public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -89,6 +90,7 @@ public class SecurityConfig {
     return http.build();
   }
 
+  @Order(2)
   @Bean
   public UserDetailsService userDetailsService() {
     return new InMemoryUserDetailsManager(
