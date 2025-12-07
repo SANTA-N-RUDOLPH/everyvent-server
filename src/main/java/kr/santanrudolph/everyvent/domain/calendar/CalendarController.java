@@ -120,8 +120,8 @@ public class CalendarController {
         CalendarColor.MINT,
         Category.CHALLENGE,
         100L,  // 공식 캘린더 원본 ID
-        CalendarType.OFFICIAL,
-        false  // 공식 캘린더는 스크랩 불가
+        CalendarType.DISTRIBUTED,
+        false  // 배포 캘린더는 스크랩 불가
     );
 
     CalendarResponse calendar3 = new CalendarResponse(
