@@ -26,7 +26,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CalendarController {
 
-  @Operation(summary = "캘린더 생성", description = "유저가 내 캘린더(PERSONLAL) 생성")
+  @Operation(summary = "캘린더 생성", description = "유저가 내 캘린더(PERSONAL) 생성")
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "생성 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT"),
@@ -34,7 +34,7 @@ public class CalendarController {
   })
   @PostMapping
   public ResponseEntity<CalendarResponse> createCalendar(
-      @Valid @RequestBody OfficialCalendarCreateRequest request) {
+      @Valid @RequestBody CalendarCreateRequest request) {
 
     CalendarResponse response = new CalendarResponse(
         1L,
@@ -43,7 +43,7 @@ public class CalendarController {
         request.description(),
         request.startDate(),
         request.startDate().plusDays(25),
-        Visibility.ADMIN,
+        request.visibility(),
         request.color(),
         request.category(),
         null,

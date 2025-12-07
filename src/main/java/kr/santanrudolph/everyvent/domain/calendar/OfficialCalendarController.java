@@ -147,7 +147,7 @@ public class OfficialCalendarController {
         request.getColor() != null ? request.getColor() : CalendarColor.BLUE,
         request.getCategory() != null ? request.getCategory() : Category.CHALLENGE,
         null,  // 원본 캘린더
-        CalendarType.PERSONAL,
+        CalendarType.OFFICIAL,
         true
     );
 

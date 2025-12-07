@@ -60,6 +60,7 @@ public class Calendar extends BaseEntity {
   private Long originalCalendarId;
 
   @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   private CalendarType calendarType;
 
   @Column(nullable = true)
@@ -175,7 +176,7 @@ public class Calendar extends BaseEntity {
   public static Calendar createDistributedCalendar(User user, Calendar officialCalendar) {
 
     return createCalendar(
-        officialCalendar.user
+        user
         , officialCalendar.getTitle()
         , officialCalendar.getDescription()
         , officialCalendar.getStartDate()

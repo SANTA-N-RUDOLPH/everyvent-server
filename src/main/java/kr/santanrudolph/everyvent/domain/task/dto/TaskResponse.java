@@ -20,8 +20,9 @@ public class TaskResponse {
   private boolean completed;
 
   public TaskResponse toTaskResponse(Task task) {
-    boolean isBeforeToday = TimeUtil.isAfter(task.getDay(), LocalDate.now());
-    TaskResponse response = new TaskResponse(
+    boolean isBeforeToday = TimeUtil.isAfter(TimeUtil.today(), task.getDay());
+
+    return new TaskResponse(
         task.getId(),
         task.getCalendar().getId(),
         task.getDay().getDayOfMonth(),
@@ -30,6 +31,5 @@ public class TaskResponse {
         task.getContent(),
         task.getCompleted()
     );
-    return response;
   }
 }

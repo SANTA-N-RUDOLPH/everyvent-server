@@ -24,6 +24,7 @@ public class Official {
   public static Official create(Calendar calendar) {
     Official official = new Official();
     official.calendar = calendar;
+    official.distributedCount = 0L;
     return official;
   }
 

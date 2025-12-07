@@ -27,10 +27,10 @@ public class Task extends BaseEntity {
   private Calendar calendar;
 
   @Column(nullable = false)
-  LocalDate day;
+  private LocalDate day;
 
   @Column(nullable = false)
-  String content;
+  private String content;
 
   @Column(nullable = false)
   private boolean canPreview;
@@ -42,7 +42,7 @@ public class Task extends BaseEntity {
     return completed;
   }
 
-  public Task createTask(Calendar calendar, LocalDate day, boolean canPreview) {
+  public static Task createTask(Calendar calendar, LocalDate day, boolean canPreview) {
     Task task = new Task();
     task.calendar = calendar;
     task.day = day;
@@ -52,8 +52,7 @@ public class Task extends BaseEntity {
   }
 
   public void complete() {
-    if (TimeUtil.isAfter(TimeUtil.today(), LocalDate.of(calendar.getStartDate().getYear(),
-        calendar.getStartDate().getMonth(), calendar.getStartDate().getDayOfMonth()))) {
+    if (TimeUtil.isAfter(this.day, TimeUtil.today())) {
       throw new EveryventException(ErrorCode.FORBIDDEN, "미래의 태스크는 완료할 수 없습니다.");
     }
     this.completed = true;

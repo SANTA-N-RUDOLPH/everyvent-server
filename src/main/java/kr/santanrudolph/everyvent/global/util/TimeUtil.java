@@ -11,8 +11,8 @@ public class TimeUtil {
     return LocalDate.now(DEFAULT_ZONE);
   }
 
-  public static boolean isAfter(LocalDate before, LocalDate after) {
-    return before.isAfter(after);
+  public static boolean isAfter(LocalDate after, LocalDate before) {
+    return after.isAfter(before);
   }
 
   public static boolean isInRange(LocalDate start, LocalDate end, LocalDate date) {
