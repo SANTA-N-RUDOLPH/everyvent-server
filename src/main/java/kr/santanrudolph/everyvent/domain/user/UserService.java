@@ -25,8 +25,8 @@ public class UserService {
   private final FollowRepository followRepository;
 
   public UserResponse getUserInfo(Long userId) {
-    User user = getCurrentUser();
-
+    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
     return UserResponse.from(user);
   }
 
