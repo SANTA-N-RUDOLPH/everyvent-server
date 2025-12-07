@@ -13,6 +13,7 @@ import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -20,7 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
@@ -33,8 +39,20 @@ class UserServiceTest {
   @Mock
   private FollowRepository followRepository;
 
+  @Mock
+  private SecurityContext securityContext;
+
+  @Mock
+  private Authentication authentication;
+
   @InjectMocks
   private UserService userService;
+
+  @BeforeEach
+  void setUp() {
+    SecurityContextHolder.setContext(securityContext);
+    given(securityContext.getAuthentication()).willReturn(authentication);
+  }
 
   // helper method
   private User createUser(Long id, String nickname) {
@@ -65,6 +83,8 @@ class UserServiceTest {
       Long userId = 1L;
       User user = createUser(userId, "user");
 
+      given(authentication.isAuthenticated()).willReturn(true);
+      given(authentication.getPrincipal()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
       given(followRepository.deleteAllByUserId(userId)).willReturn(5);
 
@@ -84,6 +104,8 @@ class UserServiceTest {
     void deleteUser_whenUserNotFound_thenThrowsException() {
       // given
       Long userId = 1L;
+      given(authentication.isAuthenticated()).willReturn(true);
+      given(authentication.getPrincipal()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.empty());
 
       // when & then
@@ -92,7 +114,7 @@ class UserServiceTest {
           .extracting("errorCode", "detail")
           .containsExactly(
               ErrorCode.NOT_FOUND,
-              "탈퇴할 사용자를 찾을 수 없습니다."
+              "사용자를 찾을 수 없습니다."
           );
 
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(userId);
@@ -106,6 +128,8 @@ class UserServiceTest {
       Long userId = 1L;
       User user = createUser(userId, "user");
 
+      given(authentication.isAuthenticated()).willReturn(true);
+      given(authentication.getPrincipal()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
       given(followRepository.deleteAllByUserId(userId)).willReturn(0);
 
