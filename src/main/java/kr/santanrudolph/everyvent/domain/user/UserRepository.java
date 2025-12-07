@@ -23,13 +23,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   boolean existsByIdAndDeletedAtIsNull(Long Id);
 
-  @Query("""
-    SELECT u FROM User u
-    WHERE u.deletedAt IS NULL
-    AND u.id NOT IN (
-        SELECT c.user.id FROM DistributedCalendar c
-        WHERE c.originalCalendar.id = :originalId
-    )
-  """)
-  List<User> findTargetUsersForDistribution(@Param("originalId") Long originalId);
+//  @Query("""
+//    SELECT u FROM User u
+//    WHERE u.deletedAt IS NULL
+//    AND u.id NOT IN (
+//        SELECT c.user.id FROM DistributedCalendar c
+//        WHERE c.originalCalendar.id = :originalId
+//    )
+//  """)
+//  List<User> findTargetUsersForDistribution(@Param("originalId") Long originalId);
 }

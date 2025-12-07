@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.domain.user;
 
+import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
@@ -9,6 +10,8 @@ import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,14 +27,17 @@ public class UserService {
   public UserResponse getUserInfo(Long userId) {
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-
     return UserResponse.from(user);
+  }
+
+  public User getCurrentUser() {
+    return userRepository.findByIdAndDeletedAtIsNull(AuthenticationUtil.getCurrentUserId())
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
   }
 
   @Transactional
   public UserResponse updateIntroduction(Long userId, UpdateIntroductionRequest request) {
-    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    User user = getCurrentUser();
 
     user.updateIntroduction(request.getIntroduction());
     log.info("User introduction updated - User ID: {}", userId);
@@ -45,9 +51,7 @@ public class UserService {
       throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 사용 중인 닉네임입니다.");
     }
 
-    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
-
+    User user = getCurrentUser();
     try {
       user.updateNickname(request.getNickname());
       userRepository.flush();
@@ -63,8 +67,7 @@ public class UserService {
 
   @Transactional
   public void deleteUser(Long userId) {
-    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
-        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "탈퇴할 사용자를 찾을 수 없습니다."));
+    User user = getCurrentUser();
 
     user.softDelete();
 
