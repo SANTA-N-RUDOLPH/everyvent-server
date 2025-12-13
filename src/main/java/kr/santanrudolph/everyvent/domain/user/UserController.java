@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
+import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,19 @@ public class UserController {
     log.info("Get my info - User ID: {}", userId);
 
     UserResponse response = userService.getUserInfo(userId);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(summary = "유저 정보 조회", description = "userId로 사용자의 정보를 조회합니다.")
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "401", description = "UNAUTHORIZED: 인증되지 않은 요청 | INVALID_ACCESS_TOKEN: 유효하지 않은 액세스 토큰"),
+      @ApiResponse(responseCode = "404", description = "NOT_FOUND: 사용자를 찾을 수 없음")
+  })
+
+  @GetMapping("/{userId}")
+  public ResponseEntity<UserBasicResponse> getMyInfo(@PathVariable Long userId) {
+    UserBasicResponse response = userService.getUserBasicInfo(userId);
     return ResponseEntity.ok(response);
   }
 

@@ -15,11 +15,10 @@ public class TaskResponse {
   private final Long calendarId;
   private final int day;
   private final boolean isBeforeToday;
-  private final boolean canPreview;
   private String content;
   private boolean completed;
 
-  public TaskResponse toTaskResponse(Task task) {
+  public TaskResponse toTaskResponse(Task task, boolean canPreview) {
     boolean isBeforeToday = TimeUtil.isAfter(TimeUtil.today(), task.getDay());
 
     return new TaskResponse(
@@ -27,7 +26,6 @@ public class TaskResponse {
         task.getCalendar().getId(),
         task.getDay().getDayOfMonth(),
         isBeforeToday,
-        task.isCanPreview(),
         task.getContent(),
         task.getCompleted()
     );

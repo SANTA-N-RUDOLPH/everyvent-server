@@ -22,7 +22,7 @@ import java.util.List;
 @Slf4j
 @Tag(name = "공식 캘린더", description = "공식 캘린더 관련 API (관리자 전용)")
 @RestController
-@RequestMapping("/api/admin/official-calendars")
+@RequestMapping("/api/admin/official/calendars")
 @RequiredArgsConstructor
 public class OfficialCalendarController {
 
@@ -32,33 +32,36 @@ public class OfficialCalendarController {
       @ApiResponse(responseCode = "201", description = "생성 성공"),
       @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자 아님")
   })
-  @PostMapping
-  public ResponseEntity<CalendarResponse> createOfficialCalendar(
+  @PostMapping()
+  public ResponseEntity<CalendarDetailResponse> createOfficialCalendar(
       @Valid @RequestBody OfficialCalendarCreateRequest request) {
 
-    CalendarResponse response = new CalendarResponse(
+    CalendarDetailResponse response = new CalendarDetailResponse(
         100L,
         1L,    // 관리자 ID
-        "2024 크리스마스 어드벤트",
-        "공식 크리스마스 캘린더",
-        LocalDate.of(2024, 12, 1),
-        LocalDate.of(2024, 12, 25),
+        request.title(),
+        request.description(),
+        request.startDate(),
+        request.startDate().plusDays(24),
+        request.previewStartDate(),
+        request.previewEndDate(),
         Visibility.ADMIN,
-        CalendarColor.MINT,
-        Category.CHALLENGE,
+        request.color(),
+        request.category(),
         null,  // 공식 캘린더는 원본
         CalendarType.OFFICIAL,
-        false  // 공식 캘린더는 스크랩 불가 (배포로만 가능)
+        false,  // 공식 캘린더는 스크랩 불가 (배포로만 가능)
+        0L
     );
 
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @Operation(summary = "모든 공식 캘린더 목록 조회", description = "모든 공식 캘린더를 조회합니다.")
-  @GetMapping
-  public ResponseEntity<List<CalendarResponse>> getOfficialCalendars() {
+  @GetMapping()
+  public ResponseEntity<List<CalendarSummaryResponse>> getOfficialCalendars() {
 
-    CalendarResponse official = new CalendarResponse(
+    CalendarSummaryResponse official = new CalendarSummaryResponse(
         100L,
         1L,
         "2024 크리스마스 어드벤트",
@@ -70,10 +73,10 @@ public class OfficialCalendarController {
         Category.CHALLENGE,
         null,
         CalendarType.OFFICIAL,
-        false
+        0L
     );
 
-    CalendarResponse official2 = new CalendarResponse(
+    CalendarSummaryResponse official2 = new CalendarSummaryResponse(
         101L,
         1L,
         "2024 크리스마스 어드벤트2",
@@ -85,10 +88,10 @@ public class OfficialCalendarController {
         Category.CHALLENGE,
         null,
         CalendarType.OFFICIAL,
-        false
+        0L
     );
 
-    CalendarResponse official3 = new CalendarResponse(
+    CalendarSummaryResponse official3 = new CalendarSummaryResponse(
         103L,
         1L,
         "2024 크리스마스 어드벤트3",
@@ -100,7 +103,7 @@ public class OfficialCalendarController {
         Category.CHALLENGE,
         null,
         CalendarType.OFFICIAL,
-        false
+        0L
     );
 
     return ResponseEntity.ok(List.of(official, official2, official3));
@@ -125,30 +128,33 @@ public class OfficialCalendarController {
     return ResponseEntity.ok(response);
   }
 
-  @Operation(summary = "공식 캘린더 수정", description = "관리자가 공식 캘린더 수정. 달 변경 불가. 꼭 필요하면 달 변경 추가해드림...")
+  @Operation(summary = "공식 캘린더 수정", description = "관리자가 공식 캘린더 수정")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "수정 성공"),
       @ApiResponse(responseCode = "403", description = "FORBIDDEN: 관리자 아님"),
       @ApiResponse(responseCode = "404", description = "NOT_FOUND")
   })
-  @PatchMapping("/{calendarId}")
-  public ResponseEntity<CalendarResponse> updateOfficialCalendar(
+  @PutMapping("/{calendarId}")
+  public ResponseEntity<CalendarDetailResponse> updateOfficialCalendar(
       @PathVariable Long calendarId,
       @Valid @RequestBody CalendarUpdateRequest request) {
 
-    CalendarResponse response = new CalendarResponse(
+    CalendarDetailResponse response = new CalendarDetailResponse(
         calendarId,
         1L,
-        request.getTitle() != null ? request.getTitle() : "기존 제목",
-        request.getDescription() != null ? request.getDescription() : "기존 설명",
+        request.title() != null ? request.title() : "기존 제목",
+        request.description() != null ? request.description() : "기존 설명",
+        LocalDate.of(2024, 12, 1),
+        LocalDate.of(2024, 12, 25),
         LocalDate.of(2024, 12, 1),
         LocalDate.of(2024, 12, 25),
         Visibility.ADMIN,
-        request.getColor() != null ? request.getColor() : CalendarColor.BLUE,
-        request.getCategory() != null ? request.getCategory() : Category.CHALLENGE,
+        request.color() != null ? request.color() : CalendarColor.BLUE,
+        request.category() != null ? request.category() : Category.CHALLENGE,
         null,  // 원본 캘린더
         CalendarType.OFFICIAL,
-        true
+        true,
+        0L
     );
 
     return ResponseEntity.ok(response);

@@ -1,17 +1,16 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto;
 
-import jakarta.validation.constraints.Size;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
+import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 
 import java.time.LocalDate;
 
-public record CalendarUpdateRequest(
-    @Size(min = 1, max = 100, message = "캘린더 제목은 1~100자 사이여야 합니다")
+public record CalendarDetailResponse(
+    Long id,
+    Long userId,
     String title,
-
-    @Size(max = 500, message = "설명은 최대 500자까지 입력 가능합니다")
     String description,
     LocalDate startDate,
     LocalDate endDate,
@@ -19,6 +18,10 @@ public record CalendarUpdateRequest(
     LocalDate previewEndDate,
     Visibility visibility,
     CalendarColor color,
-    Category category
+    Category category,
+    Long originalCalendarId,
+    CalendarType type,
+    boolean scrappable,
+    Long scrapCount
 ) {
 }

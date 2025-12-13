@@ -43,6 +43,12 @@ public class Calendar extends BaseEntity {
   @Column(nullable = false)
   private LocalDate endDate;
 
+  @Column(nullable = true)
+  private LocalDate previewStartDay;
+
+  @Column(nullable = true)
+  private LocalDate previewEndDay;
+
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private Visibility visibility;
@@ -84,7 +90,8 @@ public class Calendar extends BaseEntity {
 
   public static Calendar createCalendar(User user, String title, String description, LocalDate startDate,
                                         LocalDate endDate, Visibility visibility, Category category,
-                                        CalendarColor color, Long originalCalendarId, CalendarType calendarType) {
+                                        CalendarColor color, Long originalCalendarId, CalendarType calendarType,
+                                        LocalDate previewStartDay, LocalDate previewEndDay) {
 
     Calendar calendar = new Calendar();
     calendar.user = user;
@@ -92,6 +99,8 @@ public class Calendar extends BaseEntity {
     calendar.description = description;
     calendar.startDate = startDate;
     calendar.endDate = endDate;
+    calendar.previewStartDay = previewStartDay;
+    calendar.previewEndDay = previewEndDay;
     calendar.visibility = visibility;
     calendar.category = category;
     calendar.color = color;
@@ -116,7 +125,9 @@ public class Calendar extends BaseEntity {
         category,
         color,
         null,
-        calendarType
+        calendarType,
+        null,
+        null
     );
   }
 
@@ -135,7 +146,9 @@ public class Calendar extends BaseEntity {
         category,
         color,
         null,
-        calendarType);
+        calendarType,
+        null,
+        null);
   }
 
   public static Calendar createScrappedCalendar(User user, Calendar originalCalendar, CalendarColor color) {
@@ -154,7 +167,9 @@ public class Calendar extends BaseEntity {
         originalCalendar.getCategory(),
         color,
         originalCalendar.getId(),
-        CalendarType.SCRAPED
+        CalendarType.SCRAPED,
+        originalCalendar.getPreviewStartDay(),
+        originalCalendar.getPreviewEndDay()
     );
   }
 
@@ -186,6 +201,8 @@ public class Calendar extends BaseEntity {
         , officialCalendar.getColor()
         , officialCalendar.getId()
         , CalendarType.DISTRIBUTED
+        , officialCalendar.getPreviewStartDay()
+        , officialCalendar.getPreviewEndDay()
     );
   }
 
@@ -245,6 +262,20 @@ public class Calendar extends BaseEntity {
       throw new EveryventException(ErrorCode.FORBIDDEN, "원본 캘린더는 originalCalendarId를 가질 수 없습니다.");
     }
     this.originalCalendarId = originalCalendarId;
+  }
+
+  public void updatePreviewStartDay(LocalDate previewStartDay) {
+    if (!isOriginalCalendar()) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 미리보기 시작일을 변경할 수 없습니다.");
+    }
+    this.previewStartDay = previewStartDay;
+  }
+
+  public void updatePreviewEndDay(LocalDate previewEndDay) {
+    if (!isOriginalCalendar()) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 미리보기 종료일을 변경할 수 없습니다.");
+    }
+    this.previewEndDay = previewEndDay;
   }
 
 }
