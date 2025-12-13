@@ -4,6 +4,7 @@ import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
+import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
@@ -28,6 +29,12 @@ public class UserService {
     User user = userRepository.findByIdAndDeletedAtIsNull(userId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
     return UserResponse.from(user);
+  }
+
+  public UserBasicResponse getUserBasicInfo(Long userId) {
+    User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    return UserBasicResponse.from(user);
   }
 
   public User getCurrentUser() {

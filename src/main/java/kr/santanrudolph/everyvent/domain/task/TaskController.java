@@ -42,7 +42,6 @@ public class TaskController {
             calendarId,
             request.day(),
             false,  // isBeforeToday
-            request.canPreview(),
             request.content(),
             false  // completed
         ))
@@ -67,7 +66,6 @@ public class TaskController {
         calendarId,
         1,
         false,  // isBeforeToday
-        true,   // canPreview
         "태스크 내용 1",
         true    // completed
     );
@@ -77,7 +75,6 @@ public class TaskController {
         calendarId,
         2,
         true,   // isBeforeToday
-        false,  // canPreview
         "태스크 내용 2",
         true    // completed
     );
@@ -128,7 +125,6 @@ public class TaskController {
         calendarId,
         day,
         false,  // isBeforeToday
-        true,   // canPreview
         "태스크 상세 내용 1",
         false   // completed
     );
@@ -138,7 +134,6 @@ public class TaskController {
         calendarId,
         day,
         false,  // isBeforeToday
-        true,   // canPreview
         "태스크 상세 내용 2",
         false   // completed
     );
@@ -148,7 +143,6 @@ public class TaskController {
         calendarId,
         day,
         false,  // isBeforeToday
-        false,  // canPreview
         "태스크 상세 내용 3",
         false   // completed
     );
@@ -174,7 +168,6 @@ public class TaskController {
         calendarId,
         5,
         false,  // isBeforeToday
-        request.canPreview() != null ? request.canPreview() : true,
         request.content() != null ? request.content() : "기존 내용",
         false   // completed
     );
@@ -214,7 +207,6 @@ public class TaskController {
         calendarId,
         5,
         false,  // isBeforeToday
-        true,   // canPreview
         "태스크 내용",
         completed
     );

@@ -7,7 +7,7 @@ import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 
 import java.time.LocalDate;
 
-public record CalendarResponse(
+public record CalendarSummaryResponse(
     Long id,
     Long userId,
     String title,
@@ -19,6 +19,6 @@ public record CalendarResponse(
     Category category,
     Long originalCalendarId,
     CalendarType type,
-    boolean scrappable
+    Long scrapCount
 ) {
 }

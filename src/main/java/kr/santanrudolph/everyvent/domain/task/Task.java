@@ -33,20 +33,16 @@ public class Task extends BaseEntity {
   private String content;
 
   @Column(nullable = false)
-  private boolean canPreview;
-
-  @Column(nullable = false)
   private boolean completed;
 
   public boolean getCompleted() {
     return completed;
   }
 
-  public static Task createTask(Calendar calendar, LocalDate day, boolean canPreview) {
+  public static Task createTask(Calendar calendar, LocalDate day) {
     Task task = new Task();
     task.calendar = calendar;
     task.day = day;
-    task.canPreview = canPreview;
     task.completed = false;
     return task;
   }
@@ -56,10 +52,6 @@ public class Task extends BaseEntity {
       throw new EveryventException(ErrorCode.FORBIDDEN, "미래의 태스크는 완료할 수 없습니다.");
     }
     this.completed = true;
-  }
-
-  public void updateCanPreview(boolean canPreview) {
-    this.canPreview = canPreview;
   }
 
 }
