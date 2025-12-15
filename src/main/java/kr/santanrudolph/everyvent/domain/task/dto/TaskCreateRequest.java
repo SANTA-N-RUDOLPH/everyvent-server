@@ -14,9 +14,7 @@ public record TaskCreateRequest(
 
     @NotBlank(message = "태스크 내용은 필수입니다.")
     @Size(max = 500, message = "태스크 내용은 최대 500자까지 입력 가능합니다.")
-    String content,
+    String content
 
-    @NotNull(message = "미리보기 가능 여부는 필수입니다.")
-    Boolean canPreview
 ) {
 }
