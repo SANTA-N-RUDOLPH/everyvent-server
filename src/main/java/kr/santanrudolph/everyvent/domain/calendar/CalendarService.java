@@ -245,7 +245,7 @@ public class CalendarService {
             entry.getKey().getMonthValue(),
             entry.getValue()
         ))
-        .toList();
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private Calendar findCalendarById(Long calendarId) {
