@@ -35,3 +35,8 @@ jwt:
   access-token-expiration: 3600000
   refresh-token-expiration: 604800000
   auth-code-expiration: 60  # 인증 코드 유효 시간 추후 시간 줄일 예정
+
+frontend:
+  url: https://everyvent-client.vercel.app
+  local:
+    url: http://localhost:5173
