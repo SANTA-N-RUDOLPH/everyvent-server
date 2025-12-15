@@ -18,8 +18,8 @@ public record TaskResponse(
         task.getCalendar().getId(),
         task.getDay().getDayOfMonth(),
         isLock,
-        isLock ? task.getContent() : null,
-        isLock ? task.getCompleted() : null
+        isLock ? null : task.getContent(),
+        isLock ? null : task.getCompleted()
     );
   }
 }
