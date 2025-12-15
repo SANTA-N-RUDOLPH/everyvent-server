@@ -104,8 +104,8 @@ public class CalendarService {
     }
 
     YearMonth endYearMonth = startYearMonth.minusMonths(size);
-    LocalDate startDate = startYearMonth.atDay(1);
-    LocalDate endDate = endYearMonth.atEndOfMonth();
+    LocalDate startDate = endYearMonth.atDay(1);
+    LocalDate endDate = startYearMonth.atEndOfMonth();
 
     List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
         user,
