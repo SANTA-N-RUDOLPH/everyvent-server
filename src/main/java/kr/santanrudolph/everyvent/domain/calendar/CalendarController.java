@@ -78,7 +78,7 @@ public class CalendarController {
             - 본인의 캘린더만 조회 가능합니다.
           """
   )
-  @GetMapping("/calendars/monthly")
+  @GetMapping("/monthly")
   public ResponseEntity<List<CalendarDetailResponse>> getMonthlyCalendars(
       @RequestParam
       @DateTimeFormat(pattern = "yyyy-MM")
