@@ -1,33 +1,25 @@
 package kr.santanrudolph.everyvent.domain.task.dto;
 
+
 import kr.santanrudolph.everyvent.domain.task.Task;
-import kr.santanrudolph.everyvent.global.util.TimeUtil;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
-import java.time.LocalDate;
 
-@Data
-@AllArgsConstructor
-public class TaskResponse {
-
-  private final Long id;
-  private final Long calendarId;
-  private final int day;
-  private final boolean isBeforeToday;
-  private String content;
-  private boolean completed;
-
-  public TaskResponse toTaskResponse(Task task, boolean canPreview) {
-    boolean isBeforeToday = TimeUtil.isAfter(TimeUtil.today(), task.getDay());
-
+public record TaskResponse(
+    Long id,
+    Long calendarId,
+    int day,
+    boolean isLock,
+    String content,
+    Boolean completed // null 상태 표현을 위함
+) {
+  public static TaskResponse from(Task task, boolean isLock) {
     return new TaskResponse(
         task.getId(),
         task.getCalendar().getId(),
         task.getDay().getDayOfMonth(),
-        isBeforeToday,
-        task.getContent(),
-        task.getCompleted()
+        isLock,
+        isLock ? task.getContent() : null,
+        isLock ? task.getCompleted() : null
     );
   }
 }
