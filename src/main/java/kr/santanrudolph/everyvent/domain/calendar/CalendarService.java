@@ -45,8 +45,8 @@ public class CalendarService {
     try {
       validateCalendarLimit(user, request.startDate());
       validateFuture(request.startDate());
-    } catch (Exception e) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, e.getMessage() + " 캘린더를 만들 수 없습니다.");
+    } catch (EveryventException e) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, " 캘린더를 만들 수 없습니다." + e.getMessage());
     }
 
     Calendar calendar = Calendar.createCalendarWithStartDay(
@@ -326,7 +326,7 @@ public class CalendarService {
       validateOwner(user, calendar);
       validateOriginalCalendar(calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, e.getMessage() + " 캘린더를 수정할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, " 캘린더를 수정할 수 없습니다. " + e.getMessage());
     }
   }
 
@@ -336,7 +336,7 @@ public class CalendarService {
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, e.getMessage() + "캘린더 색상을 수정할 수 없습니다.");
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 색상을 수정할 수 없습니다. " + e.getMessage());
     }
   }
 
