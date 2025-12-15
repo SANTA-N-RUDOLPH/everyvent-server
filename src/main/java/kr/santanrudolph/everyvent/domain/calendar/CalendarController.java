@@ -12,11 +12,13 @@ import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 @Slf4j
@@ -25,6 +27,8 @@ import java.util.List;
 @RequestMapping("/api/calendars")
 @RequiredArgsConstructor
 public class CalendarController {
+
+  private final CalendarService calendarService;
 
   @Operation(summary = "캘린더 생성", description = "유저가 내 캘린더(PERSONAL) 생성")
   @ApiResponses({
@@ -36,206 +40,20 @@ public class CalendarController {
   public ResponseEntity<CalendarDetailResponse> createCalendar(
       @Valid @RequestBody CalendarCreateRequest request) {
 
-    CalendarDetailResponse response = new CalendarDetailResponse(
-        1L,
-        1L,
-        request.title(),
-        request.description(),
-        request.startDate(),
-        request.startDate().plusDays(25),
-        request.previewStartDate(),
-        request.previewEndDate(),
-        request.visibility(),
-        request.color(),
-        request.category(),
-        null,
-        CalendarType.PERSONAL,
-        false,
-        0L
-    );
-
+    CalendarDetailResponse response = calendarService.createPersonalCalendar(request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @Operation(summary = "내 캘린더 목록 조회 (무한스크롤)", description = "커서 기반 무한스크롤로 내 캘린더 목록을 월별로 그루핑하여 조회합니다.\n" +
       "(내가 만든 캘린더, 스크랩한 캘린더, 배포받은 캘린더)\n" +
-      "- cursor: 마지막으로 받은 월 (YYYY-MM 형식, 첫 요청시 생략)\n" +
+      "- cursor: 이전 응답값에서 받은 nextCursor (YYYY-MM 형식, 첫 요청시 생략)\n" +
       "- size: 페이지 크기 (달 갯수를 의미합니다. 현재 예시는 7월~12월까지이므로 size=6 입니다.)")
   @GetMapping()
   public ResponseEntity<CalendarScrollResponse> getMyCalendars(
-      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false) YearMonth cursor,
       @RequestParam(required = false, defaultValue = "10") Integer size) {
 
-    CalendarSummaryResponse calendar1 = new CalendarSummaryResponse(
-        1L,
-        1L,
-        "내 캘린더",
-        "설명",
-        LocalDate.of(2025, 12, 1),
-        LocalDate.of(2025, 12, 25),
-        Visibility.PUBLIC,
-        CalendarColor.BLUE,
-        Category.HOBBY,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar2 = new CalendarSummaryResponse(
-        5L,
-        1L,
-        "내 캘린더2",
-        "설명",
-        LocalDate.of(2025, 12, 1),
-        LocalDate.of(2025, 12, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar3 = new CalendarSummaryResponse(
-        6L,
-        1L,
-        "스크랩한 캘린더",
-        "설명",
-        LocalDate.of(2025, 12, 1),
-        LocalDate.of(2025, 12, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        1L,
-        CalendarType.SCRAPED,
-        0L
-    );
-
-    CalendarSummaryResponse calendar4 = new CalendarSummaryResponse(
-        7L,
-        1L,
-        "배포받은 공식 캘린더",
-        "설명",
-        LocalDate.of(2025, 11, 1),
-        LocalDate.of(2025, 11, 25),
-        Visibility.PUBLIC,
-        CalendarColor.MINT,
-        Category.CHALLENGE,
-        100L,
-        CalendarType.DISTRIBUTED,
-        0L
-    );
-
-    CalendarSummaryResponse calendar5 = new CalendarSummaryResponse(
-        3L,
-        1L,
-        "내 캘린더3",
-        "설명",
-        LocalDate.of(2025, 11, 1),
-        LocalDate.of(2025, 11, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar6 = new CalendarSummaryResponse(
-        4L,
-        1L,
-        "내 캘린더4",
-        "설명",
-        LocalDate.of(2025, 10, 1),
-        LocalDate.of(2025, 10, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar7 = new CalendarSummaryResponse(
-        5L,
-        1L,
-        "내 캘린더2",
-        "설명",
-        LocalDate.of(2025, 9, 1),
-        LocalDate.of(2025, 9, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar8 = new CalendarSummaryResponse(
-        8L,
-        1L,
-        "내 캘린더8",
-        "설명",
-        LocalDate.of(2025, 9, 1),
-        LocalDate.of(2025, 9, 25),
-        Visibility.PRIVATE,
-        CalendarColor.PEACH,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar9 = new CalendarSummaryResponse(
-        9L,
-        1L,
-        "내 캘린더9",
-        "설명",
-        LocalDate.of(2025, 8, 1),
-        LocalDate.of(2025, 8, 25),
-        Visibility.PRIVATE,
-        CalendarColor.LAVENDER,
-        Category.HOBBY,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    CalendarSummaryResponse calendar10 = new CalendarSummaryResponse(
-        10L,
-        1L,
-        "내 캘린더10",
-        "설명",
-        LocalDate.of(2025, 7, 1),
-        LocalDate.of(2025, 7, 25),
-        Visibility.PUBLIC,
-        CalendarColor.MINT,
-        Category.CHALLENGE,
-        null,
-        CalendarType.PERSONAL,
-        0L
-    );
-
-    // 월별로 그루핑
-    List<CalendarMonthGroup> monthGroups = List.of(
-        new CalendarMonthGroup(2025, 12, List.of(calendar1, calendar2, calendar3)),
-        new CalendarMonthGroup(2025, 11, List.of(calendar4, calendar5)),
-        new CalendarMonthGroup(2025, 10, List.of(calendar6)),
-        new CalendarMonthGroup(2025, 9, List.of(calendar7, calendar8)),
-        new CalendarMonthGroup(2025, 8, List.of(calendar9)),
-        new CalendarMonthGroup(2025, 7, List.of(calendar10))
-    );
-
-    // 무한스크롤 응답 생성
-    String nextCursor = "2025-06";  // 다음 조회 시작월
-    boolean hasNext = true;  // 실제 구현시 DB 조회 결과에 따라 결정
-
-    CalendarScrollResponse response = new CalendarScrollResponse(
-        monthGroups,
-        nextCursor,
-        hasNext
-    );
-
+    CalendarScrollResponse response = calendarService.getMyCalendars(cursor, size);
     return ResponseEntity.ok(response);
   }
 
@@ -248,101 +66,32 @@ public class CalendarController {
   @GetMapping("/{calendarId}")
   public ResponseEntity<CalendarDetailResponse> getCalendar(@PathVariable Long calendarId) {
 
-    CalendarDetailResponse response = new CalendarDetailResponse(
-        calendarId,
-        2L,
-        "캘린더 제목",
-        "캘린더 설명",
-        LocalDate.of(2024, 12, 1),
-        LocalDate.of(2024, 12, 25),
-        LocalDate.of(2024, 12, 5),
-        LocalDate.of(2024, 12, 20),
-        Visibility.PUBLIC,
-        CalendarColor.MINT,
-        Category.HOBBY,
-        null,
-        CalendarType.PERSONAL,
-        true,   // 이미 스크랩한 캘린더 판단 로직 필요...
-        0L
-    );
-
+    CalendarDetailResponse response = calendarService.getCalendar(calendarId);
     return ResponseEntity.ok(response);
   }
 
-  @Operation(summary = "이번달 인기 캘린더 목록 조회 (비회원 접근 가능)", description = "이번달 인기 캘린더 30개를 조회합니다.\n" +
-      "전체공개 캘린더만 조회됩니다.")
-  @GetMapping("/popular")
-  public ResponseEntity<PopularCalendarsResponse> getPopularCalendars() {
-
-    List<CalendarSummaryResponse> calendars = List.of(
-        new CalendarSummaryResponse(
-            101L, 11L, "인기 캘린더 1", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.BLUE, Category.CHALLENGE,
-            null, CalendarType.PERSONAL, 150L
-        ),
-        new CalendarSummaryResponse(
-            102L, 12L, "인기 캘린더 2", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.PEACH, Category.HOBBY,
-            null, CalendarType.PERSONAL, 120L
-        ),
-        new CalendarSummaryResponse(
-            103L, 13L, "인기 캘린더 3", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.MINT, Category.CHALLENGE,
-            null, CalendarType.PERSONAL, 100L
-        ),
-        new CalendarSummaryResponse(
-            104L, 14L, "인기 캘린더 4", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.LAVENDER, Category.HOBBY,
-            null, CalendarType.PERSONAL, 90L
-        ),
-        new CalendarSummaryResponse(
-            105L, 15L, "인기 캘린더 5", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.YELLOW, Category.CHALLENGE,
-            null, CalendarType.PERSONAL, 85L
-        ),
-        new CalendarSummaryResponse(
-            106L, 16L, "인기 캘린더 6", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.BLUE, Category.HOBBY,
-            null, CalendarType.PERSONAL, 75L
-        ),
-        new CalendarSummaryResponse(
-            107L, 17L, "인기 캘린더 7", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.PEACH, Category.CHALLENGE,
-            null, CalendarType.PERSONAL, 70L
-        ),
-        new CalendarSummaryResponse(
-            108L, 18L, "인기 캘린더 8", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.MINT, Category.HOBBY,
-            null, CalendarType.PERSONAL, 65L
-        ),
-        new CalendarSummaryResponse(
-            109L, 19L, "인기 캘린더 9", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.LAVENDER, Category.CHALLENGE,
-            null, CalendarType.PERSONAL, 60L
-        ),
-        new CalendarSummaryResponse(
-            110L, 20L, "인기 캘린더 10", "설명",
-            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
-            Visibility.PUBLIC, CalendarColor.YELLOW, Category.HOBBY,
-            null, CalendarType.PERSONAL, 55L
-        )
-    );
-
-    PopularCalendarsResponse response = new PopularCalendarsResponse(calendars);
-
+  @Operation(
+      summary = "월별 통합 캘린더 조회",
+      description = """
+            특정 년월의 내 모든 캘린더를 조회합니다. (최대 4개)
+            - 조회 결과가 없을 경우 빈 배열([])을 반환합니다.
+            - 본인의 캘린더만 조회 가능합니다.
+          """
+  )
+  @GetMapping("/calendars/monthly")
+  public ResponseEntity<List<CalendarDetailResponse>> getMonthlyCalendars(
+      @RequestParam
+      @DateTimeFormat(pattern = "yyyy-MM")
+      YearMonth yearMonth
+  ) {
+    List<CalendarDetailResponse> response = calendarService.getMonthlyCalendars(yearMonth);
     return ResponseEntity.ok(response);
   }
 
-  @Operation(summary = "캘린더 수정", description = "제목, 설명, 공개범위, 색상, 카테고리를 수정할 수 있습니다. 수정이 필요한 필드만 포함해서 보냅니다. (모든 필드를 추가하지 않아도 됨)")
+  @Operation(summary = "내가 만든 캘린더 수정", description = "제목, 설명, 공개범위, 색상, 카테고리를 수정할 수 있습니다. 수정이 필요한 필드만 포함해서 보냅니다. (모든 " +
+      "필드를" +
+      " " +
+      "추가하지 않아도 됨)")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "수정 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 스크랩/배포본 수정 제한"),
@@ -354,25 +103,7 @@ public class CalendarController {
       @PathVariable Long calendarId,
       @Valid @RequestBody CalendarUpdateRequest request) {
 
-    CalendarDetailResponse response = new CalendarDetailResponse(
-        calendarId,
-        1L,
-        request.title() != null ? request.title() : "기존 제목",
-        request.description() != null ? request.description() : "기존 설명",
-        LocalDate.of(2024, 12, 1),
-        LocalDate.of(2024, 12, 25),
-        LocalDate.of(2024, 12, 5),
-        LocalDate.of(2024, 12, 20),
-        request.visibility() != null ? request.visibility() : Visibility.PUBLIC,
-        request.color() != null ? request.color() : CalendarColor.BLUE,
-        request.category() != null ? request.category() : Category.CHALLENGE,
-        null,  // 원본 캘린더
-        CalendarType.PERSONAL,
-        true,
-        0L
-    );
-
-
+    CalendarDetailResponse response = calendarService.updatePersonalCalendar(calendarId, request);
     return ResponseEntity.ok(response);
   }
 
@@ -385,11 +116,12 @@ public class CalendarController {
   })
   @DeleteMapping("/{calendarId}")
   public ResponseEntity<Void> deleteCalendar(@PathVariable Long calendarId) {
+    calendarService.deleteCalendar(calendarId);
     return ResponseEntity.noContent().build();
   }
 
 
-  @Operation(summary = "캘린더 스크랩", description = "다른 사용자의 공개 캘린더를 내 컬렉션에 저장합니다. userId는 현재 유저입니다.")
+  @Operation(summary = "캘린더 스크랩", description = "다른 사용자의 공개 캘린더를 내 컬렉션에 저장합니다.")
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "스크랩 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 자기 캘린더 스크랩 시도"),
@@ -434,24 +166,7 @@ public class CalendarController {
       @PathVariable Long calendarId,
       @Valid @RequestBody ScrapCalendarRequest request) {
 
-    CalendarDetailResponse response = new CalendarDetailResponse(
-        calendarId,
-        1L,
-        "스크랩한 캘린더",
-        "설명",
-        LocalDate.of(2024, 12, 1),
-        LocalDate.of(2024, 12, 25),
-        LocalDate.of(2024, 12, 5),
-        LocalDate.of(2024, 12, 20),
-        Visibility.PRIVATE,
-        request.color(),  // 변경된 색상
-        Category.HOBBY,
-        10L,  // 원본 ID
-        CalendarType.SCRAPED,
-        false,
-        1L
-    );
-
+    CalendarDetailResponse response = calendarService.updateScrapColor(calendarId, request);
     return ResponseEntity.ok(response);
   }
 
@@ -467,60 +182,79 @@ public class CalendarController {
     return ResponseEntity.noContent().build();
   }
 
+  // todo: 특정 캘린더를 스크랩한 사람 목록 조회하기
 
-  @Operation(summary = "월별 통합 캘린더 조회", description = "특정 년월의 내 모든 캘린더를 조회합니다. (최대 4개)\n" +
-      "내가 만든 캘린더, 스크랩한 캘린더, 배포받은 공식 캘린더가 포함됩니다. 본인의 것만 조회 가능합니다.")
-  @GetMapping("/monthly")
-  public ResponseEntity<List<CalendarSummaryResponse>> getMonthlyCalendars(
-      @RequestParam int year,
-      @RequestParam int month) {
+  @Operation(summary = "이번달 인기 캘린더 목록 조회 (비회원 접근 가능)", description = "이번달 인기 캘린더 30개를 조회합니다.\n" +
+      "전체공개 캘린더만 조회됩니다.")
+  @GetMapping("/popular")
+  public ResponseEntity<PopularCalendarsResponse> getPopularCalendars() {
 
-    CalendarSummaryResponse calendar1 = new CalendarSummaryResponse(
-        1L,
-        1L,
-        "내가 만든 12월 캘린더",
-        "개인 캘린더 설명",
-        LocalDate.of(year, month, 1),
-        LocalDate.of(year, month, 25),
-        Visibility.PUBLIC,
-        CalendarColor.BLUE,
-        Category.HOBBY,
-        null,
-        CalendarType.PERSONAL,
-        0L
+    List<CalendarListResponse> calendars = List.of(
+        new CalendarListResponse(
+            101L, 11L, "인기 캘린더 1", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.BLUE, Category.CHALLENGE,
+            null, CalendarType.PERSONAL, 150L
+        ),
+        new CalendarListResponse(
+            102L, 12L, "인기 캘린더 2", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.PEACH, Category.HOBBY,
+            null, CalendarType.PERSONAL, 120L
+        ),
+        new CalendarListResponse(
+            103L, 13L, "인기 캘린더 3", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.MINT, Category.CHALLENGE,
+            null, CalendarType.PERSONAL, 100L
+        ),
+        new CalendarListResponse(
+            104L, 14L, "인기 캘린더 4", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.LAVENDER, Category.HOBBY,
+            null, CalendarType.PERSONAL, 90L
+        ),
+        new CalendarListResponse(
+            105L, 15L, "인기 캘린더 5", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.YELLOW, Category.CHALLENGE,
+            null, CalendarType.PERSONAL, 85L
+        ),
+        new CalendarListResponse(
+            106L, 16L, "인기 캘린더 6", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.BLUE, Category.HOBBY,
+            null, CalendarType.PERSONAL, 75L
+        ),
+        new CalendarListResponse(
+            107L, 17L, "인기 캘린더 7", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.PEACH, Category.CHALLENGE,
+            null, CalendarType.PERSONAL, 70L
+        ),
+        new CalendarListResponse(
+            108L, 18L, "인기 캘린더 8", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.MINT, Category.HOBBY,
+            null, CalendarType.PERSONAL, 65L
+        ),
+        new CalendarListResponse(
+            109L, 19L, "인기 캘린더 9", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.LAVENDER, Category.CHALLENGE,
+            null, CalendarType.PERSONAL, 60L
+        ),
+        new CalendarListResponse(
+            110L, 20L, "인기 캘린더 10", "설명",
+            LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            Visibility.PUBLIC, CalendarColor.YELLOW, Category.HOBBY,
+            null, CalendarType.PERSONAL, 55L
+        )
     );
 
-    CalendarSummaryResponse calendar2 = new CalendarSummaryResponse(
-        2L,
-        1L,
-        "스크랩한 12월 캘린더",
-        "스크랩 캘린더 설명",
-        LocalDate.of(year, month, 1),
-        LocalDate.of(year, month, 25),
-        Visibility.PRIVATE,
-        CalendarColor.YELLOW,
-        Category.CHALLENGE,
-        10L,  // 원본 캘린더 ID
-        CalendarType.SCRAPED,
-        50L
-    );
+    PopularCalendarsResponse response = new PopularCalendarsResponse(calendars);
 
-    CalendarSummaryResponse calendar3 = new CalendarSummaryResponse(
-        3L,
-        1L,
-        "배포받은 공식 캘린더",
-        "공식 캘린더 설명",
-        LocalDate.of(year, month, 1),
-        LocalDate.of(year, month, 25),
-        Visibility.PUBLIC,
-        CalendarColor.MINT,
-        Category.CHALLENGE,
-        100L,  // 공식 캘린더 원본 ID
-        CalendarType.DISTRIBUTED,
-        0L
-    );
-
-    return ResponseEntity.ok(List.of(calendar1, calendar2, calendar3));
+    return ResponseEntity.ok(response);
   }
 }
 
