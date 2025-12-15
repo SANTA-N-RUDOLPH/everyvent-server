@@ -12,6 +12,9 @@ import java.util.Arrays;
 @Configuration
 public class CorsConfig {
 
+  @Value("${frontend.local.url}")
+  private String localFrontendUrl;
+
   @Value("${frontend.url}")
   private String frontendUrl;
 
@@ -21,7 +24,8 @@ public class CorsConfig {
 
     // 허용할 출처 (로컬 개발 + 배포 환경)
     configuration.setAllowedOrigins(Arrays.asList(
-        frontendUrl  // 환경별 프론트엔드 URL
+        localFrontendUrl,
+        frontendUrl
     ));
 
     // 허용할 HTTP 메서드

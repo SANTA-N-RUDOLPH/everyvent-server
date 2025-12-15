@@ -29,7 +29,7 @@ public class Calendar extends BaseEntity {
   private Long id;
 
   @ManyToOne
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
   @Column(nullable = false)
@@ -88,10 +88,11 @@ public class Calendar extends BaseEntity {
     return deletedAt != null;
   }
 
-  public static Calendar createCalendar(User user, String title, String description, LocalDate startDate,
-                                        LocalDate endDate, Visibility visibility, Category category,
-                                        CalendarColor color, Long originalCalendarId, CalendarType calendarType,
-                                        LocalDate previewStartDay, LocalDate previewEndDay) {
+  public static Calendar createCalendar(User user, String title, String description,
+                                        LocalDate startDate, LocalDate endDate,
+                                        LocalDate previewStartDay, LocalDate previewEndDay,
+                                        Visibility visibility, Category category,
+                                        CalendarColor color, Long originalCalendarId, CalendarType calendarType) {
 
     Calendar calendar = new Calendar();
     calendar.user = user;
@@ -111,7 +112,8 @@ public class Calendar extends BaseEntity {
   }
 
   public static Calendar createCalendarWithStartDay(User user, String title, String description,
-                                                    LocalDate startDate, Visibility visibility,
+                                                    LocalDate startDate, LocalDate previewStartDay,
+                                                    LocalDate previewEndDay, Visibility visibility,
                                                     CalendarColor color, Category category, CalendarType calendarType) {
 
     LocalDate endDate = startDate.plusDays(DEFAULT_PERIOD_DAYS);
@@ -121,18 +123,19 @@ public class Calendar extends BaseEntity {
         description,
         startDate,
         endDate,
+        previewStartDay,
+        previewEndDay,
         visibility,
         category,
         color,
         null,
-        calendarType,
-        null,
-        null
+        calendarType
     );
   }
 
   public static Calendar createCalendarWithStartAndEndDay(User user, String title, String description,
                                                           LocalDate startDate, LocalDate endDate,
+                                                          LocalDate previewStartDay, LocalDate previewEndDay,
                                                           Visibility visibility, CalendarColor color,
                                                           Category category, CalendarType calendarType) {
 
@@ -142,13 +145,14 @@ public class Calendar extends BaseEntity {
         description,
         startDate,
         endDate,
+        previewStartDay,
+        previewEndDay,
         visibility,
         category,
         color,
         null,
-        calendarType,
-        null,
-        null);
+        calendarType
+    );
   }
 
   public static Calendar createScrappedCalendar(User user, Calendar originalCalendar, CalendarColor color) {
@@ -163,28 +167,33 @@ public class Calendar extends BaseEntity {
         originalCalendar.getDescription(),
         originalCalendar.getStartDate(),
         originalCalendar.getEndDate(),
+        originalCalendar.getPreviewStartDay(),
+        originalCalendar.getPreviewEndDay(),
         Visibility.PUBLIC,
         originalCalendar.getCategory(),
         color,
         originalCalendar.getId(),
-        CalendarType.SCRAPED,
-        originalCalendar.getPreviewStartDay(),
-        originalCalendar.getPreviewEndDay()
+        CalendarType.SCRAPED
     );
   }
 
   public static Calendar createOfficialCalendar(User user, String title, String description,
-                                                LocalDate startDate, LocalDate endDate, CalendarColor color, Category category) {
+                                                LocalDate startDate, LocalDate endDate,
+                                                LocalDate previewStartDay, LocalDate previewEndDay,
+                                                CalendarColor color, Category category) {
     return createCalendarWithStartAndEndDay(
         user,
         title,
         description,
         startDate,
         endDate,
+        previewStartDay,
+        previewEndDay,
         Visibility.ADMIN,
         color,
         category,
-        CalendarType.OFFICIAL);
+        CalendarType.OFFICIAL
+    );
   }
 
   // 배포 캘린더의 공개범위는 항상 public (공개범위 변경 불가)
@@ -196,13 +205,13 @@ public class Calendar extends BaseEntity {
         , officialCalendar.getDescription()
         , officialCalendar.getStartDate()
         , officialCalendar.getEndDate()
+        , officialCalendar.getPreviewStartDay()
+        , officialCalendar.getPreviewEndDay()
         , Visibility.PUBLIC
         , officialCalendar.getCategory()
         , officialCalendar.getColor()
         , officialCalendar.getId()
         , CalendarType.DISTRIBUTED
-        , officialCalendar.getPreviewStartDay()
-        , officialCalendar.getPreviewEndDay()
     );
   }
 

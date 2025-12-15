@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar;
+package kr.santanrudolph.everyvent.domain.calendar.official;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -59,9 +59,9 @@ public class OfficialCalendarController {
 
   @Operation(summary = "모든 공식 캘린더 목록 조회", description = "모든 공식 캘린더를 조회합니다.")
   @GetMapping()
-  public ResponseEntity<List<CalendarSummaryResponse>> getOfficialCalendars() {
+  public ResponseEntity<List<CalendarListResponse>> getOfficialCalendars() {
 
-    CalendarSummaryResponse official = new CalendarSummaryResponse(
+    CalendarListResponse official = new CalendarListResponse(
         100L,
         1L,
         "2024 크리스마스 어드벤트",
@@ -76,7 +76,7 @@ public class OfficialCalendarController {
         0L
     );
 
-    CalendarSummaryResponse official2 = new CalendarSummaryResponse(
+    CalendarListResponse official2 = new CalendarListResponse(
         101L,
         1L,
         "2024 크리스마스 어드벤트2",
@@ -91,7 +91,7 @@ public class OfficialCalendarController {
         0L
     );
 
-    CalendarSummaryResponse official3 = new CalendarSummaryResponse(
+    CalendarListResponse official3 = new CalendarListResponse(
         103L,
         1L,
         "2024 크리스마스 어드벤트3",

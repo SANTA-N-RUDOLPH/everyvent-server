@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.domain.calendar.dto;
 
+import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
@@ -24,4 +25,25 @@ public record CalendarDetailResponse(
     boolean scrappable,
     Long scrapCount
 ) {
+
+  public static CalendarDetailResponse from(Calendar calendar, boolean scrappable, Long scrapCount) {
+    return new CalendarDetailResponse(
+        calendar.getId(),
+        calendar.getUser().getId(),
+        calendar.getTitle(),
+        calendar.getDescription(),
+        calendar.getStartDate(),
+        calendar.getEndDate(),
+        calendar.getPreviewStartDay(),
+        calendar.getPreviewEndDay(),
+        calendar.getVisibility(),
+        calendar.getColor(),
+        calendar.getCategory(),
+        calendar.getOriginalCalendarId(),
+        calendar.getCalendarType(),
+        scrappable,
+        scrapCount
+    );
+  }
+
 }

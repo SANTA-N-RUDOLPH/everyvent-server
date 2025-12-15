@@ -29,9 +29,6 @@ spring:
         show_sql: false
         default_batch_fetch_size: 100
 
-frontend:
-  url: http://localhost:5173  # 로컬 프론트엔드 URL
-
 logging:
   level:
     org.hibernate.SQL: info
