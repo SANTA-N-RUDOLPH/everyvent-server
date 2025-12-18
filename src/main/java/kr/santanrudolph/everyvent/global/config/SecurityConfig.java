@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.global.config;
 
+import kr.santanrudolph.everyvent.auth.security.CustomAuthorizationRequestResolver;
 import kr.santanrudolph.everyvent.auth.security.JwtAuthenticationFilter;
 import kr.santanrudolph.everyvent.auth.service.KakaoOAuthService;
 import kr.santanrudolph.everyvent.auth.security.OAuth2SuccessHandler;
@@ -29,6 +30,7 @@ public class SecurityConfig {
   private final OAuth2SuccessHandler oAuth2SuccessHandler;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final Environment environment;
+  private final CustomAuthorizationRequestResolver customAuthorizationRequestResolver;
 
   @Value("${SWAGGER_USERNAME}")
   private String swaggerUsername;
@@ -59,7 +61,7 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
         .authorizeHttpRequests(auth -> {
 
@@ -85,6 +87,9 @@ public class SecurityConfig {
             .frameOptions(frame -> frame.sameOrigin()))
 
         .oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(authorization -> authorization
+                .authorizationRequestResolver(customAuthorizationRequestResolver)
+            )
             .userInfoEndpoint(info -> info.userService(kakaoOAuthService))
             .successHandler(oAuth2SuccessHandler));
 
