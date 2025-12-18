@@ -45,10 +45,11 @@ public class CalendarController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @Operation(summary = "내 캘린더 목록 조회 (무한스크롤)", description = "커서 기반 무한스크롤로 내 캘린더 목록을 월별로 그루핑하여 조회합니다.\n" +
-            "(내가 만든 캘린더, 스크랩한 캘린더, 배포받은 캘린더)\n" +
-            "- cursor: 이전 응답값에서 받은 nextCursor (YYYY-MM 형식, 첫 요청시 생략)\n" +
-            "- size: 페이지 크기 (달 갯수를 의미합니다. 현재 예시는 7월~12월까지이므로 size=6 입니다.)")
+    @Operation(summary = "내 캘린더 목록 조회 (무한스크롤)", description = """
+            커서 기반 무한스크롤로 내 캘린더 목록을 월별로 그루핑하여 조회합니다.
+            (내가 만든 캘린더, 스크랩한 캘린더, 배포받은 캘린더)
+            - cursor: 이전 응답값에서 받은 nextCursor (YYYY-MM 형식, 첫 요청시 생략)
+            - size: 페이지 크기 (달 갯수를 의미합니다. 현재 예시는 7월~12월까지이므로 size=6 입니다.)""")
     @GetMapping()
     public ResponseEntity<CalendarScrollResponse> getMyCalendars(
             @RequestParam(required = false) YearMonth cursor,
