@@ -4,22 +4,23 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ConfigurationProperties(prefix = "oauth2.redirect")
-@Getter
-@Setter
 public class RedirectUriValidator {
 
   private static final String DEFAULT_REDIRECT_URI = "http://localhost:5173";
 
-  private List<String> allowedUris;
+  private final List<String> allowedUris;
+
+  public RedirectUriValidator(
+      @Value("${frontend.url}") String frontendUrl,
+      @Value("${frontend.local.url}") String localUrl) {
+    this.allowedUris = List.of(frontendUrl, localUrl);
+  }
 
   public boolean isAllowed(String redirectUri) {
     if (!isPresent(redirectUri)) {
