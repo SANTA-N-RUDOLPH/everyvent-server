@@ -337,6 +337,7 @@ public class CalendarService {
             validateFuture(calendar.getStartDate());
             validateDeleted(calendar);
             validateOwner(user, calendar);
+            validateScrappedCalendar(calendar);
         } catch (EveryventException e) {
             throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더 색상을 수정할 수 없습니다. " + e.getMessage());
         }
@@ -373,6 +374,12 @@ public class CalendarService {
     private void validateOriginalCalendar(Calendar calendar) {
         if (!calendar.isOriginalCalendar()) {
             throw new EveryventException(ErrorCode.FORBIDDEN, "원본 캘린더가 아닙니다.");
+        }
+    }
+
+    private void validateScrappedCalendar(Calendar calendar) {
+        if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
+            throw new EveryventException(ErrorCode.INVALID_INPUT, "스크랩한 캘린더가 아닙니다.");
         }
     }
 
