@@ -48,7 +48,7 @@ public class CalendarService {
             validateCalendarLimit(user, request.startDate());
             validateFuture(request.startDate());
         } catch (EveryventException e) {
-            throw new EveryventException(ErrorCode.INVALID_INPUT, " 캘린더를 만들 수 없습니다." + e.getMessage());
+            throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더를 만들 수 없습니다. " + e.getMessage());
         }
 
         Calendar calendar = Calendar.createCalendarWithStartDay(
@@ -328,7 +328,7 @@ public class CalendarService {
             validateOwner(user, calendar);
             validateOriginalCalendar(calendar);
         } catch (EveryventException e) {
-            throw new EveryventException(ErrorCode.INVALID_INPUT, " 캘린더를 수정할 수 없습니다. " + e.getMessage());
+            throw new EveryventException(ErrorCode.INVALID_INPUT, "캘린더를 수정할 수 없습니다. " + e.getMessage());
         }
     }
 
