@@ -123,6 +123,7 @@ public class CalendarController {
     }
 
 
+    // todo: 캘린더 스크랩
     @Operation(summary = "캘린더 스크랩", description = "다른 사용자의 공개 캘린더를 내 컬렉션에 저장합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "스크랩 성공"),
@@ -172,6 +173,7 @@ public class CalendarController {
         return ResponseEntity.ok(response);
     }
 
+    // todo: 캘린더 스크랩 취소
     @Operation(summary = "스크랩 취소", description = "스크랩한 캘린더를 삭제")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "스크랩 취소 성공"),
@@ -186,6 +188,7 @@ public class CalendarController {
 
     // todo: 특정 캘린더를 스크랩한 사람 목록 조회하기
 
+    // todo: 이번 달 인기 캘린더 목록 조회
     @Operation(summary = "이번달 인기 캘린더 목록 조회 (비회원 접근 가능)", description = "이번달 인기 캘린더 30개를 조회합니다.\n" +
             "전체공개 캘린더만 조회됩니다.")
     @GetMapping("/popular")
