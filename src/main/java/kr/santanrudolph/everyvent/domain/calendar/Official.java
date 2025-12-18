@@ -1,7 +1,6 @@
-package kr.santanrudolph.everyvent.domain.calendar.official;
+package kr.santanrudolph.everyvent.domain.calendar;
 
 import jakarta.persistence.*;
-import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
