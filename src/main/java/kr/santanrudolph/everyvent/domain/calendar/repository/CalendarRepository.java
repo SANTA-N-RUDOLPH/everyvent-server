@@ -1,5 +1,6 @@
-package kr.santanrudolph.everyvent.domain.calendar;
+package kr.santanrudolph.everyvent.domain.calendar.repository;
 
+import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;

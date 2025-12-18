@@ -1,10 +1,11 @@
-package kr.santanrudolph.everyvent.domain.calendar;
+package kr.santanrudolph.everyvent.domain.calendar.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import kr.santanrudolph.everyvent.domain.calendar.service.CalendarService;
 import kr.santanrudolph.everyvent.domain.calendar.dto.*;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;

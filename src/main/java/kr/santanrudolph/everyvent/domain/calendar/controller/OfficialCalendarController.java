@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar.official;
+package kr.santanrudolph.everyvent.domain.calendar.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
