@@ -71,7 +71,7 @@ public class CalendarService {
     }
 
     public CalendarDetailResponse getCalendar(Long calendarId) {
-        Calendar calendar = findCalendarById(calendarId);
+        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
         User currentUser = userService.getCurrentUser();
 
         validateCanViewCalendar(currentUser, calendar);
@@ -152,7 +152,7 @@ public class CalendarService {
     @Transactional
     public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
         User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
+        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
         validateUpdateCalendar(currentUser, calendar);
 
@@ -208,7 +208,7 @@ public class CalendarService {
     public void deleteCalendar(Long calendarId) {
         User currentUser = userService.getCurrentUser();
 
-        Calendar calendar = findCalendarById(calendarId);
+        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
         validateCanDeleteCalendar(currentUser, calendar);
 
@@ -250,8 +250,8 @@ public class CalendarService {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Calendar findCalendarById(Long calendarId) {
-        return calendarRepository.findById(calendarId)
+    private Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
+        return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
                 .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
     }
 
