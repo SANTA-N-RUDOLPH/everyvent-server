@@ -222,7 +222,7 @@ public class Calendar extends BaseEntity {
 
   public void updateTitle(String title) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 제목을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "원본 캘린더가 아닌 캘린더는 제목을 변경할 수 없습니다.");
     }
     this.title = title;
   }
