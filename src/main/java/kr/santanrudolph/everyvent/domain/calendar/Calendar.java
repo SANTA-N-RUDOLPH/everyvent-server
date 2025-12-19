@@ -222,42 +222,42 @@ public class Calendar extends BaseEntity {
 
   public void updateTitle(String title) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 제목을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "제목을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.title = title;
   }
 
   public void updateDescription(String description) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 설명을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "설명을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.description = description;
   }
 
   public void updateStartDate(LocalDate startDate) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 캘린더 시작일을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "시작일을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.startDate = startDate;
   }
 
   public void updateEndDate(LocalDate endDate) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 캘린더 종료일을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "종료일을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.endDate = endDate;
   }
 
   public void updateVisibility(Visibility visibility) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 공개범위를 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "공개범위를 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.visibility = visibility;
   }
 
   public void updateCategory(Category category) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 카테고리를 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "카테고리를 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.category = category;
   }
@@ -275,14 +275,14 @@ public class Calendar extends BaseEntity {
 
   public void updatePreviewStartDay(LocalDate previewStartDay) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 미리보기 시작일을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "미리보기 시작일을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.previewStartDay = previewStartDay;
   }
 
   public void updatePreviewEndDay(LocalDate previewEndDay) {
     if (!isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "스크랩 캘린더는 미리보기 종료일을 변경할 수 없습니다.");
+      throw new EveryventException(ErrorCode.FORBIDDEN, "미리보기 종료일을 변경할 수 없습니다. 원본 캘린더가 아닙니다.");
     }
     this.previewEndDay = previewEndDay;
   }
