@@ -19,148 +19,148 @@ import java.time.YearMonth;
 @Component
 @RequiredArgsConstructor
 public class CalendarPolicy {
-  private final CalendarRepository calendarRepository;
-  private final FollowService followService;
-  private final ScrapService scrapService;
+    private final CalendarRepository calendarRepository;
+    private final FollowService followService;
+    private final ScrapService scrapService;
 
-  public boolean canView(User user, Calendar calendar) {
-    if (user.getRole() == Role.ADMIN) {
-      return true;
+    public boolean canView(User user, Calendar calendar) {
+        if (user.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        if (isOwner(user, calendar)) {
+            return true;
+        }
+
+        Visibility visibility = calendar.getVisibility();
+        if (visibility == Visibility.PUBLIC) {
+            return true;
+        }
+
+        Long followerId = user.getId();
+        Long targetId = calendar.getUser().getId();
+        if (visibility == Visibility.FOLLOWER) {
+            return followService.isFollowing(followerId, targetId);
+        }
+
+        if (visibility == Visibility.MUTUAL) {
+            return followService.isMutualFollow(followerId, targetId);
+        }
+
+        return false;
     }
 
-    if (isOwner(user, calendar)) {
-      return true;
+    public boolean canScrap(User user, Calendar calendar) {
+        if (isOwner(user, calendar)) {
+            return false;
+        }
+
+        if (!canView(user, calendar)) {
+            return false;
+        }
+
+        return !scrapService.isScrapped(user, calendar.getId());
     }
 
-    Visibility visibility = calendar.getVisibility();
-    if (visibility == Visibility.PUBLIC) {
-      return true;
+    public boolean isOwner(User user, Calendar calendar) {
+        return calendar.getUser().getId().equals(user.getId());
     }
 
-    Long followerId = user.getId();
-    Long targetId = calendar.getUser().getId();
-    if (visibility == Visibility.FOLLOWER) {
-      return followService.isFollowing(followerId, targetId);
+    public void validateCanCreate(User user, LocalDate startDate) {
+        try {
+            validateCalendarLimit(user, startDate);
+            validateFuture(startDate);
+        } catch (EveryventException e) {
+            throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getMessage());
+        }
     }
 
-    if (visibility == Visibility.MUTUAL) {
-      return followService.isMutualFollow(followerId, targetId);
+    public void validateCanUpdate(User user, Calendar calendar) {
+        try {
+            validateFuture(calendar.getStartDate());
+            validateDeleted(calendar);
+            validateOwner(user, calendar);
+            validateOriginalCalendar(calendar);
+        } catch (EveryventException e) {
+            throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getMessage());
+        }
     }
 
-    return false;
-  }
-
-  public boolean canScrap(User user, Calendar calendar) {
-    if (isOwner(user, calendar)) {
-      return false;
+    public void validateCanUpdateScrapColor(User user, Calendar calendar) {
+        try {
+            validateFuture(calendar.getStartDate());
+            validateDeleted(calendar);
+            validateOwner(user, calendar);
+            validateScrappedCalendar(calendar);
+        } catch (EveryventException e) {
+            throw new EveryventException(e.getErrorCode(), "캘린더 색상을 수정할 수 없습니다. " + e.getMessage());
+        }
     }
 
-    if (!canView(user, calendar)) {
-      return false;
+    public void validateCanDelete(User user, Calendar calendar) {
+        try {
+            validateFuture(calendar.getStartDate());
+            validateDeleted(calendar);
+            validateOwner(user, calendar);
+        } catch (EveryventException e) {
+            throw new EveryventException(e.getErrorCode(), e.getMessage());
+        }
     }
 
-    return !scrapService.isScrapped(user, calendar.getId());
-  }
-
-  public boolean isOwner(User user, Calendar calendar) {
-    return calendar.getUser().getId().equals(user.getId());
-  }
-
-  public void validateCanCreate(User user, LocalDate startDate) {
-    try {
-      validateCalendarLimit(user, startDate);
-      validateFuture(startDate);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getMessage());
+    public void validateCanView(User user, Calendar calendar) {
+        if (!canView(user, calendar)) {
+            throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
+        }
     }
-  }
 
-  public void validateCanUpdate(User user, Calendar calendar) {
-    try {
-      validateFuture(calendar.getStartDate());
-      validateDeleted(calendar);
-      validateOwner(user, calendar);
-      validateOriginalCalendar(calendar);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getMessage());
+    private void validateCalendarLimit(User user, LocalDate targetDate) {
+        int year = targetDate.getYear();
+        int month = targetDate.getMonthValue();
+
+        long count = calendarRepository.countByUserAndYearMonthAndTypes(
+                user, year, month, CalendarConstants.LIMITED_CALENDAR_TYPES
+        );
+
+        if (count >= CalendarConstants.MAX_CNT_PER_MONTH) {
+            throw new EveryventException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("%d년 %d월에 생성 가능한 캘린더 수를 초과했습니다.", year, month)
+            );
+        }
     }
-  }
 
-  public void validateCanUpdateScrapColor(User user, Calendar calendar) {
-    try {
-      validateFuture(calendar.getStartDate());
-      validateDeleted(calendar);
-      validateOwner(user, calendar);
-      validateScrappedCalendar(calendar);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더 색상을 수정할 수 없습니다. " + e.getMessage());
+    public void validateOwner(User user, Calendar calendar) {
+        if (!isOwner(user, calendar)) {
+            throw new EveryventException(ErrorCode.FORBIDDEN, "본인 캘린더가 아닙니다.");
+        }
     }
-  }
 
-  public void validateCanDelete(User user, Calendar calendar) {
-    try {
-      validateFuture(calendar.getStartDate());
-      validateDeleted(calendar);
-      validateOwner(user, calendar);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), e.getMessage());
+    private void validateFuture(LocalDate startDate) {
+        YearMonth calendarYearMonth = YearMonth.from(startDate);
+        YearMonth currentYearMonth = YearMonth.now();
+
+        if (calendarYearMonth.isAfter(currentYearMonth)) {
+            return;
+        }
+        throw new EveryventException(ErrorCode.INVALID_INPUT, "과거입니다.");
     }
-  }
 
-  public void validateCanView(User user, Calendar calendar) {
-    if (!canView(user, calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
+    private void validateDeleted(Calendar calendar) {
+        if (calendar.isDeleted()) {
+            throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 캘린더입니다.");
+        }
     }
-  }
 
-  private void validateCalendarLimit(User user, LocalDate targetDate) {
-    int year = targetDate.getYear();
-    int month = targetDate.getMonthValue();
-
-    long count = calendarRepository.countByUserAndYearMonthAndTypes(
-        user, year, month, CalendarConstants.LIMITED_CALENDAR_TYPES
-    );
-
-    if (count >= CalendarConstants.MAX_CNT_PER_MONTH) {
-      throw new EveryventException(
-          ErrorCode.INVALID_INPUT,
-          String.format("%d년 %d월에 생성 가능한 캘린더 수를 초과했습니다.", year, month)
-      );
+    private void validateOriginalCalendar(Calendar calendar) {
+        if (!calendar.isOriginalCalendar()) {
+            throw new EveryventException(ErrorCode.FORBIDDEN, "원본 캘린더가 아닙니다.");
+        }
     }
-  }
 
-  public void validateOwner(User user, Calendar calendar) {
-    if (!isOwner(user, calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "본인 캘린더가 아닙니다.");
+    private void validateScrappedCalendar(Calendar calendar) {
+        if (!calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
+            throw new EveryventException(ErrorCode.INVALID_INPUT, "스크랩한 캘린더가 아닙니다.");
+        }
     }
-  }
-
-  private void validateFuture(LocalDate startDate) {
-    YearMonth calendarYearMonth = YearMonth.from(startDate);
-    YearMonth currentYearMonth = YearMonth.now();
-
-    if (calendarYearMonth.isAfter(currentYearMonth)) {
-      return;
-    }
-    throw new EveryventException(ErrorCode.INVALID_INPUT, "과거입니다.");
-  }
-
-  private void validateDeleted(Calendar calendar) {
-    if (calendar.isDeleted()) {
-      throw new EveryventException(ErrorCode.NOT_FOUND, "삭제된 캘린더입니다.");
-    }
-  }
-
-  private void validateOriginalCalendar(Calendar calendar) {
-    if (!calendar.isOriginalCalendar()) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "원본 캘린더가 아닙니다.");
-    }
-  }
-
-  private void validateScrappedCalendar(Calendar calendar) {
-    if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "스크랩한 캘린더가 아닙니다.");
-    }
-  }
 
 }
