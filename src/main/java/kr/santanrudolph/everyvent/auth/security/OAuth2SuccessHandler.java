@@ -54,10 +54,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         .queryParam("code", authCode)
         .build().toUriString();
 
-    // OAuth2 로그인 완료 후 불필요한 세션 데이터 제거
+    // OAuth2 로그인 완료 후 세션 무효화 (이후 API 호출은 JWT로만 인증)
     HttpSession session = request.getSession(false);
     if (session != null) {
-      session.removeAttribute(REDIRECT_URI_SESSION_KEY);
+      session.invalidate();
+      log.info("Session invalidated after OAuth2 login success");
     }
 
     log.info("Redirecting to: {}", targetUrl);
