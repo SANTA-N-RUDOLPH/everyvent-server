@@ -4,7 +4,7 @@ import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.dto.*;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
-import kr.santanrudolph.everyvent.domain.task.TaskService;
+import kr.santanrudolph.everyvent.domain.task.TaskRepository;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserService;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -31,9 +31,9 @@ public class CalendarService {
   private static final long INITIAL_SCRAP_COUNT = 0L;
 
   private final CalendarRepository calendarRepository;
+  private final TaskRepository taskRepository;
   private final UserService userService;
   private final ScrapService scrapService;
-  private final TaskService taskService;
   private final CalendarPolicy calendarPolicy;
 
 
@@ -202,7 +202,8 @@ public class CalendarService {
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanDelete(currentUser, calendar);
-    taskService.deleteTasksByCalendarId(calendarId);
+
+    taskRepository.deleteByCalendarId(calendarId);
     calendar.softDelete();
   }
 
