@@ -19,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -148,12 +149,15 @@ public class TaskService {
   }
 
   private List<Task> requestsToTasks(Calendar calendar, List<TaskCreateRequest> requests) {
+    Map<Integer, Long> requestedTaskCountByDay = requests.stream()
+        .collect(Collectors.groupingBy(TaskCreateRequest::day, Collectors.counting()));
+
     return requests.stream()
         .map(request -> {
           LocalDate taskDay = parseTaskDay(calendar, request);
 
           validateDateWithinCalendarRange(calendar, taskDay);
-          validateTaskLimit(calendar, taskDay);
+          validateTaskLimit(calendar, taskDay, requestedTaskCountByDay.get(request.day()));
 
           return Task.createTask(calendar, taskDay, request.content());
         })
@@ -172,11 +176,11 @@ public class TaskService {
     }
   }
 
-  private void validateTaskLimit(Calendar calendar, LocalDate day) {
+  private void validateTaskLimit(Calendar calendar, LocalDate day, long requestedTaskCountByDay) {
     long calendarId = calendar.getId();
     long count = taskRepository.countByCalendarIdAndDay(calendarId, day);
 
-    if (count >= MAX_TASKS_PER_DAY) {
+    if (count + requestedTaskCountByDay > MAX_TASKS_PER_DAY) {
       throw new EveryventException(
           ErrorCode.INVALID_INPUT,
           String.format("하루에 최대 %d개의 태스크만 생성할 수 있습니다.", MAX_TASKS_PER_DAY)
