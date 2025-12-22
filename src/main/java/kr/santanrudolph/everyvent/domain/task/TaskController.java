@@ -111,7 +111,7 @@ public class TaskController {
     return ResponseEntity.noContent().build();
   }
 
-  @Operation(summary = "태스크 완료 상태 변경", description = "태스크의 완료/미완료 상태를 변경합니다. completed 쿼리 파라미터로 true/false를 전달합니다.")
+  @Operation(summary = "태스크 완료 상태 변경", description = "태스크의 완료/미완료 상태를 변경합니다.")
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "처리 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 미래 태스크 완료 불가"),
@@ -122,7 +122,7 @@ public class TaskController {
   public ResponseEntity<TaskResponse> updateTaskCompletion(
       @PathVariable Long calendarId,
       @PathVariable Long taskId,
-      @RequestParam Boolean completed) {
+      @RequestBody Boolean completed) {
 
     TaskResponse response = taskService.updateTaskCompletion(calendarId, taskId, completed);
     return ResponseEntity.ok(response);
