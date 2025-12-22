@@ -145,16 +145,7 @@ public class TaskService {
     Calendar calendar = calendarService.findCalendarByIdAndDeletedAtIsNull(calendarId);
     Task task = findTaskById(taskId);
 
-    try {
-      calendarPolicy.validateCanView(currentUser, calendar);
-      validateTaskBelongsToCalendar(task, calendarId);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "태스크 완료 상태를 변경할 수 없습니다. " + e.getMessage());
-    }
-
-    if (isLocked(calendar, task)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "태스크 완료 상태를 변경할 수 없습니다. 아직 열리지 않았습니다.");
-    }
+    validateCanComplete(currentUser, calendar, task);
 
     if (completed) {
       task.complete();
@@ -221,6 +212,19 @@ public class TaskService {
     }
   }
 
+  private void validateCanComplete(User currentUser, Calendar calendar, Task task) {
+    try {
+      calendarPolicy.validateCanView(currentUser, calendar);
+      validateTaskBelongsToCalendar(task, calendar.getId());
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크 완료 상태를 변경할 수 없습니다. " + e.getMessage());
+    }
+
+    if (isFutureTask(task)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "태스크 완료 상태를 변경할 수 없습니다. 미래의 태스크입니다.");
+    }
+  }
+
   private boolean isLocked(Calendar calendar, Task task) {
     LocalDate now = TimeUtil.today();
 
@@ -236,5 +240,9 @@ public class TaskService {
 
     // 해당 날짜가 미래면 잠겨있음
     return task.getDay().isAfter(now);
+  }
+
+  private boolean isFutureTask(Task task) {
+    return TimeUtil.isAfter(task.getDay(), TimeUtil.today());
   }
 }
