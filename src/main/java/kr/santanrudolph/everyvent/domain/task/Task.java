@@ -4,9 +4,6 @@ package kr.santanrudolph.everyvent.domain.task;
 import jakarta.persistence.*;
 import kr.santanrudolph.everyvent.global.entity.BaseEntity;
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
-import kr.santanrudolph.everyvent.global.exception.ErrorCode;
-import kr.santanrudolph.everyvent.global.exception.EveryventException;
-import kr.santanrudolph.everyvent.global.util.TimeUtil;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,26 +29,27 @@ public class Task extends BaseEntity {
   @Column(nullable = false)
   private String content;
 
-  @Column(nullable = false)
-  private boolean completed;
+  @Column
+  private Boolean completed;
 
-  public boolean getCompleted() {
-    return completed;
-  }
-
-  public static Task createTask(Calendar calendar, LocalDate day) {
+  public static Task createTask(Calendar calendar, LocalDate day, String content) {
     Task task = new Task();
     task.calendar = calendar;
     task.day = day;
+    task.content = content;
     task.completed = false;
     return task;
   }
 
+  public void updateContent(String content) {
+    this.content = content;
+  }
+
   public void complete() {
-    if (TimeUtil.isAfter(this.day, TimeUtil.today())) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "미래의 태스크는 완료할 수 없습니다.");
-    }
     this.completed = true;
   }
 
+  public void uncomplete() {
+    this.completed = false;
+  }
 }
