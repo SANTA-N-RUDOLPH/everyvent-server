@@ -91,7 +91,7 @@ public class CalendarPolicy {
   public void validateCanUpdateScrapColor(User user, Calendar calendar) {
     try {
       // 이번달 캘린더일 때 update 가능
-      validateThisMonth(calendar.getStartDate());
+      validateThisMonth(calendar);
       validateDeleted(calendar);
       validateOwner(user, calendar);
       validateIsScrappedCalendar(calendar);
@@ -118,10 +118,11 @@ public class CalendarPolicy {
 
   public void validateCanScrap(User user, Calendar calendar) {
     try {
+      validateCanView(user, calendar);
+      validateThisMonth(calendar);
       validateDeleted(calendar);
       validateNotOwner(user, calendar);
       validateNotAlreadyScrapped(user, calendar);
-      validateCanView(user, calendar);
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 스크랩할 수 없습니다. " + e.getMessage());
     }
@@ -131,6 +132,7 @@ public class CalendarPolicy {
     try {
       validateDeleted(calendar);
       validateAlreadyScrapped(user, calendar);
+      validateThisMonth(calendar);
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "스크랩을 취소할 수 없습니다. " + e.getMessage());
     }
@@ -168,8 +170,8 @@ public class CalendarPolicy {
     throw new EveryventException(ErrorCode.INVALID_INPUT, "과거입니다.");
   }
 
-  private void validateThisMonth(LocalDate startDate) {
-    YearMonth calendarYearMonth = YearMonth.from(startDate);
+  private void validateThisMonth(Calendar calendar) {
+    YearMonth calendarYearMonth = YearMonth.from(calendar.getStartDate());
     YearMonth currentYearMonth = TimeUtil.currentYearMonth();
 
     if (calendarYearMonth.isAfter(currentYearMonth)) {
