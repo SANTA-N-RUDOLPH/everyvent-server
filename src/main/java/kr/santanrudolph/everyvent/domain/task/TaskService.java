@@ -56,22 +56,28 @@ public class TaskService {
     }
 
     public List<TaskResponse> getTasksAllInformation(Long calendarId) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
-
-        try {
-            calendarPolicy.validateCanView(currentUser, calendar);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getMessage());
-        }
-
-        List<Task> tasks = taskRepository.findAllByCalendarId(calendarId);
+        List<Task> tasks = getAllTasks(calendarId);
 
         return tasks.stream()
                 .map(task -> TaskResponse.from(task, UNLOCKED))
                 .toList();
     }
 
+    public List<TaskResponse> saveCopyTasks(Calendar originalCalendar, Calendar ScrappedCalendar) {
+        List<Task> originalTasks = getAllTasks(originalCalendar.getId());
+        List<Task> copyTasks = new ArrayList<>();
+
+        for (Task original : originalTasks) {
+            copyTasks.add(
+                    Task.createTask(ScrappedCalendar, original.getDay(), original.getContent())
+            );
+        }
+        List<Task> results = taskRepository.saveAll(copyTasks);
+
+        return results.stream()
+                .map(task -> TaskResponse.from(task, UNLOCKED))
+                .toList();
+    }
 
     public List<TaskResponse> getTasks(Long calendarId) {
         User currentUser = userService.getCurrentUser();
@@ -140,6 +146,24 @@ public class TaskService {
         }
 
         return TaskResponse.from(task, false);
+    }
+
+    @Transactional
+    public void deleteByCalendarId(Long calendarId) {
+        taskRepository.deleteByCalendarId(calendarId);
+    }
+
+    private List<Task> getAllTasks(Long calendarId) {
+        User currentUser = userService.getCurrentUser();
+        Calendar calendar = findCalendarById(calendarId);
+
+        try {
+            calendarPolicy.validateCanView(currentUser, calendar);
+        } catch (EveryventException e) {
+            throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getMessage());
+        }
+
+        return taskRepository.findAllByCalendarId(calendarId);
     }
 
     private Calendar findCalendarById(Long calendarId) {
@@ -239,4 +263,5 @@ public class TaskService {
     private boolean isFutureTask(Task task) {
         return TimeUtil.isAfter(task.getDay(), TimeUtil.today());
     }
+
 }
