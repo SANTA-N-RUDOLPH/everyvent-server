@@ -126,20 +126,6 @@ public class TaskService {
   }
 
   @Transactional
-  public void deleteTasksByCalendarId(Long calendarId) {
-    User currentUser = userService.getCurrentUser();
-    Calendar calendar = calendarService.findCalendarByIdAndDeletedAtIsNull(calendarId);
-
-    try {
-      calendarPolicy.validateCanUpdate(currentUser, calendar);
-    } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "태스크들을 삭제할 수 없습니다. " + e.getMessage());
-    }
-
-    taskRepository.deleteByCalendarId(calendarId);
-  }
-
-  @Transactional
   public TaskResponse updateTaskCompletion(Long calendarId, Long taskId, Boolean completed) {
     User currentUser = userService.getCurrentUser();
     Calendar calendar = calendarService.findCalendarByIdAndDeletedAtIsNull(calendarId);
