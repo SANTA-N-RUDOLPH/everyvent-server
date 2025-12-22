@@ -4,6 +4,7 @@ import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.dto.*;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
+import kr.santanrudolph.everyvent.domain.task.TaskRepository;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserService;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -25,224 +26,225 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CalendarService {
 
-    private static final boolean SCRAPPABLE = true;
-    private static final boolean NOT_SCRAPPABLE = false;
-    private static final long INITIAL_SCRAP_COUNT = 0L;
+  private static final boolean SCRAPPABLE = true;
+  private static final boolean NOT_SCRAPPABLE = false;
+  private static final long INITIAL_SCRAP_COUNT = 0L;
 
-    private final CalendarRepository calendarRepository;
-    private final UserService userService;
-    private final ScrapService scrapService;
-    private final CalendarPolicy calendarPolicy;
-
-
-    @Transactional
-    public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
-
-        User user = userService.getCurrentUser();
-
-        calendarPolicy.validateCanCreate(user, request.startDate());
-
-        Calendar calendar = Calendar.createCalendarWithStartDay(
-                user,
-                request.title(),
-                request.description(),
-                request.startDate(),
-                request.previewStartDate(),
-                request.previewEndDate(),
-                request.visibility(),
-                request.color(),
-                request.category(),
-                CalendarType.PERSONAL
-        );
+  private final CalendarRepository calendarRepository;
+  private final TaskRepository taskRepository;
+  private final UserService userService;
+  private final ScrapService scrapService;
+  private final CalendarPolicy calendarPolicy;
 
 
-        Calendar saved = calendarRepository.save(calendar);
+  @Transactional
+  public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
 
-        return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
+    User user = userService.getCurrentUser();
+
+    calendarPolicy.validateCanCreate(user, request.startDate());
+
+    Calendar calendar = Calendar.createCalendarWithStartDay(
+        user,
+        request.title(),
+        request.description(),
+        request.startDate(),
+        request.previewStartDate(),
+        request.previewEndDate(),
+        request.visibility(),
+        request.color(),
+        request.category(),
+        CalendarType.PERSONAL
+    );
+
+
+    Calendar saved = calendarRepository.save(calendar);
+
+    return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
+  }
+
+  public CalendarDetailResponse getCalendar(Long calendarId) {
+    Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+    User currentUser = userService.getCurrentUser();
+
+    calendarPolicy.validateCanView(currentUser, calendar);
+
+    Long scrapCount = scrapService.getScrapCount(calendarId);
+    boolean scrappable = calendarPolicy.canScrap(currentUser, calendar);
+    return CalendarDetailResponse.from(calendar, scrappable, scrapCount);
+  }
+
+  public CalendarScrollResponse getMyCalendars(YearMonth cursor, Integer size) {
+    User user = userService.getCurrentUser();
+
+    if (size <= 0) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "size는 1 이상이어야 합니다.");
     }
 
-    public CalendarDetailResponse getCalendar(Long calendarId) {
-        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
-        User currentUser = userService.getCurrentUser();
-
-        calendarPolicy.validateCanView(currentUser, calendar);
-
-        Long scrapCount = scrapService.getScrapCount(calendarId);
-        boolean scrappable = calendarPolicy.canScrap(currentUser, calendar);
-        return CalendarDetailResponse.from(calendar, scrappable, scrapCount);
+    YearMonth startYearMonth;
+    if (cursor == null) {
+      startYearMonth = calendarRepository
+          .findFirstByUserAndDeletedAtIsNullAndStartDateBeforeOrderByStartDateDesc(
+              user,
+              LocalDate.now().plusYears(10)  // todo: 비즈니스 로직 상 10년 후까지 포함. 리팩토링 필요
+          )
+          .map(calendar -> YearMonth.from(calendar.getStartDate()))
+          .orElse(null);
+    } else {
+      startYearMonth = cursor;
     }
 
-    public CalendarScrollResponse getMyCalendars(YearMonth cursor, Integer size) {
-        User user = userService.getCurrentUser();
-
-        if (size <= 0) {
-            throw new EveryventException(ErrorCode.INVALID_INPUT, "size는 1 이상이어야 합니다.");
-        }
-
-        YearMonth startYearMonth;
-        if (cursor == null) {
-            startYearMonth = calendarRepository
-                    .findFirstByUserAndDeletedAtIsNullAndStartDateBeforeOrderByStartDateDesc(
-                            user,
-                            LocalDate.now().plusYears(10)  // todo: 비즈니스 로직 상 10년 후까지 포함. 리팩토링 필요
-                    )
-                    .map(calendar -> YearMonth.from(calendar.getStartDate()))
-                    .orElse(null);
-        } else {
-            startYearMonth = cursor;
-        }
-
-        if (startYearMonth == null) { // 최근 캘린더 존재하지 않음
-            return new CalendarScrollResponse(null, null, false);
-        }
-
-        YearMonth endYearMonth = startYearMonth.minusMonths(size);
-        LocalDate startDate = endYearMonth.atDay(1);
-        LocalDate endDate = startYearMonth.atEndOfMonth();
-
-        List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
-                user,
-                startDate,
-                endDate
-        );
-
-        Map<Long, Long> scrapCountsMap = getScrapCountMapFromCalendars(calendars);
-
-        List<CalendarMonthGroup> calendarMonthGroups = groupCalendarsByMonth(calendars, scrapCountsMap);
-
-        boolean hasNext = calendarMonthGroups.size() > size;
-        String nextCursor = null;
-
-        if (hasNext) {
-            CalendarMonthGroup lastGroup = calendarMonthGroups.remove(calendarMonthGroups.size() - 1);
-            nextCursor = lastGroup.toYearMonth().toString();
-        }
-
-        return new CalendarScrollResponse(calendarMonthGroups, nextCursor, hasNext);
+    if (startYearMonth == null) { // 최근 캘린더 존재하지 않음
+      return new CalendarScrollResponse(null, null, false);
     }
 
-    public List<CalendarDetailResponse> getMonthlyCalendars(YearMonth yearMonth) {
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
-        List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
-                userService.getCurrentUser(),
-                startDate,
-                endDate
-        );
+    YearMonth endYearMonth = startYearMonth.minusMonths(size);
+    LocalDate startDate = endYearMonth.atDay(1);
+    LocalDate endDate = startYearMonth.atEndOfMonth();
 
-        Map<Long, Long> scrapCountsMap = getScrapCountMapFromCalendars(calendars);
+    List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
+        user,
+        startDate,
+        endDate
+    );
 
-        return calendars.stream()
-                .map(calendar -> CalendarDetailResponse.from(
-                        calendar,
-                        NOT_SCRAPPABLE,
-                        scrapCountsMap.getOrDefault(calendar.getId(), 0L)))
-                .toList();
+    Map<Long, Long> scrapCountsMap = getScrapCountMapFromCalendars(calendars);
+
+    List<CalendarMonthGroup> calendarMonthGroups = groupCalendarsByMonth(calendars, scrapCountsMap);
+
+    boolean hasNext = calendarMonthGroups.size() > size;
+    String nextCursor = null;
+
+    if (hasNext) {
+      CalendarMonthGroup lastGroup = calendarMonthGroups.remove(calendarMonthGroups.size() - 1);
+      nextCursor = lastGroup.toYearMonth().toString();
     }
 
-    @Transactional
-    public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+    return new CalendarScrollResponse(calendarMonthGroups, nextCursor, hasNext);
+  }
 
-        calendarPolicy.validateCanUpdate(currentUser, calendar);
+  public List<CalendarDetailResponse> getMonthlyCalendars(YearMonth yearMonth) {
+    LocalDate startDate = yearMonth.atDay(1);
+    LocalDate endDate = yearMonth.atEndOfMonth();
+    List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
+        userService.getCurrentUser(),
+        startDate,
+        endDate
+    );
 
-        if (request.title() != null) {
-            calendar.updateTitle(request.title());
-        }
-        if (request.description() != null) {
-            calendar.updateDescription(request.description());
-        }
-        if (request.startDate() != null) {
-            calendar.updateStartDate(request.startDate());
-        }
-        if (request.endDate() != null) {
-            calendar.updateEndDate(request.endDate());
-        }
-        if (request.previewStartDate() != null) {
-            calendar.updatePreviewStartDay(request.previewStartDate());
-        }
-        if (request.previewEndDate() != null) {
-            calendar.updatePreviewEndDay(request.previewEndDate());
-        }
-        if (request.visibility() != null) {
-            calendar.updateVisibility(request.visibility());
-        }
-        if (request.color() != null) {
-            calendar.updateColor(request.color());
-        }
-        if (request.category() != null) {
-            calendar.updateCategory(request.category());
-        }
+    Map<Long, Long> scrapCountsMap = getScrapCountMapFromCalendars(calendars);
 
-        Long scrapCount = scrapService.getScrapCount(calendar.getId());
+    return calendars.stream()
+        .map(calendar -> CalendarDetailResponse.from(
+            calendar,
+            NOT_SCRAPPABLE,
+            scrapCountsMap.getOrDefault(calendar.getId(), 0L)))
+        .toList();
+  }
 
-        return CalendarDetailResponse.from(calendar, false, scrapCount);
+  @Transactional
+  public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+
+    calendarPolicy.validateCanUpdate(currentUser, calendar);
+
+    if (request.title() != null) {
+      calendar.updateTitle(request.title());
+    }
+    if (request.description() != null) {
+      calendar.updateDescription(request.description());
+    }
+    if (request.startDate() != null) {
+      calendar.updateStartDate(request.startDate());
+    }
+    if (request.endDate() != null) {
+      calendar.updateEndDate(request.endDate());
+    }
+    if (request.previewStartDate() != null) {
+      calendar.updatePreviewStartDay(request.previewStartDate());
+    }
+    if (request.previewEndDate() != null) {
+      calendar.updatePreviewEndDay(request.previewEndDate());
+    }
+    if (request.visibility() != null) {
+      calendar.updateVisibility(request.visibility());
+    }
+    if (request.color() != null) {
+      calendar.updateColor(request.color());
+    }
+    if (request.category() != null) {
+      calendar.updateCategory(request.category());
     }
 
-    @Transactional
-    public CalendarDetailResponse updateScrapColor(Long calendarId, ScrapCalendarRequest request) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = calendarRepository.findById(calendarId)
-                .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
+    Long scrapCount = scrapService.getScrapCount(calendar.getId());
 
-        calendarPolicy.validateCanUpdateScrapColor(currentUser, calendar);
+    return CalendarDetailResponse.from(calendar, false, scrapCount);
+  }
 
-        calendar.updateColor(request.color());
+  @Transactional
+  public CalendarDetailResponse updateScrapColor(Long calendarId, ScrapCalendarRequest request) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = calendarRepository.findById(calendarId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
 
-        Long scrapCount = scrapService.getScrapCount(calendar.getId());
-        return CalendarDetailResponse.from(calendar, SCRAPPABLE, scrapCount);
+    calendarPolicy.validateCanUpdateScrapColor(currentUser, calendar);
+
+    calendar.updateColor(request.color());
+
+    Long scrapCount = scrapService.getScrapCount(calendar.getId());
+    return CalendarDetailResponse.from(calendar, SCRAPPABLE, scrapCount);
+  }
+
+  @Transactional
+  public void deleteCalendar(Long calendarId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+
+    calendarPolicy.validateCanDelete(currentUser, calendar);
+
+    taskRepository.deleteByCalendarId(calendarId);
+    calendar.softDelete();
+  }
+
+  public Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
+    return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
+  }
+
+  private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {
+    if (calendars == null || calendars.isEmpty()) {
+      return Collections.emptyMap();
     }
 
-    @Transactional
-    public void deleteCalendar(Long calendarId) {
-        User currentUser = userService.getCurrentUser();
+    List<Long> calendarIds = calendars.stream()
+        .map(Calendar::getId)
+        .toList();
+    return scrapService.getScrapCountMap(calendarIds);
+  }
 
-        Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+  private List<CalendarMonthGroup> groupCalendarsByMonth(List<Calendar> calendars, Map<Long, Long> scrapCountMap) {
+    Map<YearMonth, List<CalendarListResponse>> groupedByMonth =
+        calendars.stream()
+            .collect(Collectors.groupingBy(
+                calendar -> YearMonth.from(calendar.getStartDate()),
+                LinkedHashMap::new,
+                Collectors.mapping(
+                    calendar
+                        -> CalendarListResponse.fromCalendar(
+                        calendar, scrapCountMap.getOrDefault(calendar.getId(), 0L)
+                    ),
+                    Collectors.toList()
+                )
+            ));
 
-        calendarPolicy.validateCanDelete(currentUser, calendar);
-
-        calendar.softDelete();
-    }
-
-    public Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
-        return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
-                .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
-    }
-
-    private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {
-        if (calendars == null || calendars.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        List<Long> calendarIds = calendars.stream()
-                .map(Calendar::getId)
-                .toList();
-        return scrapService.getScrapCountMap(calendarIds);
-    }
-
-    private List<CalendarMonthGroup> groupCalendarsByMonth(List<Calendar> calendars, Map<Long, Long> scrapCountMap) {
-        Map<YearMonth, List<CalendarListResponse>> groupedByMonth =
-                calendars.stream()
-                        .collect(Collectors.groupingBy(
-                                calendar -> YearMonth.from(calendar.getStartDate()),
-                                LinkedHashMap::new,
-                                Collectors.mapping(
-                                        calendar
-                                                -> CalendarListResponse.fromCalendar(
-                                                calendar, scrapCountMap.getOrDefault(calendar.getId(), 0L)
-                                        ),
-                                        Collectors.toList()
-                                )
-                        ));
-
-        return groupedByMonth.entrySet().stream()
-                .map(entry -> new CalendarMonthGroup(
-                        entry.getKey().getYear(),
-                        entry.getKey().getMonthValue(),
-                        entry.getValue()
-                ))
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
+    return groupedByMonth.entrySet().stream()
+        .map(entry -> new CalendarMonthGroup(
+            entry.getKey().getYear(),
+            entry.getKey().getMonthValue(),
+            entry.getValue()
+        ))
+        .collect(Collectors.toCollection(ArrayList::new));
+  }
 
 }
