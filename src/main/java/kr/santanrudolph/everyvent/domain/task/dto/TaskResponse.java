@@ -8,18 +8,18 @@ public record TaskResponse(
     Long id,
     Long calendarId,
     int day,
-    boolean isLock,
+    boolean isLocked,
     String content,
     Boolean completed // null 상태 표현을 위함
 ) {
-  public static TaskResponse from(Task task, boolean isLock) {
+  public static TaskResponse from(Task task, boolean isLocked) {
     return new TaskResponse(
         task.getId(),
         task.getCalendar().getId(),
         task.getDay().getDayOfMonth(),
-        isLock,
-        isLock ? null : task.getContent(),
-        isLock ? null : task.getCompleted()
+        isLocked,
+        isLocked ? null : task.getContent(),
+        isLocked ? null : task.getCompleted()
     );
   }
 }
