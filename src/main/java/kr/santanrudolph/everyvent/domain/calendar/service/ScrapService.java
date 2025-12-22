@@ -29,6 +29,15 @@ public class ScrapService {
         return scrapRepository.save(scrap);
     }
 
+    @Transactional
+    public void removeScrap(User user, Long calendarId) {
+        Scrap scrap = scrapRepository.findById(calendarId).orElse(null);
+        if (scrap != null) {
+            scrap.removeScrapper(user);
+            scrapRepository.save(scrap);
+        }
+    }
+
     public Long getScrapCount(Long calendarId) {
         Scrap scrap = scrapRepository.findById(calendarId).orElse(null);
         if (scrap == null) {
