@@ -48,4 +48,6 @@ public interface CalendarRepository extends JpaRepository<Calendar, Long> {
   Optional<Calendar> findFirstByUserAndDeletedAtIsNullAndStartDateBeforeOrderByStartDateDesc(User user, LocalDate startDate);
 
   Optional<Calendar> findByIdAndDeletedAtIsNull(Long calendarId);
+
+  Optional<Calendar> findByOriginalCalendarIdAndUserId(Long originalCalendarId, Long id);
 }
