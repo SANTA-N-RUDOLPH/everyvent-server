@@ -100,9 +100,19 @@ public class CalendarPolicy {
     }
   }
 
-  public void validateCanDelete(User user, Calendar calendar) {
+  public void validateCanSoftDelete(User user, Calendar calendar) {
     try {
       validateFuture(calendar.getStartDate());
+      validateDeleted(calendar);
+      validateOwner(user, calendar);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다." + e.getMessage());
+    }
+  }
+
+  public void validateCanHardDelete(User user, Calendar calendar) {
+    try {
+      validateThisMonth(calendar);
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
@@ -131,8 +141,8 @@ public class CalendarPolicy {
   public void validateCanCancelScrap(User user, Calendar calendar) {
     try {
       validateDeleted(calendar);
-      validateAlreadyScrapped(user, calendar);
       validateThisMonth(calendar);
+      validateOwner(user, calendar);
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "스크랩을 취소할 수 없습니다. " + e.getMessage());
     }
@@ -208,12 +218,6 @@ public class CalendarPolicy {
   private void validateNotAlreadyScrapped(User user, Calendar calendar) {
     if (scrapService.isScrapped(user, calendar.getId())) {
       throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 스크랩한 캘린더입니다.");
-    }
-  }
-
-  private void validateAlreadyScrapped(User user, Calendar calendar) {
-    if (!scrapService.isScrapped(user, calendar.getId())) {
-      throw new EveryventException(ErrorCode.NOT_FOUND, "스크랩하지 않은 캘린더입니다.");
     }
   }
 
