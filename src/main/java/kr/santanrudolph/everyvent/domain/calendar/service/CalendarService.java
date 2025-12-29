@@ -1,10 +1,12 @@
 package kr.santanrudolph.everyvent.domain.calendar.service;
 
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
+import kr.santanrudolph.everyvent.domain.calendar.Scrap;
 import kr.santanrudolph.everyvent.domain.calendar.dto.*;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
-import kr.santanrudolph.everyvent.domain.task.TaskRepository;
+import kr.santanrudolph.everyvent.domain.task.TaskService;
+import kr.santanrudolph.everyvent.domain.task.dto.TaskResponse;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserService;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
@@ -31,7 +33,7 @@ public class CalendarService {
   private static final long INITIAL_SCRAP_COUNT = 0L;
 
   private final CalendarRepository calendarRepository;
-  private final TaskRepository taskRepository;
+  private final TaskService taskService;
   private final UserService userService;
   private final ScrapService scrapService;
   private final CalendarPolicy calendarPolicy;
@@ -183,6 +185,54 @@ public class CalendarService {
   }
 
   @Transactional
+  public CalendarDetailResponse scrapCalendar(Long calendarId, ScrapCalendarRequest request) {
+    User currentUser = userService.getCurrentUser();
+    Calendar originalCalendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+
+    calendarPolicy.validateCanScrap(currentUser, originalCalendar);
+
+    Calendar scrappedCalendar = Calendar.createScrappedCalendar(
+        currentUser,
+        originalCalendar,
+        request.color()
+    );
+
+    // Calendar 저장
+    Calendar savedCalendar = calendarRepository.save(scrappedCalendar);
+    // Scrap 저장
+    Scrap scrap = scrapService.addScrap(currentUser, originalCalendar);
+    // Task 저장
+    List<TaskResponse> taskResponses = taskService.saveCopyTasks(originalCalendar, savedCalendar);
+    log.info(
+        "캘린더 스크랩 완료 - originalCalendarId={}, newCalendarId={}, copiedTaskCount={}",
+        originalCalendar.getId(),
+        savedCalendar.getId(),
+        taskResponses.size()
+    );
+
+    Long scrapCount = scrap.getScrapCount();
+    return CalendarDetailResponse.from(savedCalendar, NOT_SCRAPPABLE, scrapCount);
+  }
+
+  @Transactional
+  public void cancelScrap(Long originalCalendarId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar scrappedCalendar = calendarRepository
+        .findByOriginalCalendarIdAndUserId(originalCalendarId, currentUser.getId())
+        .orElseThrow(() ->
+            new EveryventException(ErrorCode.NOT_FOUND, "스크랩하지 않은 캘린더입니다.")
+        );
+
+    calendarPolicy.validateCanCancelScrap(currentUser, scrappedCalendar);
+
+    // calendar + task 삭제
+    hardDeleteCalendar(scrappedCalendar.getId());
+    // scrap에서 유저 삭제
+    scrapService.removeScrap(currentUser, scrappedCalendar.getOriginalCalendarId());
+
+  }
+
+  @Transactional
   public CalendarDetailResponse updateScrapColor(Long calendarId, ScrapCalendarRequest request) {
     User currentUser = userService.getCurrentUser();
     Calendar calendar = calendarRepository.findById(calendarId)
@@ -193,23 +243,47 @@ public class CalendarService {
     calendar.updateColor(request.color());
 
     Long scrapCount = scrapService.getScrapCount(calendar.getId());
-    return CalendarDetailResponse.from(calendar, SCRAPPABLE, scrapCount);
+    return CalendarDetailResponse.from(calendar, NOT_SCRAPPABLE, scrapCount);
   }
 
   @Transactional
-  public void deleteCalendar(Long calendarId) {
+  public void softDeleteCalendar(Long calendarId) {
     User currentUser = userService.getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
-    calendarPolicy.validateCanDelete(currentUser, calendar);
+    calendarPolicy.validateCanSoftDelete(currentUser, calendar);
 
-    taskRepository.deleteByCalendarId(calendarId);
+    taskService.deleteByCalendarId(calendarId);
     calendar.softDelete();
+  }
+
+  @Transactional
+  public void hardDeleteCalendar(Long calendarId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+
+    calendarPolicy.validateCanHardDelete(currentUser, calendar);
+
+    taskService.deleteByCalendarId(calendarId);
+    calendarRepository.deleteById(calendarId);
   }
 
   public Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
     return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
+  }
+
+  public ScrapperScrollResponse getScrappers(Long calendarId, Long cursor, Integer size) {
+    if (size <= 0) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "size는 1 이상이어야 합니다.");
+    }
+
+    Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
+    User currentUser = userService.getCurrentUser();
+
+    calendarPolicy.validateCanView(currentUser, calendar);
+
+    return scrapService.getScrappers(calendarId, cursor, size);
   }
 
   private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {

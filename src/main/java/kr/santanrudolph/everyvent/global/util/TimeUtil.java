@@ -1,6 +1,7 @@
 package kr.santanrudolph.everyvent.global.util;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 
 public class TimeUtil {
@@ -9,6 +10,10 @@ public class TimeUtil {
 
   public static LocalDate today() {
     return LocalDate.now(DEFAULT_ZONE);
+  }
+
+  public static YearMonth currentYearMonth() {
+    return YearMonth.now(DEFAULT_ZONE);
   }
 
   public static boolean isAfter(LocalDate after, LocalDate before) {
