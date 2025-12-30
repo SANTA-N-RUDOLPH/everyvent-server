@@ -17,13 +17,9 @@ public class SwaggerConfig {
   @Bean
   public OpenAPI openAPI() {
     String jwtSchemeName = "JWT Token";
-    String basicAuthSchemeName = "Basic Auth";
 
     SecurityRequirement jwtSecurityRequirement = new SecurityRequirement()
         .addList(jwtSchemeName);
-
-    SecurityRequirement basicAuthSecurityRequirement = new SecurityRequirement()
-        .addList(basicAuthSchemeName);
 
     Components components = new Components()
         .addSecuritySchemes(jwtSchemeName, new SecurityScheme()
@@ -31,13 +27,7 @@ public class SwaggerConfig {
             .type(SecurityScheme.Type.HTTP)
             .scheme("bearer")
             .bearerFormat("JWT")
-            .description("JWT 토큰을 입력하세요. 'Bearer ' 접두사는 자동으로 추가됩니다."))
-
-        .addSecuritySchemes(basicAuthSchemeName, new SecurityScheme()
-            .name(basicAuthSchemeName)
-            .type(SecurityScheme.Type.HTTP)
-            .scheme("basic")
-            .description("Swagger UI 접근을 위한 Basic Authentication"));
+            .description("JWT 토큰을 입력하세요. 'Bearer ' 접두사는 자동으로 추가됩니다."));
 
     return new OpenAPI()
         .info(new Info()
@@ -53,7 +43,6 @@ public class SwaggerConfig {
                 .description("로컬 개발 서버")
         ))
         .addSecurityItem(jwtSecurityRequirement)
-        .addSecurityItem(basicAuthSecurityRequirement)
         .components(components);
   }
 }
