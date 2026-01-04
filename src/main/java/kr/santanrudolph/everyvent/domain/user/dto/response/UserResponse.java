@@ -9,6 +9,7 @@ public record UserResponse(
     String nickname,
     String email,
     String introduction,
+    String profileImageKey,
     String socialProvider,
     String role,
     boolean isNicknameRequired
@@ -21,6 +22,7 @@ public record UserResponse(
         user.getNickname(),
         user.getEmail(),
         user.getIntroduction(),
+        user.getProfileImageKey(),
         user.getSocialProvider().name(),
         user.getRole().name(),
         user.isNicknameRequired()

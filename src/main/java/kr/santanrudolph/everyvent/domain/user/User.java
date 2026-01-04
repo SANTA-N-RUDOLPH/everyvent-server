@@ -1,5 +1,6 @@
 package kr.santanrudolph.everyvent.domain.user;
 
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -47,6 +48,9 @@ public class User extends BaseEntity {
   @Column(length = 500)
   private String introduction;
 
+  @Column(length = 500)
+  private String profileImageKey;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private Role role;
@@ -84,6 +88,14 @@ public class User extends BaseEntity {
     if (nickname != null && !nickname.isBlank()) {
       this.nickname = nickname;
     }
+  }
+
+  public void updateProfileImageKey(String profileImageKey) {
+    this.profileImageKey = profileImageKey;
+  }
+
+  public void deleteProfileImageKey() {
+    this.profileImageKey = null;
   }
 
   public void softDelete() {

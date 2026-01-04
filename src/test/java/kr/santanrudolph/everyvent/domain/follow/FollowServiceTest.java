@@ -14,10 +14,11 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
-import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
+import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
+import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -40,6 +41,8 @@ class FollowServiceTest {
   private FollowRepository followRepository;
   @Mock
   private UserRepository userRepository;
+  @Mock
+  private CurrentUserProvider currentUserProvider;
   @InjectMocks
   private FollowService followService;
 
@@ -59,7 +62,6 @@ class FollowServiceTest {
   private static final Long FOLLOW_ID = 3L;
 
   // Test fixtures
-  private FollowCreateCommand command;
   private User follower;
   private User target;
 
@@ -99,8 +101,6 @@ class FollowServiceTest {
     @BeforeEach
     void setUp() {
       // 공통 테스트 픽스쳐 초기화
-      command = new FollowCreateCommand(FOLLOWER_ID, TARGET_ID);
-
       follower = createUser(FOLLOWER_ID, "follower");
       target = createUser(TARGET_ID, "target");
     }
@@ -111,6 +111,7 @@ class FollowServiceTest {
       // given
       Follow expectedFollow = createFollow(follower, target, FOLLOW_ID);
 
+      given(currentUserProvider.getCurrentUserId()).willReturn(FOLLOWER_ID);
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
           follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
@@ -119,7 +120,7 @@ class FollowServiceTest {
       given(followRepository.save(any(Follow.class))).willReturn(expectedFollow);
 
       // when
-      FollowCreateResponse response = followService.createFollow(command);
+      FollowCreateResponse response = followService.createFollow(TARGET_ID);
 
       // then
       assertThat(response).isNotNull();
@@ -144,15 +145,16 @@ class FollowServiceTest {
     @Test
     void createFollow_whenFollowerNotFound_thenThrowsException() {
       // given
+      given(currentUserProvider.getCurrentUserId()).willReturn(FOLLOWER_ID);
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> followService.createFollow(command))
+      assertThatThrownBy(() -> followService.createFollow(TARGET_ID))
           .isInstanceOf(EveryventException.class)
           .extracting("errorCode", "detail")
           .containsExactly(
               ErrorCode.NOT_FOUND,
-              "팔로워 id를 찾을 수 없습니다."
+              "현재 유저를 찾을 수 없습니다."
           );
 
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
@@ -166,12 +168,13 @@ class FollowServiceTest {
     @Test
     void createFollow_whenTargetNotFound_thenThrowsException() {
       // given
+      given(currentUserProvider.getCurrentUserId()).willReturn(FOLLOWER_ID);
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
           follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> followService.createFollow(command))
+      assertThatThrownBy(() -> followService.createFollow(TARGET_ID))
           .isInstanceOf(EveryventException.class)
           .extracting("errorCode", "detail")
           .containsExactly(
@@ -190,6 +193,7 @@ class FollowServiceTest {
     @Test
     void createFollow_whenFollowExists_thenThrowsException() {
       // given
+      given(currentUserProvider.getCurrentUserId()).willReturn(FOLLOWER_ID);
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(Optional.of(
           follower));
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
@@ -197,7 +201,7 @@ class FollowServiceTest {
           true);
 
       // when & then
-      assertThatThrownBy(() -> followService.createFollow(command))
+      assertThatThrownBy(() -> followService.createFollow(TARGET_ID))
           .isInstanceOf(EveryventException.class)
           .extracting("errorCode", "detail")
           .containsExactly(
@@ -228,8 +232,8 @@ class FollowServiceTest {
       target = createUser(TARGET_ID, "target");
 
       List<FollowResponse> expectedFollowers = List.of(
-          new FollowResponse(FOLLOW_ID, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(FOLLOWER_ID, "follower1", "introduction1")),
-          new FollowResponse(FOLLOW_ID2, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(FOLLOWER_ID2, "follower2", "introduction2"))
+          new FollowResponse(FOLLOW_ID, new UserBasicResponse(FOLLOWER_ID, "follower1", "introduction1", null)),
+          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(FOLLOWER_ID2, "follower2", "introduction2", null))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
@@ -299,8 +303,8 @@ class FollowServiceTest {
       follower = createUser(FOLLOWER_ID, "follower");
 
       List<FollowResponse> expectedFollowings = List.of(
-          new FollowResponse(FOLLOW_ID, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(TARGET_ID, "target1", "introduction1")),
-          new FollowResponse(FOLLOW_ID2, new kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse(TARGET_ID2, "target2", "introduction2"))
+          new FollowResponse(FOLLOW_ID, new UserBasicResponse(TARGET_ID, "target1", "introduction1", null)),
+          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(TARGET_ID2, "target2", "introduction2", null))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(

@@ -8,12 +8,13 @@ import static org.mockito.Mockito.times;
 
 import java.util.Optional;
 
+import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
+import kr.santanrudolph.everyvent.infrastructure.s3.S3Service;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -21,12 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @Tag("unit")
 @ExtendWith(MockitoExtension.class)
@@ -40,19 +36,13 @@ class UserServiceTest {
   private FollowRepository followRepository;
 
   @Mock
-  private SecurityContext securityContext;
+  private S3Service s3Service;
 
   @Mock
-  private Authentication authentication;
+  private CurrentUserProvider currentUserProvider;
 
   @InjectMocks
   private UserService userService;
-
-  @BeforeEach
-  void setUp() {
-    SecurityContextHolder.setContext(securityContext);
-    given(securityContext.getAuthentication()).willReturn(authentication);
-  }
 
   // helper method
   private User createUser(Long id, String nickname) {
@@ -83,13 +73,12 @@ class UserServiceTest {
       Long userId = 1L;
       User user = createUser(userId, "user");
 
-      given(authentication.isAuthenticated()).willReturn(true);
-      given(authentication.getPrincipal()).willReturn(userId);
+      given(currentUserProvider.getCurrentUserId()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
       given(followRepository.deleteAllByUserId(userId)).willReturn(5);
 
       // when
-      userService.deleteUser(userId);
+      userService.deleteUser();
 
       // then
       assertThat(user.isDeleted()).isTrue();
@@ -104,12 +93,11 @@ class UserServiceTest {
     void deleteUser_whenUserNotFound_thenThrowsException() {
       // given
       Long userId = 1L;
-      given(authentication.isAuthenticated()).willReturn(true);
-      given(authentication.getPrincipal()).willReturn(userId);
+      given(currentUserProvider.getCurrentUserId()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.empty());
 
       // when & then
-      assertThatThrownBy(() -> userService.deleteUser(userId))
+      assertThatThrownBy(() -> userService.deleteUser())
           .isInstanceOf(EveryventException.class)
           .extracting("errorCode", "detail")
           .containsExactly(
@@ -128,13 +116,12 @@ class UserServiceTest {
       Long userId = 1L;
       User user = createUser(userId, "user");
 
-      given(authentication.isAuthenticated()).willReturn(true);
-      given(authentication.getPrincipal()).willReturn(userId);
+      given(currentUserProvider.getCurrentUserId()).willReturn(userId);
       given(userRepository.findByIdAndDeletedAtIsNull(userId)).willReturn(Optional.of(user));
       given(followRepository.deleteAllByUserId(userId)).willReturn(0);
 
       // when
-      userService.deleteUser(userId);
+      userService.deleteUser();
 
       // then
       assertThat(user.isDeleted()).isTrue();

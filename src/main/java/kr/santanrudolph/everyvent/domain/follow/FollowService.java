@@ -2,12 +2,13 @@ package kr.santanrudolph.everyvent.domain.follow;
 
 
 import java.util.List;
+
+import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.user.User;
 import kr.santanrudolph.everyvent.domain.user.UserRepository;
@@ -23,22 +24,25 @@ public class FollowService {
 
   private final FollowRepository followRepository;
   private final UserRepository userRepository;
+  private final CurrentUserProvider currentUserProvider;
 
 
   @Transactional
-  public FollowCreateResponse createFollow(FollowCreateCommand command) {
-    User follower = userRepository.findByIdAndDeletedAtIsNull(command.followerId())
-        .orElseThrow(() -> new EveryventException(
-            ErrorCode.NOT_FOUND, "팔로워 id를 찾을 수 없습니다."));
+  public FollowCreateResponse createFollow(Long targetId) {
+    Long followerId = currentUserProvider.getCurrentUserId();
+    if (followerId.equals(targetId)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "자기 자신을 팔로우할 수 없습니다.");
+    }
 
-    User target = userRepository.findByIdAndDeletedAtIsNull(command.targetId())
+    User follower = userRepository.findByIdAndDeletedAtIsNull(followerId)
+        .orElseThrow(() -> new EveryventException(
+            ErrorCode.NOT_FOUND, "현재 유저를 찾을 수 없습니다."));
+
+    User target = userRepository.findByIdAndDeletedAtIsNull(targetId)
         .orElseThrow(() -> new EveryventException(
             ErrorCode.NOT_FOUND, "팔로우 대상 id를 찾을 수 없습니다."));
 
-    if (followRepository.existsByFollowerIdAndTargetId(
-        command.followerId(),
-        command.targetId()
-    )) {
+    if (followRepository.existsByFollowerIdAndTargetId(followerId, targetId)) {
       throw new EveryventException(ErrorCode.ALREADY_EXIST, "이미 팔로우 중입니다.");
     }
 
@@ -46,7 +50,7 @@ public class FollowService {
     Follow saved = followRepository.save(follow);
 
     log.info("Follow created - follower: {}, target: {}, follow: {}",
-        command.followerId(), command.targetId(), follow.getId());
+        followerId, targetId, follow.getId());
 
     return FollowCreateResponse.from(saved);
   }
@@ -96,7 +100,19 @@ public class FollowService {
   }
 
   @Transactional
-  public void deleteFollow(Long followerId, Long targetId) {
+  public void deleteFollower(Long followerId) {
+    Long targetId = currentUserProvider.getCurrentUserId();
+    deleteFollow(followerId, targetId);
+  }
+
+  @Transactional
+  public void deleteTarget(Long targetId) {
+    Long followerId = currentUserProvider.getCurrentUserId();
+    deleteFollow(followerId, targetId);
+  }
+
+  @Transactional
+  void deleteFollow(Long followerId, Long targetId) {
     if (!userRepository.existsByIdAndDeletedAtIsNull(followerId)) {
       throw new EveryventException(
           ErrorCode.NOT_FOUND,
