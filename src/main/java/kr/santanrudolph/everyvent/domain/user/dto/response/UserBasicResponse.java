@@ -7,14 +7,16 @@ public record UserBasicResponse(
 
     Long id,
     String nickname,
-    String introduction
+    String introduction,
+    String profileImageKey
 ) {
 
   public static UserBasicResponse from(User user) {
     return new UserBasicResponse(
         user.getId(),
         user.getNickname(),
-        user.getIntroduction()
+        user.getIntroduction(),
+        user.getProfileImageKey()
     );
   }
 }
