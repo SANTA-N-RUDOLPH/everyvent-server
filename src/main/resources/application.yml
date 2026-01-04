@@ -40,3 +40,10 @@ frontend:
   url: https://everyvent-client.vercel.app
   local:
     url: http://localhost:5173
+
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    region: ${AWS_REGION}
+    presigned-url-expiration: 300
+    max-file-size: 5242880
