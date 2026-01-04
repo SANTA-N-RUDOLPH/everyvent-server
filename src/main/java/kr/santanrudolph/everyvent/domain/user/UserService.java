@@ -119,8 +119,9 @@ public class UserService {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "삭제할 프로필 이미지가 없습니다.");
     }
 
+    String keyToDelete = user.getProfileImageKey();
     user.deleteProfileImageKey();
-    s3Service.deleteObject(user.getProfileImageKey(), user.getId());
+    s3Service.deleteObject(keyToDelete, user.getId());
 
     log.info("Profile image deleted - User ID: {}", user.getId());
 
