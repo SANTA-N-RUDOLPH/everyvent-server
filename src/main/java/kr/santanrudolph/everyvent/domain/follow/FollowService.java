@@ -36,7 +36,7 @@ public class FollowService {
 
     User follower = userRepository.findByIdAndDeletedAtIsNull(followerId)
         .orElseThrow(() -> new EveryventException(
-            ErrorCode.NOT_FOUND, "팔로우 대상 id를 찾을 수 없습니다."));
+            ErrorCode.NOT_FOUND, "현재 유저를 찾을 수 없습니다."));
 
     User target = userRepository.findByIdAndDeletedAtIsNull(targetId)
         .orElseThrow(() -> new EveryventException(
