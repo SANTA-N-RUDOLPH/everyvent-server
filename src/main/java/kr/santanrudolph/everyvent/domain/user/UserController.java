@@ -65,7 +65,7 @@ public class UserController {
     Long userId = AuthenticationUtil.getCurrentUserId();
     log.info("Update introduction - User ID: {}", userId);
 
-    UserResponse response = userService.updateIntroduction(userId, request);
+    UserResponse response = userService.updateIntroduction(request);
     return ResponseEntity.ok(response);
   }
 
@@ -83,7 +83,7 @@ public class UserController {
     Long userId = AuthenticationUtil.getCurrentUserId();
     log.info("Update nickname - User ID: {}", userId);
 
-    UserResponse response = userService.updateNickname(userId, request);
+    UserResponse response = userService.updateNickname(request);
     return ResponseEntity.ok(response);
   }
 
@@ -98,7 +98,7 @@ public class UserController {
     Long userId = AuthenticationUtil.getCurrentUserId();
     log.info("User deletion requested - User ID: {}", userId);
 
-    userService.deleteUser(userId);
+    userService.deleteUser();
 
     return ResponseEntity.noContent().build();
   }
