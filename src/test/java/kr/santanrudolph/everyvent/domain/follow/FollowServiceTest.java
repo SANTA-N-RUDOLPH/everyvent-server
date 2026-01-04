@@ -154,7 +154,7 @@ class FollowServiceTest {
           .extracting("errorCode", "detail")
           .containsExactly(
               ErrorCode.NOT_FOUND,
-              "팔로우 대상 id를 찾을 수 없습니다."
+              "현재 유저를 찾을 수 없습니다."
           );
 
       then(userRepository).should(times(1)).findByIdAndDeletedAtIsNull(FOLLOWER_ID);
