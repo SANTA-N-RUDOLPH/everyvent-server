@@ -30,6 +30,10 @@ public class FollowService {
   @Transactional
   public FollowCreateResponse createFollow(Long targetId) {
     Long followerId = currentUserProvider.getCurrentUserId();
+    if (followerId.equals(targetId)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "자기 자신을 팔로우할 수 없습니다.");
+    }
+
     User follower = userRepository.findByIdAndDeletedAtIsNull(followerId)
         .orElseThrow(() -> new EveryventException(
             ErrorCode.NOT_FOUND, "팔로우 대상 id를 찾을 수 없습니다."));
