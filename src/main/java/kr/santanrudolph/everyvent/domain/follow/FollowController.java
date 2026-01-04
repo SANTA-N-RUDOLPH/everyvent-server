@@ -5,13 +5,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import kr.santanrudolph.everyvent.auth.AuthenticationUtil;
-import kr.santanrudolph.everyvent.domain.follow.command.FollowCreateCommand;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
-import kr.santanrudolph.everyvent.global.exception.ErrorCode;
-import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +32,7 @@ import java.util.List;
 public class FollowController {
 
   private final FollowService followService;
+  private final CurrentUserProvider currentUserProvider;
 
   @Operation(
       summary = "팔로우 생성",
@@ -46,17 +46,13 @@ public class FollowController {
   })
   @PostMapping("/me/followings/{targetId}")
   public ResponseEntity<FollowCreateResponse> createFollow(
-      @PathVariable Long targetId
+      @PathVariable
+      @NotNull
+      @Positive Long targetId
   ) {
-    Long currentUserId = AuthenticationUtil.getCurrentUserId();
+    Long currentUserId = currentUserProvider.getCurrentUserId();
 
-    // 자기 자신 팔로우 방지
-    if (currentUserId.equals(targetId)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "자기 자신을 팔로우할 수 없습니다.");
-    }
-
-    FollowCreateCommand command = new FollowCreateCommand(currentUserId, targetId);
-    FollowCreateResponse response = followService.createFollow(command);
+    FollowCreateResponse response = followService.createFollow(targetId);
 
     log.info("Follow created - follower: {}, target: {}", currentUserId, targetId);
 
@@ -114,9 +110,9 @@ public class FollowController {
   public ResponseEntity<Void> unfollowUser(
       @PathVariable Long targetId
   ) {
-    Long currentUserId = AuthenticationUtil.getCurrentUserId();
+    Long currentUserId = currentUserProvider.getCurrentUserId();
 
-    followService.deleteFollow(currentUserId, targetId);
+    followService.deleteTarget(targetId);
 
     log.info("Unfollow - follower: {}, target: {}", currentUserId, targetId);
 
@@ -135,9 +131,9 @@ public class FollowController {
   public ResponseEntity<Void> removeFollower(
       @PathVariable Long followerId
   ) {
-    Long currentUserId = AuthenticationUtil.getCurrentUserId();
+    Long currentUserId = currentUserProvider.getCurrentUserId();
 
-    followService.deleteFollow(followerId, currentUserId);
+    followService.deleteFollower(followerId);
 
     log.info("Follower removed - follower: {}, target: {}", followerId, currentUserId);
 
