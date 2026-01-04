@@ -26,7 +26,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
   int countActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
   @Query(
-      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction) "
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction, u.profileImageKey) "
           +
           "FROM Follow f " +
           "JOIN f.follower u " +
@@ -34,7 +34,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
   List<FollowResponse> findActiveFollowersByTargetId(@Param("targetId") Long targetId);
 
   @Query(
-      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction) "
+      "SELECT new kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse(f.id, u.id, u.nickname, u.introduction, u.profileImageKey) "
           +
           "FROM Follow f " +
           "JOIN f.target u " +
