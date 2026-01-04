@@ -78,17 +78,15 @@ public class UserService {
   @Transactional
   public void deleteUser() {
     User user = getCurrentUser();
+    user.softDelete();
+
+    int deletedFollowCount = followRepository.deleteAllByUserId(user.getId());
+    log.info("User soft deleted - User ID: {}, Deleted follow count: {}",
+        user.getId(), deletedFollowCount);
 
     if (user.getProfileImageKey() != null) {
       s3Service.deleteObject(user.getProfileImageKey(), user.getId());
     }
-
-    user.softDelete();
-
-    int deletedFollowCount = followRepository.deleteAllByUserId(user.getId());
-
-    log.info("User soft deleted - User ID: {}, Deleted follow count: {}",
-        user.getId(), deletedFollowCount);
   }
 
   public ProfileImageUploadResponse generateProfileImageUploadUrl(Long userId, ProfileImageUploadRequest request) {
@@ -121,11 +119,9 @@ public class UserService {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "삭제할 프로필 이미지가 없습니다.");
     }
 
-    // S3에서 이미지 삭제
+    user.deleteProfileImageKey();
     s3Service.deleteObject(user.getProfileImageKey(), user.getId());
 
-    // DB에서 objectKey 삭제
-    user.deleteProfileImageKey();
     log.info("Profile image deleted - User ID: {}", user.getId());
 
     return UserResponse.from(user);
