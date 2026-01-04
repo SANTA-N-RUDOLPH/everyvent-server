@@ -2,12 +2,15 @@ package kr.santanrudolph.everyvent.domain.user;
 
 import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
+import kr.santanrudolph.everyvent.domain.user.dto.request.ProfileImageUpdateRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
+import kr.santanrudolph.everyvent.domain.user.dto.request.ProfileImageUploadRequest;
+import kr.santanrudolph.everyvent.infrastructure.s3.ProfileImageUploadResponse;
 import kr.santanrudolph.everyvent.infrastructure.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,12 +79,56 @@ public class UserService {
   public void deleteUser() {
     User user = getCurrentUser();
 
+    if (user.getProfileImageKey() != null) {
+      s3Service.deleteObject(user.getProfileImageKey(), user.getId());
+    }
+
     user.softDelete();
 
     int deletedFollowCount = followRepository.deleteAllByUserId(user.getId());
 
     log.info("User soft deleted - User ID: {}, Deleted follow count: {}",
         user.getId(), deletedFollowCount);
+  }
+
+  public ProfileImageUploadResponse generateProfileImageUploadUrl(Long userId, ProfileImageUploadRequest request) {
+    return s3Service.generatePresignedResponse(
+        userId,
+        request.filename(),
+        request.contentType(),
+        request.fileSize()
+    );
+  }
+
+  @Transactional
+  public UserResponse saveProfileImageKey(ProfileImageUpdateRequest request) {
+    User user = getCurrentUser();
+
+    s3Service.validateObjectKey(request.objectKey(), user.getId());
+
+    user.updateProfileImageKey(request.objectKey());
+    log.info("Profile image key saved - User ID: {}, Object Key: {}",
+        user.getId(), request.objectKey());
+
+    return UserResponse.from(user);
+  }
+
+  @Transactional
+  public UserResponse deleteProfileImage() {
+    User user = getCurrentUser();
+
+    if (user.getProfileImageKey() == null) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "삭제할 프로필 이미지가 없습니다.");
+    }
+
+    // S3에서 이미지 삭제
+    s3Service.deleteObject(user.getProfileImageKey(), user.getId());
+
+    // DB에서 objectKey 삭제
+    user.deleteProfileImageKey();
+    log.info("Profile image deleted - User ID: {}", user.getId());
+
+    return UserResponse.from(user);
   }
 
   private User getActiveUser(Long userId) {
