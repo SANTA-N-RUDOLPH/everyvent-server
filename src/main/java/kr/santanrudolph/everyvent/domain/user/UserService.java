@@ -30,7 +30,7 @@ public class UserService {
   private final CurrentUserProvider currentUserProvider;
 
 
-  public UserResponse getUserInfo(Long userId) {
+  public UserResponse getCurrentUserInfo() {
     User user = getCurrentUser();
     return UserResponse.from(user);
   }

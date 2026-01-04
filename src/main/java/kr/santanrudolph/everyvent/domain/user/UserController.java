@@ -39,7 +39,7 @@ public class UserController {
     Long userId = currentUserProvider.getCurrentUserId();
     log.info("Get my info - User ID: {}", userId);
 
-    UserResponse response = userService.getUserInfo(userId);
+    UserResponse response = userService.getCurrentUserInfo();
     return ResponseEntity.ok(response);
   }
 
