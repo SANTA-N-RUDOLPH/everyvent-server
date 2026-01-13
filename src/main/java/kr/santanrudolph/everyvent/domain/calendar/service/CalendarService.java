@@ -61,6 +61,8 @@ public class CalendarService {
 
 
     Calendar saved = calendarRepository.save(calendar);
+    log.info("Calendar created - userId={}, calendarId={}, startDate={}",
+        user.getId(), saved.getId(), saved.getStartDate());
 
     return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
   }
@@ -203,12 +205,8 @@ public class CalendarService {
     Scrap scrap = scrapService.addScrap(currentUser, originalCalendar);
     // Task 저장
     List<TaskResponse> taskResponses = taskService.saveCopyTasks(originalCalendar, savedCalendar);
-    log.info(
-        "캘린더 스크랩 완료 - originalCalendarId={}, newCalendarId={}, copiedTaskCount={}",
-        originalCalendar.getId(),
-        savedCalendar.getId(),
-        taskResponses.size()
-    );
+    log.info("Calendar scrapped - originalCalendarId={}, newCalendarId={}, userId={}, copiedTaskCount={}",
+        originalCalendar.getId(), savedCalendar.getId(), currentUser.getId(), taskResponses.size());
 
     Long scrapCount = scrap.getScrapCount();
     return CalendarDetailResponse.from(savedCalendar, NOT_SCRAPPABLE, scrapCount);
@@ -229,6 +227,8 @@ public class CalendarService {
     hardDeleteCalendar(scrappedCalendar.getId());
     // scrap에서 유저 삭제
     scrapService.removeScrap(currentUser, scrappedCalendar.getOriginalCalendarId());
+    log.info("Scrap cancelled - originalCalendarId={}, scrappedCalendarId={}, userId={}",
+        originalCalendarId, scrappedCalendar.getId(), currentUser.getId());
 
   }
 
@@ -252,12 +252,16 @@ public class CalendarService {
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
+      log.info("Scraped calendar deleted (hard) - calendarId={}, userId={}",
+          calendarId, currentUser.getId());
       hardDeleteCalendar(calendarId);
       return;
     }
 
     calendarPolicy.validateCanSoftDelete(currentUser, calendar);
     taskService.deleteByCalendarId(calendarId);
+    log.info("Calendar soft deleted - calendarId={}, userId={}, type={}",
+        calendarId, currentUser.getId(), calendar.getCalendarType());
     calendar.softDelete();
   }
 
@@ -268,6 +272,8 @@ public class CalendarService {
 
     calendarPolicy.validateCanHardDelete(currentUser, calendar);
 
+    log.warn("Calendar permanently deleted - calendarId={}, userId={}, type={}",
+        calendarId, currentUser.getId(), calendar.getCalendarType());
     taskService.deleteByCalendarId(calendarId);
     calendarRepository.deleteById(calendarId);
   }

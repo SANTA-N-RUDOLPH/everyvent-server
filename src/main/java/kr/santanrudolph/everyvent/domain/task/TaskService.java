@@ -49,6 +49,8 @@ public class TaskService {
 
     List<Task> tasks = requestsToTasks(calendar, requests);
     List<Task> results = taskRepository.saveAll(tasks);
+    log.info("Tasks created - calendarId={}, userId={}, taskCount={}",
+        calendarId, currentUser.getId(), results.size());
 
     return results.stream()
         .map(task -> TaskResponse.from(task, UNLOCKED))
@@ -150,6 +152,7 @@ public class TaskService {
 
   @Transactional
   public void deleteByCalendarId(Long calendarId) {
+    log.info("Tasks deleted in bulk - calendarId={}", calendarId);
     taskRepository.deleteByCalendarId(calendarId);
   }
 
