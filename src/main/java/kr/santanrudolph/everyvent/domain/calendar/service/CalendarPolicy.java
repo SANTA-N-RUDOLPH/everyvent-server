@@ -106,7 +106,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다." + e.getDetail());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -116,7 +116,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다." + e.getDetail());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다. " + e.getDetail());
     }
   }
 
