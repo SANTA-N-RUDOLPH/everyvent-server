@@ -73,7 +73,7 @@ public class CalendarPolicy {
       validateCalendarLimit(user, startDate);
       validateFuture(startDate);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -84,7 +84,7 @@ public class CalendarPolicy {
       validateOwner(user, calendar);
       validateOriginalCalendar(calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -96,7 +96,7 @@ public class CalendarPolicy {
       validateOwner(user, calendar);
       validateIsScrappedCalendar(calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더 색상을 수정할 수 없습니다. " + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더 색상을 수정할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -106,7 +106,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다." + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -116,7 +116,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다." + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 삭제할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -134,7 +134,7 @@ public class CalendarPolicy {
       validateNotOwner(user, calendar);
       validateNotAlreadyScrapped(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "캘린더를 스크랩할 수 없습니다. " + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "캘린더를 스크랩할 수 없습니다. " + e.getDetail());
     }
   }
 
@@ -144,7 +144,7 @@ public class CalendarPolicy {
       validateThisMonth(calendar);
       validateOwner(user, calendar);
     } catch (EveryventException e) {
-      throw new EveryventException(e.getErrorCode(), "스크랩을 취소할 수 없습니다. " + e.getMessage());
+      throw new EveryventException(e.getErrorCode(), "스크랩을 취소할 수 없습니다. " + e.getDetail());
     }
   }
 

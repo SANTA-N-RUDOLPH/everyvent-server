@@ -118,7 +118,7 @@ public class CalendarController {
   })
   @DeleteMapping("/{calendarId}")
   public ResponseEntity<Void> deleteCalendar(@PathVariable Long calendarId) {
-    calendarService.softDeleteCalendar(calendarId);
+    calendarService.deleteCalendar(calendarId);
     return ResponseEntity.noContent().build();
   }
 
