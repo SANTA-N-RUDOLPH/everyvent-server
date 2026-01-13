@@ -251,8 +251,12 @@ public class CalendarService {
     User currentUser = userService.getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
-    calendarPolicy.validateCanSoftDelete(currentUser, calendar);
+    if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
+      hardDeleteCalendar(calendarId);
+      return;
+    }
 
+    calendarPolicy.validateCanSoftDelete(currentUser, calendar);
     taskService.deleteByCalendarId(calendarId);
     calendar.softDelete();
   }
