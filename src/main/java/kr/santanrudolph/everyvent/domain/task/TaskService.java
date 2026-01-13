@@ -28,240 +28,240 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class TaskService {
 
-    private static final int MAX_TASKS_PER_DAY = 3;
-    private static final boolean UNLOCKED = false;
+  private static final int MAX_TASKS_PER_DAY = 3;
+  private static final boolean UNLOCKED = false;
 
-    private final TaskRepository taskRepository;
-    private final CalendarRepository calendarRepository;
-    private final UserService userService;
-    private final CalendarPolicy calendarPolicy;
+  private final TaskRepository taskRepository;
+  private final CalendarRepository calendarRepository;
+  private final UserService userService;
+  private final CalendarPolicy calendarPolicy;
 
-    @Transactional
-    public List<TaskResponse> createTasks(Long calendarId, List<TaskCreateRequest> requests) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
+  @Transactional
+  public List<TaskResponse> createTasks(Long calendarId, List<TaskCreateRequest> requests) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
 
-        try {
-            calendarPolicy.validateCanUpdate(currentUser, calendar);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 생성할 수 없습니다. " + e.getMessage());
-        }
-
-        List<Task> tasks = requestsToTasks(calendar, requests);
-        List<Task> results = taskRepository.saveAll(tasks);
-
-        return results.stream()
-                .map(task -> TaskResponse.from(task, UNLOCKED))
-                .toList();
+    try {
+      calendarPolicy.validateCanUpdate(currentUser, calendar);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크를 생성할 수 없습니다. " + e.getDetail());
     }
 
-    public List<TaskResponse> getTasksAllInformation(Long calendarId) {
-        List<Task> tasks = getAllTasks(calendarId);
+    List<Task> tasks = requestsToTasks(calendar, requests);
+    List<Task> results = taskRepository.saveAll(tasks);
 
-        return tasks.stream()
-                .map(task -> TaskResponse.from(task, UNLOCKED))
-                .toList();
+    return results.stream()
+        .map(task -> TaskResponse.from(task, UNLOCKED))
+        .toList();
+  }
+
+  public List<TaskResponse> getTasksAllInformation(Long calendarId) {
+    List<Task> tasks = getAllTasks(calendarId);
+
+    return tasks.stream()
+        .map(task -> TaskResponse.from(task, UNLOCKED))
+        .toList();
+  }
+
+  public List<TaskResponse> saveCopyTasks(Calendar originalCalendar, Calendar ScrappedCalendar) {
+    List<Task> originalTasks = getAllTasks(originalCalendar.getId());
+    List<Task> copyTasks = new ArrayList<>();
+
+    for (Task original : originalTasks) {
+      copyTasks.add(
+          Task.createTask(ScrappedCalendar, original.getDay(), original.getContent())
+      );
+    }
+    List<Task> results = taskRepository.saveAll(copyTasks);
+
+    return results.stream()
+        .map(task -> TaskResponse.from(task, UNLOCKED))
+        .toList();
+  }
+
+  public List<TaskResponse> getTasks(Long calendarId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
+    try {
+      calendarPolicy.validateCanView(currentUser, calendar);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getDetail());
     }
 
-    public List<TaskResponse> saveCopyTasks(Calendar originalCalendar, Calendar ScrappedCalendar) {
-        List<Task> originalTasks = getAllTasks(originalCalendar.getId());
-        List<Task> copyTasks = new ArrayList<>();
+    List<Task> tasks = taskRepository.findAllByCalendarId(calendarId);
 
-        for (Task original : originalTasks) {
-            copyTasks.add(
-                    Task.createTask(ScrappedCalendar, original.getDay(), original.getContent())
-            );
-        }
-        List<Task> results = taskRepository.saveAll(copyTasks);
+    return tasks.stream()
+        .map(task -> TaskResponse.from(task, isLocked(calendar, task)))
+        .toList();
+  }
 
-        return results.stream()
-                .map(task -> TaskResponse.from(task, UNLOCKED))
-                .toList();
+  @Transactional
+  public TaskResponse updateTask(Long calendarId, Long taskId, TaskUpdateRequest request) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
+    Task task = findTaskById(taskId);
+
+    try {
+      calendarPolicy.validateCanUpdate(currentUser, calendar);
+      validateTaskBelongsToCalendar(task, calendarId);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크를 수정할 수 없습니다. " + e.getDetail());
     }
 
-    public List<TaskResponse> getTasks(Long calendarId) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
-        try {
-            calendarPolicy.validateCanView(currentUser, calendar);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getMessage());
-        }
-
-        List<Task> tasks = taskRepository.findAllByCalendarId(calendarId);
-
-        return tasks.stream()
-                .map(task -> TaskResponse.from(task, isLocked(calendar, task)))
-                .toList();
+    if (request.content() != null) {
+      task.updateContent(request.content());
     }
 
-    @Transactional
-    public TaskResponse updateTask(Long calendarId, Long taskId, TaskUpdateRequest request) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
-        Task task = findTaskById(taskId);
+    return TaskResponse.from(task, UNLOCKED);
+  }
 
-        try {
-            calendarPolicy.validateCanUpdate(currentUser, calendar);
-            validateTaskBelongsToCalendar(task, calendarId);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 수정할 수 없습니다. " + e.getMessage());
-        }
+  @Transactional
+  public void deleteTask(Long calendarId, Long taskId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
+    Task task = findTaskById(taskId);
 
-        if (request.content() != null) {
-            task.updateContent(request.content());
-        }
-
-        return TaskResponse.from(task, UNLOCKED);
+    try {
+      calendarPolicy.validateCanUpdate(currentUser, calendar);
+      validateTaskBelongsToCalendar(task, calendarId);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크를 삭제할 수 없습니다. " + e.getDetail());
     }
 
-    @Transactional
-    public void deleteTask(Long calendarId, Long taskId) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
-        Task task = findTaskById(taskId);
+    taskRepository.delete(task);
+  }
 
-        try {
-            calendarPolicy.validateCanUpdate(currentUser, calendar);
-            validateTaskBelongsToCalendar(task, calendarId);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 삭제할 수 없습니다. " + e.getMessage());
-        }
+  @Transactional
+  public TaskResponse updateTaskCompletion(Long calendarId, Long taskId, Boolean completed) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
+    Task task = findTaskById(taskId);
 
-        taskRepository.delete(task);
+    validateCanComplete(currentUser, calendar, task);
+
+    if (completed) {
+      task.complete();
+    } else {
+      task.uncomplete();
     }
 
-    @Transactional
-    public TaskResponse updateTaskCompletion(Long calendarId, Long taskId, Boolean completed) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
-        Task task = findTaskById(taskId);
+    return TaskResponse.from(task, false);
+  }
 
-        validateCanComplete(currentUser, calendar, task);
+  @Transactional
+  public void deleteByCalendarId(Long calendarId) {
+    taskRepository.deleteByCalendarId(calendarId);
+  }
 
-        if (completed) {
-            task.complete();
-        } else {
-            task.uncomplete();
-        }
+  private List<Task> getAllTasks(Long calendarId) {
+    User currentUser = userService.getCurrentUser();
+    Calendar calendar = findCalendarById(calendarId);
 
-        return TaskResponse.from(task, false);
+    try {
+      calendarPolicy.validateCanView(currentUser, calendar);
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getDetail());
     }
 
-    @Transactional
-    public void deleteByCalendarId(Long calendarId) {
-        taskRepository.deleteByCalendarId(calendarId);
+    return taskRepository.findAllByCalendarId(calendarId);
+  }
+
+  private Calendar findCalendarById(Long calendarId) {
+    return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
+  }
+
+  private Task findTaskById(Long taskId) {
+    return taskRepository.findById(taskId)
+        .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "태스크를 찾을 수 없습니다."));
+  }
+
+  private List<Task> requestsToTasks(Calendar calendar, List<TaskCreateRequest> requests) {
+    Map<Integer, Long> requestedTaskCountByDay = requests.stream()
+        .collect(Collectors.groupingBy(TaskCreateRequest::day, Collectors.counting()));
+
+    return requests.stream()
+        .map(request -> {
+          LocalDate taskDay = parseTaskDay(calendar, request);
+
+          validateDateWithinCalendarRange(calendar, taskDay);
+          validateTaskLimit(calendar, taskDay, requestedTaskCountByDay.get(request.day()));
+
+          return Task.createTask(calendar, taskDay, request.content());
+        })
+        .toList();
+  }
+
+  private LocalDate parseTaskDay(Calendar calendar, TaskCreateRequest request) {
+    LocalDate startDay = calendar.getStartDate();
+    try {
+      return startDay.withDayOfMonth(request.day());
+    } catch (DateTimeException e) {
+      throw new EveryventException(
+          ErrorCode.INVALID_INPUT,
+          String.format("%d월에는 %d일이 존재하지 않습니다.", startDay.getMonthValue(), request.day())
+      );
+    }
+  }
+
+  private void validateTaskLimit(Calendar calendar, LocalDate day, long requestedTaskCountByDay) {
+    long calendarId = calendar.getId();
+    long count = taskRepository.countByCalendarIdAndDay(calendarId, day);
+
+    if (count + requestedTaskCountByDay > MAX_TASKS_PER_DAY) {
+      throw new EveryventException(
+          ErrorCode.INVALID_INPUT,
+          String.format("하루에 최대 %d개의 태스크만 생성할 수 있습니다.", MAX_TASKS_PER_DAY)
+      );
+    }
+  }
+
+  private void validateDateWithinCalendarRange(Calendar calendar, LocalDate day) {
+    if (day.isBefore(calendar.getStartDate()) || day.isAfter(calendar.getEndDate())) {
+      throw new EveryventException(
+          ErrorCode.INVALID_INPUT, "태스크 날짜는 캘린더 기간 내에 있어야 합니다."
+      );
+    }
+  }
+
+  private void validateTaskBelongsToCalendar(Task task, Long calendarId) {
+    if (!task.getCalendar().getId().equals(calendarId)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "해당 태스크는 이 캘린더에 속하지 않습니다.");
+    }
+  }
+
+  private void validateCanComplete(User currentUser, Calendar calendar, Task task) {
+    try {
+      calendarPolicy.validateCanView(currentUser, calendar);
+      validateTaskBelongsToCalendar(task, calendar.getId());
+    } catch (EveryventException e) {
+      throw new EveryventException(e.getErrorCode(), "태스크 완료 상태를 변경할 수 없습니다. " + e.getDetail());
     }
 
-    private List<Task> getAllTasks(Long calendarId) {
-        User currentUser = userService.getCurrentUser();
-        Calendar calendar = findCalendarById(calendarId);
+    if (isFutureTask(task)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "태스크 완료 상태를 변경할 수 없습니다. 미래의 태스크입니다.");
+    }
+  }
 
-        try {
-            calendarPolicy.validateCanView(currentUser, calendar);
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크를 조회할 수 없습니다. " + e.getMessage());
-        }
+  private boolean isLocked(Calendar calendar, Task task) {
+    LocalDate now = TimeUtil.today();
 
-        return taskRepository.findAllByCalendarId(calendarId);
+    LocalDate previewStartDay = calendar.getPreviewStartDay();
+    LocalDate previewEndDay = calendar.getPreviewEndDay();
+
+    // 미리보기 범위 안에 있으면 잠겨있지 않음
+    if (previewStartDay != null && previewEndDay != null) {
+      if (TimeUtil.isInRange(previewStartDay, previewEndDay, task.getDay())) {
+        return false;
+      }
     }
 
-    private Calendar findCalendarById(Long calendarId) {
-        return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
-                .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
-    }
+    // 해당 날짜가 미래면 잠겨있음
+    return task.getDay().isAfter(now);
+  }
 
-    private Task findTaskById(Long taskId) {
-        return taskRepository.findById(taskId)
-                .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "태스크를 찾을 수 없습니다."));
-    }
-
-    private List<Task> requestsToTasks(Calendar calendar, List<TaskCreateRequest> requests) {
-        Map<Integer, Long> requestedTaskCountByDay = requests.stream()
-                .collect(Collectors.groupingBy(TaskCreateRequest::day, Collectors.counting()));
-
-        return requests.stream()
-                .map(request -> {
-                    LocalDate taskDay = parseTaskDay(calendar, request);
-
-                    validateDateWithinCalendarRange(calendar, taskDay);
-                    validateTaskLimit(calendar, taskDay, requestedTaskCountByDay.get(request.day()));
-
-                    return Task.createTask(calendar, taskDay, request.content());
-                })
-                .toList();
-    }
-
-    private LocalDate parseTaskDay(Calendar calendar, TaskCreateRequest request) {
-        LocalDate startDay = calendar.getStartDate();
-        try {
-            return startDay.withDayOfMonth(request.day());
-        } catch (DateTimeException e) {
-            throw new EveryventException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("%d월에는 %d일이 존재하지 않습니다.", startDay.getMonthValue(), request.day())
-            );
-        }
-    }
-
-    private void validateTaskLimit(Calendar calendar, LocalDate day, long requestedTaskCountByDay) {
-        long calendarId = calendar.getId();
-        long count = taskRepository.countByCalendarIdAndDay(calendarId, day);
-
-        if (count + requestedTaskCountByDay > MAX_TASKS_PER_DAY) {
-            throw new EveryventException(
-                    ErrorCode.INVALID_INPUT,
-                    String.format("하루에 최대 %d개의 태스크만 생성할 수 있습니다.", MAX_TASKS_PER_DAY)
-            );
-        }
-    }
-
-    private void validateDateWithinCalendarRange(Calendar calendar, LocalDate day) {
-        if (day.isBefore(calendar.getStartDate()) || day.isAfter(calendar.getEndDate())) {
-            throw new EveryventException(
-                    ErrorCode.INVALID_INPUT, "태스크 날짜는 캘린더 기간 내에 있어야 합니다."
-            );
-        }
-    }
-
-    private void validateTaskBelongsToCalendar(Task task, Long calendarId) {
-        if (!task.getCalendar().getId().equals(calendarId)) {
-            throw new EveryventException(ErrorCode.INVALID_INPUT, "해당 태스크는 이 캘린더에 속하지 않습니다.");
-        }
-    }
-
-    private void validateCanComplete(User currentUser, Calendar calendar, Task task) {
-        try {
-            calendarPolicy.validateCanView(currentUser, calendar);
-            validateTaskBelongsToCalendar(task, calendar.getId());
-        } catch (EveryventException e) {
-            throw new EveryventException(e.getErrorCode(), "태스크 완료 상태를 변경할 수 없습니다. " + e.getMessage());
-        }
-
-        if (isFutureTask(task)) {
-            throw new EveryventException(ErrorCode.FORBIDDEN, "태스크 완료 상태를 변경할 수 없습니다. 미래의 태스크입니다.");
-        }
-    }
-
-    private boolean isLocked(Calendar calendar, Task task) {
-        LocalDate now = TimeUtil.today();
-
-        LocalDate previewStartDay = calendar.getPreviewStartDay();
-        LocalDate previewEndDay = calendar.getPreviewEndDay();
-
-        // 미리보기 범위 안에 있으면 잠겨있지 않음
-        if (previewStartDay != null && previewEndDay != null) {
-            if (TimeUtil.isInRange(previewStartDay, previewEndDay, task.getDay())) {
-                return false;
-            }
-        }
-
-        // 해당 날짜가 미래면 잠겨있음
-        return task.getDay().isAfter(now);
-    }
-
-    private boolean isFutureTask(Task task) {
-        return TimeUtil.isAfter(task.getDay(), TimeUtil.today());
-    }
+  private boolean isFutureTask(Task task) {
+    return TimeUtil.isAfter(task.getDay(), TimeUtil.today());
+  }
 
 }
