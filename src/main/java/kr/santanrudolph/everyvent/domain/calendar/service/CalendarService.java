@@ -247,7 +247,7 @@ public class CalendarService {
   }
 
   @Transactional
-  public void softDeleteCalendar(Long calendarId) {
+  public void deleteCalendar(Long calendarId) {
     User currentUser = userService.getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
