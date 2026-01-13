@@ -65,13 +65,13 @@ public class TaskService {
         .toList();
   }
 
-  public List<TaskResponse> saveCopyTasks(Calendar originalCalendar, Calendar ScrappedCalendar) {
+  public List<TaskResponse> saveCopyTasks(Calendar originalCalendar, Calendar scrappedCalendar) {
     List<Task> originalTasks = getAllTasks(originalCalendar.getId());
     List<Task> copyTasks = new ArrayList<>();
 
     for (Task original : originalTasks) {
       copyTasks.add(
-          Task.createTask(ScrappedCalendar, original.getDay(), original.getContent())
+          Task.createTask(scrappedCalendar, original.getDay(), original.getContent())
       );
     }
     List<Task> results = taskRepository.saveAll(copyTasks);
