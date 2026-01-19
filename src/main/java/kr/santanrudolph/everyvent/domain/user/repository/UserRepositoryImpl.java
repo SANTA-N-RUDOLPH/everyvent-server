@@ -110,8 +110,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
   }
 
   private BooleanExpression keywordMatch(String lowerKeyword) {
-    return user.nickname.lower().contains(lowerKeyword)
-        .or(user.introduction.lower().contains(lowerKeyword));
+    return user.nickname.lower().contains(lowerKeyword);
   }
 
   private BooleanExpression notFollowingOrFollower(Long currentUserId) {
