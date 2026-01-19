@@ -9,7 +9,7 @@ import java.util.List;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.config.JpaConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -85,7 +85,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
               tuple(follow1.getId(), follower1.getId(), "follower1", null),
               tuple(follow2.getId(), follower2.getId(), "follower2", null));
@@ -122,7 +122,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(tuple(follow1.getId(), activeUser.getId(), activeUser.getNickname(), null));
 
     }
@@ -150,7 +150,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
               tuple(follow1.getId(), target1.getId(), target1.getNickname(), null),
               tuple(follow2.getId(), target2.getId(), target2.getNickname(), null));
@@ -187,7 +187,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(tuple(follow1.getId(), target1.getId(), target1.getNickname(), null));
     }
 

@@ -5,18 +5,18 @@ import kr.santanrudolph.everyvent.domain.user.User;
 
 public record UserBasicResponse(
 
-    Long id,
+    Long userId,
     String nickname,
-    String introduction,
-    String profileImageKey
+    String profileImageKey,
+    String introduction
 ) {
 
   public static UserBasicResponse from(User user) {
     return new UserBasicResponse(
         user.getId(),
         user.getNickname(),
-        user.getIntroduction(),
-        user.getProfileImageKey()
+        user.getProfileImageKey(),
+        user.getIntroduction()
     );
   }
 }

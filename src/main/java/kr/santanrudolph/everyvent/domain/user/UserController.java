@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.user.dto.request.ProfileImageUpdateRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequest;
@@ -12,7 +13,11 @@ import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.request.ProfileImageUploadRequest;
+import kr.santanrudolph.everyvent.domain.user.dto.response.UserSearchResponse;
 import kr.santanrudolph.everyvent.infrastructure.s3.ProfileImageUploadResponse;
+
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
   private final UserService userService;
+  private final UserSearchService userSearchService;
   private final CurrentUserProvider currentUserProvider;
 
   @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
@@ -157,6 +163,29 @@ public class UserController {
 
     UserResponse response = userService.deleteProfileImage();
     return ResponseEntity.ok(response);
+  }
+
+  @Operation(
+      summary = "사용자 검색",
+      description = "닉네임으로 사용자를 검색합니다. 점수 기반 정렬 (텍스트 매칭 > 관계 > 인기도). " +
+          "관계 있는 사람(팔로우/팔로워) 우선 노출, 최대 100개 반환"
+  )
+  @ApiResponses({
+      @ApiResponse(responseCode = "200", description = "검색 성공"),
+      @ApiResponse(responseCode = "400", description = "INVALID_INPUT: 검색어가 비어있음"),
+      @ApiResponse(responseCode = "401", description = "UNAUTHORIZED: 인증되지 않은 요청 | INVALID_ACCESS_TOKEN: 유효하지 않은 액세스 토큰")
+  })
+  @GetMapping("/search")
+  public ResponseEntity<List<UserSearchResponse>> searchUsers(
+      @RequestParam @NotBlank(message = "검색어는 필수입니다") String keyword
+  ) {
+    Long currentUserId = currentUserProvider.getCurrentUserId();
+    log.info("User search - keyword: {}, userId: {}", keyword, currentUserId);
+
+    List<UserSearchResponse> results = userSearchService.searchUsers(keyword);
+
+    log.info("Search results - keyword: {}, count: {}", keyword, results.size());
+    return ResponseEntity.ok(results);
   }
 
 }

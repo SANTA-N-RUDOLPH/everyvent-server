@@ -7,6 +7,7 @@ import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateIntroductionRequ
 import kr.santanrudolph.everyvent.domain.user.dto.request.UpdateNicknameRequest;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserResponse;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import kr.santanrudolph.everyvent.domain.user.dto.request.ProfileImageUploadRequest;

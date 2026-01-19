@@ -1,7 +1,14 @@
 package kr.santanrudolph.everyvent.domain.follow;
 
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowerCountProjection;
 
 import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCountDto;
@@ -11,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowCreateResponse;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.springframework.stereotype.Service;
@@ -67,7 +74,7 @@ public class FollowService {
     return new FollowCountDto(followerCount, followingCount);
   }
 
-  int getFollowerCount(Long targetId) {
+  public int getFollowerCount(Long targetId) {
     return followRepository.countActiveFollowersByTargetId(targetId);
   }
 
@@ -145,6 +152,45 @@ public class FollowService {
 
   public boolean isMutualFollow(Long userId1, Long userId2) {
     return isFollowing(userId1, userId2) && isFollowing(userId2, userId1);
+  }
+
+  public FollowStatus getFollowStatus(boolean isFollowing, boolean isFollower) {
+    if (isFollowing && isFollower)
+      return FollowStatus.MUTUAL;
+
+    if (isFollowing && !isFollower)
+      return FollowStatus.FOLLOWING;
+
+    if (!isFollowing && isFollower)
+      return FollowStatus.FOLLOWER;
+
+    return FollowStatus.NONE;
+  }
+
+  public Set<Long> findFollowingIds(Long currentUserId, List<Long> candidateIds) {
+    return new HashSet<>(
+        followRepository.findFollowingIds(currentUserId, candidateIds)
+    );
+  }
+
+  public Set<Long> findFollowerIds(Long currentUserId, List<Long> candidateIds) {
+    return new HashSet<>(
+        followRepository.findFollowerIds(currentUserId, candidateIds)
+    );
+  }
+
+  public Map<Long, Integer> getFollowerCountMap(List<Long> candidateIds) {
+
+    if (candidateIds == null || candidateIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    return followRepository.countFollowersByUserIds(candidateIds)
+        .stream()
+        .collect(Collectors.toMap(
+            FollowerCountProjection::getUserId,
+            p -> p.getCount().intValue()
+        ));
   }
 
 }

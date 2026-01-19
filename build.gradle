@@ -4,6 +4,8 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
+def querydslVersion = '5.1.0'
+
 group = 'kr.santanrudolph'
 version = '0.0.1-SNAPSHOT'
 description = 'everyvent-server'
@@ -47,6 +49,12 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.7'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    // QueryDSL
+    implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
+    annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
     // Development & Utilities
     compileOnly 'org.projectlombok:lombok'

@@ -21,7 +21,7 @@ import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.dto.response.UserBasicResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -232,8 +232,8 @@ class FollowServiceTest {
       target = createUser(TARGET_ID, "target");
 
       List<FollowResponse> expectedFollowers = List.of(
-          new FollowResponse(FOLLOW_ID, new UserBasicResponse(FOLLOWER_ID, "follower1", "introduction1", null)),
-          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(FOLLOWER_ID2, "follower2", "introduction2", null))
+          new FollowResponse(FOLLOW_ID, new UserBasicResponse(FOLLOWER_ID, "follower1", null, "introduction1")),
+          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(FOLLOWER_ID2, "follower2", null, "introduction2"))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(TARGET_ID)).willReturn(Optional.of(target));
@@ -246,7 +246,7 @@ class FollowServiceTest {
       // then
       assertThat(result)
           .hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(
               tuple(FOLLOW_ID, FOLLOWER_ID, "follower1", "introduction1"),
               tuple(FOLLOW_ID2, FOLLOWER_ID2, "follower2", "introduction2"));
@@ -303,8 +303,8 @@ class FollowServiceTest {
       follower = createUser(FOLLOWER_ID, "follower");
 
       List<FollowResponse> expectedFollowings = List.of(
-          new FollowResponse(FOLLOW_ID, new UserBasicResponse(TARGET_ID, "target1", "introduction1", null)),
-          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(TARGET_ID2, "target2", "introduction2", null))
+          new FollowResponse(FOLLOW_ID, new UserBasicResponse(TARGET_ID, "target1", null, "introduction1")),
+          new FollowResponse(FOLLOW_ID2, new UserBasicResponse(TARGET_ID2, "target2", null, "introduction2"))
       );
 
       given(userRepository.findByIdAndDeletedAtIsNull(FOLLOWER_ID)).willReturn(
@@ -318,7 +318,7 @@ class FollowServiceTest {
       // then
       assertThat(result)
           .hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(
               tuple(FOLLOW_ID, TARGET_ID, "target1", "introduction1"),
               tuple(FOLLOW_ID2, TARGET_ID2, "target2", "introduction2"));
