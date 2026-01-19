@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
+import kr.santanrudolph.everyvent.domain.follow.dto.FollowerCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -41,7 +42,40 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
           "WHERE f.follower.id = :followerId AND u.deletedAt IS NULL")
   List<FollowResponse> findActiveFollowingsByFollowerId(@Param("followerId") Long followerId);
 
-  Optional<Follow> findByFollowerIdAndTargetId(Long followerId, Long targetId);
+  // 내가 팔로우하는 대상들
+  @Query("""
+        select f.follower.id
+        from Follow f
+        where f.follower.id = :me
+          and f.target.id in :targets
+      """)
+  List<Long> findFollowingIds(
+      @Param("me") Long me,
+      @Param("targets") List<Long> targets
+  );
+
+  // 나를 팔로우하는 사람들
+  @Query("""
+        select f.follower.id
+        from Follow f
+        where f.target.id = :me
+          and f.follower.id in :targets
+      """)
+  List<Long> findFollowerIds(
+      @Param("me") Long me,
+      @Param("targets") List<Long> targets
+  );
+
+  @Query("""
+        select f.target.id as userId, count(f.id) as count
+        from Follow f
+        where f.target.id in :userIds
+        and f.follower.deletedAt is null
+        group by f.target.id
+      """)
+  List<FollowerCountProjection> countFollowersByUserIds(
+      @Param("userIds") List<Long> userIds
+  );
 
   @Modifying
   @Query("DELETE FROM Follow f WHERE f.follower.id = :followerId AND f.target.id = :targetId")
