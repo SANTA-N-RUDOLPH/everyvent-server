@@ -167,7 +167,7 @@ public class UserController {
 
   @Operation(
       summary = "사용자 검색",
-      description = "닉네임 또는 소개글로 사용자를 검색합니다. 점수 기반 정렬 (텍스트 매칭 > 관계 > 인기도). " +
+      description = "닉네임으로 사용자를 검색합니다. 점수 기반 정렬 (텍스트 매칭 > 관계 > 인기도). " +
           "관계 있는 사람(팔로우/팔로워) 우선 노출, 최대 100개 반환"
   )
   @ApiResponses({

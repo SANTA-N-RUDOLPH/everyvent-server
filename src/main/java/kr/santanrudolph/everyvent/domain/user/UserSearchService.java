@@ -133,16 +133,10 @@ public class UserSearchService {
   private double calculateTextScore(User user, String keyword) {
     String lowerKeyword = keyword.toLowerCase();
     String nickname = user.getNickname().toLowerCase();
-    String introduction = Objects.toString(user.getIntroduction(), "").toLowerCase();
 
     if (nickname.equals(lowerKeyword)) return 100;
-    if (!introduction.isEmpty() && introduction.equals(lowerKeyword)) return 90;
-
     if (nickname.startsWith(lowerKeyword)) return 80;
-    if (!introduction.isEmpty() && introduction.startsWith(lowerKeyword)) return 70;
-
     if (nickname.contains(lowerKeyword)) return 60;
-    if (!introduction.isEmpty() && introduction.contains(lowerKeyword)) return 50;
 
     return 0;
   }
