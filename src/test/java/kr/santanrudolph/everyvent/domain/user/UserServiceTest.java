@@ -11,6 +11,7 @@ import java.util.Optional;
 import kr.santanrudolph.everyvent.auth.CurrentUserProvider;
 import kr.santanrudolph.everyvent.domain.follow.FollowRepository;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import kr.santanrudolph.everyvent.infrastructure.s3.S3Service;

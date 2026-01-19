@@ -1,7 +1,7 @@
 package kr.santanrudolph.everyvent.global.config;
 
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.domain.user.enums.Role;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import lombok.RequiredArgsConstructor;

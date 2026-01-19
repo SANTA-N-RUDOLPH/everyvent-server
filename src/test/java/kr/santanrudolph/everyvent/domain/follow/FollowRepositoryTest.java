@@ -9,7 +9,7 @@ import java.util.List;
 import kr.santanrudolph.everyvent.domain.follow.dto.FollowResponse;
 import kr.santanrudolph.everyvent.domain.user.enums.SocialProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.config.JpaConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
