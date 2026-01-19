@@ -8,6 +8,6 @@ public record FollowResponse(
 ) {
 
   public FollowResponse(Long id, Long userId, String userNickname, String userIntroduction, String profileImageKey) {
-    this(id, new UserBasicResponse(userId, userNickname, userIntroduction, profileImageKey));
+    this(id, new UserBasicResponse(userId, userNickname, profileImageKey, userIntroduction));
   }
 }
