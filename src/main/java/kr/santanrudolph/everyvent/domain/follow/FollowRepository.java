@@ -44,7 +44,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
   // 내가 팔로우하는 대상들
   @Query("""
-        select f.follower.id
+        select f.target.id
         from Follow f
         where f.follower.id = :me
           and f.target.id in :targets
