@@ -79,7 +79,7 @@ public class UserSearchService {
     Map<Long, Integer> followerCountMap = followService.getFollowerCountMap(allCandidateIds);
 
     // 3. 공통 팔로워 목록 조회 -> "@@님, ##님 외 여러 명"을 위함
-    List<CommonFollowerProjection> commonFollowerProjections = relatedUserIds.isEmpty()
+    List<CommonFollowerProjection> commonFollowerProjections = allCandidateIds.isEmpty()
         ? List.of()
         : userRepository.findCommonFollowersBatch(currentUserId, allCandidateIds);
     Map<Long, List<UserBasicResponse>> commonFollowersMap = groupCommonFollowers(commonFollowerProjections);
