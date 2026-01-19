@@ -40,7 +40,7 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         .otherwise(4);
 
     return queryFactory
-        .selectDistinct(user)
+        .select(user)
         .from(user)
         .leftJoin(f1).on(f1.follower.id.eq(currentUserId).and(f1.target.id.eq(user.id)))
         .leftJoin(f2).on(f2.follower.id.eq(user.id).and(f2.target.id.eq(currentUserId)))
