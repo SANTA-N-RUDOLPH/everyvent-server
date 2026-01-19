@@ -85,7 +85,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
               tuple(follow1.getId(), follower1.getId(), "follower1", null),
               tuple(follow2.getId(), follower2.getId(), "follower2", null));
@@ -122,7 +122,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(tuple(follow1.getId(), activeUser.getId(), activeUser.getNickname(), null));
 
     }
@@ -150,7 +150,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(2)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactlyInAnyOrder(
               tuple(follow1.getId(), target1.getId(), target1.getNickname(), null),
               tuple(follow2.getId(), target2.getId(), target2.getNickname(), null));
@@ -187,7 +187,7 @@ class FollowRepositoryTest {
 
       // then
       assertThat(result).hasSize(1)
-          .extracting("id", "user.id", "user.nickname", "user.introduction")
+          .extracting("id", "user.userId", "user.nickname", "user.introduction")
           .containsExactly(tuple(follow1.getId(), target1.getId(), target1.getNickname(), null));
     }
 
