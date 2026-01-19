@@ -39,13 +39,13 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
                 PARTITION BY f1.target_id
                 ORDER BY f1.follower_id
               ) AS rn
-            FROM follow f1
-            JOIN follow f2
+            FROM follows f1
+            JOIN follows f2
               ON f2.target_id = f1.follower_id
              AND f2.follower_id = :currentUserId
             WHERE f1.target_id IN (:targetUserIds)
           ) t
-          JOIN user u ON u.id = t.follower_id
+          JOIN users u ON u.id = t.follower_id
           WHERE t.rn <= 3
             AND u.deleted_at IS NULL
           """,
