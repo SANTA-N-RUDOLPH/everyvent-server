@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.santanrudolph.everyvent.auth.dto.TokenResponse;
 import kr.santanrudolph.everyvent.auth.security.JwtTokenProvider;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;

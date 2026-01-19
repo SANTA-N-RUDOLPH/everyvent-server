@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.santanrudolph.everyvent.auth.repository.RedisTokenRepository;
 import kr.santanrudolph.everyvent.domain.user.User;
-import kr.santanrudolph.everyvent.domain.user.UserRepository;
+import kr.santanrudolph.everyvent.domain.user.repository.UserRepository;
 import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.ErrorResponse;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain filterChain)
+                                  FilterChain filterChain)
       throws ServletException, IOException {
 
     try {
