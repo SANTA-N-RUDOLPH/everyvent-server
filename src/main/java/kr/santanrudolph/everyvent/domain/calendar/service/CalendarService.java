@@ -41,7 +41,16 @@ public class CalendarService {
 
   @Transactional
   public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
+    User user = getCurrentUser();
+    Calendar saved = createCalendar(request, CalendarType.PERSONAL);
 
+    log.info("Calendar created - userId={}, calendarId={}, startDate={}, calendarType={}",
+        user.getId(), saved.getId(), saved.getStartDate(), saved.getCalendarType());
+
+    return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
+  }
+
+  public Calendar createCalendar(CalendarCreateRequest request, CalendarType calendarType) {
     User user = getCurrentUser();
 
     calendarPolicy.validateCanCreate(user, request.startDate());
@@ -56,15 +65,10 @@ public class CalendarService {
         request.visibility(),
         request.color(),
         request.category(),
-        CalendarType.PERSONAL
+        calendarType
     );
 
-
-    Calendar saved = calendarRepository.save(calendar);
-    log.info("Calendar created - userId={}, calendarId={}, startDate={}",
-        user.getId(), saved.getId(), saved.getStartDate());
-
-    return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
+    return calendarRepository.save(calendar);
   }
 
   public CalendarDetailResponse getCalendar(Long calendarId) {
