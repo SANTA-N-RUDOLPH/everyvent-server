@@ -42,7 +42,7 @@ public class CalendarService {
   @Transactional
   public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
 
-    User user = userService.getCurrentUser();
+    User user = getCurrentUser();
 
     calendarPolicy.validateCanCreate(user, request.startDate());
 
@@ -69,7 +69,7 @@ public class CalendarService {
 
   public CalendarDetailResponse getCalendar(Long calendarId) {
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
 
     calendarPolicy.validateCanView(currentUser, calendar);
 
@@ -79,7 +79,7 @@ public class CalendarService {
   }
 
   public CalendarScrollResponse getMyCalendars(YearMonth cursor, Integer size) {
-    User user = userService.getCurrentUser();
+    User user = getCurrentUser();
 
     if (size <= 0) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "size는 1 이상이어야 합니다.");
@@ -131,7 +131,7 @@ public class CalendarService {
     LocalDate startDate = yearMonth.atDay(1);
     LocalDate endDate = yearMonth.atEndOfMonth();
     List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
-        userService.getCurrentUser(),
+        getCurrentUser(),
         startDate,
         endDate
     );
@@ -148,7 +148,7 @@ public class CalendarService {
 
   @Transactional
   public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanUpdate(currentUser, calendar);
@@ -188,7 +188,7 @@ public class CalendarService {
 
   @Transactional
   public CalendarDetailResponse scrapCalendar(Long calendarId, ScrapCalendarRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar originalCalendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanScrap(currentUser, originalCalendar);
@@ -214,7 +214,7 @@ public class CalendarService {
 
   @Transactional
   public void cancelScrap(Long originalCalendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar scrappedCalendar = calendarRepository
         .findByOriginalCalendarIdAndUserId(originalCalendarId, currentUser.getId())
         .orElseThrow(() ->
@@ -234,7 +234,7 @@ public class CalendarService {
 
   @Transactional
   public CalendarDetailResponse updateScrapColor(Long calendarId, ScrapCalendarRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = calendarRepository.findById(calendarId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
 
@@ -248,7 +248,7 @@ public class CalendarService {
 
   @Transactional
   public void deleteCalendar(Long calendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
@@ -267,7 +267,7 @@ public class CalendarService {
 
   @Transactional
   public void hardDeleteCalendar(Long calendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanHardDelete(currentUser, calendar);
@@ -289,11 +289,15 @@ public class CalendarService {
     }
 
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
 
     calendarPolicy.validateCanView(currentUser, calendar);
 
     return scrapService.getScrappers(calendarId, cursor, size);
+  }
+
+  public User getCurrentUser() {
+    return userService.getCurrentUser();
   }
 
   private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {
