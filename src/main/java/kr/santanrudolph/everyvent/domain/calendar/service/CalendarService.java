@@ -2,7 +2,10 @@ package kr.santanrudolph.everyvent.domain.calendar.service;
 
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.Scrap;
-import kr.santanrudolph.everyvent.domain.calendar.dto.*;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.*;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarCreateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarUpdateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.ScrapCalendarRequest;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
 import kr.santanrudolph.everyvent.domain.task.TaskService;

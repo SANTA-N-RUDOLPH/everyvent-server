@@ -2,8 +2,8 @@ package kr.santanrudolph.everyvent.domain.calendar.service;
 
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.Scrap;
-import kr.santanrudolph.everyvent.domain.calendar.dto.ScrapperResponse;
-import kr.santanrudolph.everyvent.domain.calendar.dto.ScrapperScrollResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.ScrapperResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.ScrapperScrollResponse;
 import kr.santanrudolph.everyvent.domain.calendar.repository.ScrapCountProjection;
 import kr.santanrudolph.everyvent.domain.calendar.repository.ScrapRepository;
 import kr.santanrudolph.everyvent.domain.user.User;

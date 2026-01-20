@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar.dto;
+package kr.santanrudolph.everyvent.domain.calendar.dto.reponse;
 
 public record DistributeResponse(
     Long officialCalendarId,
