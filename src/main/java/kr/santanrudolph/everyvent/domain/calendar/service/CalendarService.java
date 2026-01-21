@@ -41,22 +41,11 @@ public class CalendarService {
   private final ScrapService scrapService;
   private final CalendarPolicy calendarPolicy;
 
-
-  @Transactional
-  public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
-    User user = getCurrentUser();
-    Calendar saved = createCalendar(request, CalendarType.PERSONAL);
-
-    log.info("Calendar created - userId={}, calendarId={}, startDate={}, calendarType={}",
-        user.getId(), saved.getId(), saved.getStartDate(), saved.getCalendarType());
-
-    return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
-  }
-
+  // create
   public Calendar createCalendar(CalendarCreateRequest request, CalendarType calendarType) {
     User user = getCurrentUser();
 
-    calendarPolicy.validateCanCreate(user, request.startDate());
+    calendarPolicy.validateCanCreate(user, request.startDate(), calendarType);
 
     Calendar calendar = Calendar.createCalendarWithStartDay(
         user,
@@ -74,6 +63,19 @@ public class CalendarService {
     return calendarRepository.save(calendar);
   }
 
+  @Transactional
+  public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
+    User user = getCurrentUser();
+    Calendar saved = createCalendar(request, CalendarType.PERSONAL);
+
+    log.info("Calendar created - userId={}, calendarId={}, startDate={}, calendarType={}",
+        user.getId(), saved.getId(), saved.getStartDate(), saved.getCalendarType());
+
+    return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
+  }
+
+
+  // read
   public CalendarDetailResponse getCalendar(Long calendarId) {
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
     User currentUser = getCurrentUser();
@@ -153,46 +155,36 @@ public class CalendarService {
         .toList();
   }
 
+
+  // update
+  public Calendar updateCalendar(Calendar calendar, CalendarUpdateRequest request) {
+    Optional.ofNullable(request.title()).ifPresent(calendar::updateTitle);
+    Optional.ofNullable(request.description()).ifPresent(calendar::updateDescription);
+    Optional.ofNullable(request.startDate()).ifPresent(calendar::updateStartDate);
+    Optional.ofNullable(request.endDate()).ifPresent(calendar::updateEndDate);
+    Optional.ofNullable(request.previewStartDate()).ifPresent(calendar::updatePreviewStartDay);
+    Optional.ofNullable(request.previewEndDate()).ifPresent(calendar::updatePreviewEndDay);
+    Optional.ofNullable(request.visibility()).ifPresent(calendar::updateVisibility);
+    Optional.ofNullable(request.color()).ifPresent(calendar::updateColor);
+    Optional.ofNullable(request.category()).ifPresent(calendar::updateCategory);
+
+    return calendar;
+  }
+
   @Transactional
   public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
     User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanUpdate(currentUser, calendar);
-
-    if (request.title() != null) {
-      calendar.updateTitle(request.title());
-    }
-    if (request.description() != null) {
-      calendar.updateDescription(request.description());
-    }
-    if (request.startDate() != null) {
-      calendar.updateStartDate(request.startDate());
-    }
-    if (request.endDate() != null) {
-      calendar.updateEndDate(request.endDate());
-    }
-    if (request.previewStartDate() != null) {
-      calendar.updatePreviewStartDay(request.previewStartDate());
-    }
-    if (request.previewEndDate() != null) {
-      calendar.updatePreviewEndDay(request.previewEndDate());
-    }
-    if (request.visibility() != null) {
-      calendar.updateVisibility(request.visibility());
-    }
-    if (request.color() != null) {
-      calendar.updateColor(request.color());
-    }
-    if (request.category() != null) {
-      calendar.updateCategory(request.category());
-    }
+    updateCalendar(calendar, request);
 
     Long scrapCount = scrapService.getScrapCount(calendar.getId());
 
     return CalendarDetailResponse.from(calendar, false, scrapCount);
   }
 
+  // scrap
   @Transactional
   public CalendarDetailResponse scrapCalendar(Long calendarId, ScrapCalendarRequest request) {
     User currentUser = getCurrentUser();
@@ -253,6 +245,8 @@ public class CalendarService {
     return CalendarDetailResponse.from(calendar, NOT_SCRAPPABLE, scrapCount);
   }
 
+
+  // delete
   @Transactional
   public void deleteCalendar(Long calendarId) {
     User currentUser = getCurrentUser();
@@ -285,6 +279,8 @@ public class CalendarService {
     calendarRepository.deleteById(calendarId);
   }
 
+
+  // domain query method
   public Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
     return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
@@ -307,6 +303,8 @@ public class CalendarService {
     return userService.getCurrentUser();
   }
 
+
+  // utility method
   private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {
     if (calendars == null || calendars.isEmpty()) {
       return Collections.emptyMap();
