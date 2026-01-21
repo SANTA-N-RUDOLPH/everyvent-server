@@ -5,8 +5,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.CalendarDetailResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.CalendarListResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.CalendarScrollResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.ScrapperScrollResponse;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarCreateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarUpdateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.ScrapCalendarRequest;
 import kr.santanrudolph.everyvent.domain.calendar.service.CalendarService;
-import kr.santanrudolph.everyvent.domain.calendar.dto.*;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
@@ -31,7 +37,11 @@ public class CalendarController {
 
   private final CalendarService calendarService;
 
-  @Operation(summary = "캘린더 생성", description = "유저가 내 캘린더(PERSONAL) 생성")
+  @Operation(summary = "캘린더 생성", description = """
+      유저가 내 캘린더(PERSONAL)를 생성합니다. 1~25일의 캘린더라면, startDate는 항상 yyyy-mm-01 이어야 합니다.
+      endDate는 필수가 아닙니다. starDate와 endDate를 지정하여 캘린더를 생성할 수도 있습니다.
+      """
+  )
   @ApiResponses({
       @ApiResponse(responseCode = "201", description = "생성 성공"),
       @ApiResponse(responseCode = "400", description = "INVALID_INPUT"),

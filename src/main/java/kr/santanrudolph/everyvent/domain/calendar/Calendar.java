@@ -32,6 +32,9 @@ public class Calendar extends BaseEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
+  @Column(name = "user_id", insertable = false, updatable = false)
+  private Long userId; // 읽기 전용
+
   @Column(nullable = false)
   private String title;
 

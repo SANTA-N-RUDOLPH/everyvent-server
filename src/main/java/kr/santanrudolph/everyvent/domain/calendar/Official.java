@@ -13,7 +13,7 @@ public class Official {
   @Id
   private Long id;
 
-  @OneToOne
+  @OneToOne(cascade = CascadeType.REMOVE)
   @MapsId
   @JoinColumn(name = "id")
   private Calendar calendar;

@@ -1,14 +1,16 @@
-package kr.santanrudolph.everyvent.domain.calendar.dto;
+package kr.santanrudolph.everyvent.domain.calendar.dto.request;
+
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 
 import java.time.LocalDate;
 
-public record OfficialCalendarCreateRequest(
+public record CalendarCreateRequest(
     @NotBlank(message = "캘린더 제목은 필수입니다")
     @Size(max = 100, message = "제목은 100자를 초과할 수 없습니다")
     String title,
@@ -21,6 +23,9 @@ public record OfficialCalendarCreateRequest(
 
     LocalDate previewStartDate,
     LocalDate previewEndDate,
+
+    @NotNull(message = "공개범위는 필수입니다")
+    Visibility visibility,
 
     @NotNull(message = "색상은 필수입니다")
     CalendarColor color,

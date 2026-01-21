@@ -1,5 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar.dto;
-
+package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,7 +9,7 @@ import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 
 import java.time.LocalDate;
 
-public record CalendarCreateRequest(
+public record OfficialCalendarCreateRequest(
     @NotBlank(message = "캘린더 제목은 필수입니다")
     @Size(max = 100, message = "제목은 100자를 초과할 수 없습니다")
     String title,
@@ -24,13 +23,23 @@ public record CalendarCreateRequest(
     LocalDate previewStartDate,
     LocalDate previewEndDate,
 
-    @NotNull(message = "공개범위는 필수입니다")
-    Visibility visibility,
-
     @NotNull(message = "색상은 필수입니다")
     CalendarColor color,
 
     @NotNull(message = "카테고리는 필수입니다")
     Category category
 ) {
+
+  public CalendarCreateRequest toCalendarCreateRequest() {
+    return new CalendarCreateRequest(
+        this.title,
+        this.description,
+        this.startDate,
+        this.previewStartDate,
+        this.previewEndDate,
+        Visibility.ADMIN,
+        this.color,
+        this.category
+    );
+  }
 }

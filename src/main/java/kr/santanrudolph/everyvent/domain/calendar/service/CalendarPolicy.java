@@ -4,7 +4,6 @@ package kr.santanrudolph.everyvent.domain.calendar.service;
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.CalendarConstants;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
-import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
 import kr.santanrudolph.everyvent.domain.follow.FollowService;
 import kr.santanrudolph.everyvent.domain.user.User;
@@ -25,33 +24,6 @@ public class CalendarPolicy {
   private final FollowService followService;
   private final ScrapService scrapService;
 
-  public boolean canView(User user, Calendar calendar) {
-    if (user.getRole() == Role.ADMIN) {
-      return true;
-    }
-
-    if (isOwner(user, calendar)) {
-      return true;
-    }
-
-    Visibility visibility = calendar.getVisibility();
-    if (visibility == Visibility.PUBLIC) {
-      return true;
-    }
-
-    Long followerId = user.getId();
-    Long targetId = calendar.getUser().getId();
-    if (visibility == Visibility.FOLLOWER) {
-      return followService.isFollowing(followerId, targetId);
-    }
-
-    if (visibility == Visibility.MUTUAL) {
-      return followService.isMutualFollow(followerId, targetId);
-    }
-
-    return false;
-  }
-
   public boolean canScrap(User user, Calendar calendar) {
     if (isOwner(user, calendar)) {
       return false;
@@ -68,20 +40,46 @@ public class CalendarPolicy {
     return calendar.getUser().getId().equals(user.getId());
   }
 
-  public void validateCanCreate(User user, LocalDate startDate) {
+
+  // create
+  public void validateCanCreate(User user, LocalDate startDate, CalendarType calendarType) {
     try {
-      validateCalendarLimit(user, startDate);
-      validateFuture(startDate);
+      switch (calendarType) {
+        case OFFICIAL -> {
+          validateAdmin(user);
+        }
+        case PERSONAL -> {
+          validateCalendarLimit(user, startDate);
+          validateFuture(startDate);
+        }
+      }
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getDetail());
     }
   }
 
+
+  // read
+  public void validateCanView(User user, Calendar calendar) {
+    switch (calendar.getCalendarType()) {
+      case OFFICIAL -> {
+        validateAdmin(user);
+      }
+      case PERSONAL -> {
+        if (!canView(user, calendar)) {
+          throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
+        }
+      }
+    }
+  }
+
+
+  // update
   public void validateCanUpdate(User user, Calendar calendar) {
     try {
+      validateUpdatePermission(user, calendar);
       validateFuture(calendar.getStartDate());
       validateDeleted(calendar);
-      validateOwner(user, calendar);
       validateOriginalCalendar(calendar);
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getDetail());
@@ -100,6 +98,8 @@ public class CalendarPolicy {
     }
   }
 
+
+  // delete
   public void validateCanSoftDelete(User user, Calendar calendar) {
     try {
       validateFuture(calendar.getStartDate());
@@ -120,12 +120,8 @@ public class CalendarPolicy {
     }
   }
 
-  public void validateCanView(User user, Calendar calendar) {
-    if (!canView(user, calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
-    }
-  }
 
+  // scrap
   public void validateCanScrap(User user, Calendar calendar) {
     try {
       validateCanView(user, calendar);
@@ -133,6 +129,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateNotOwner(user, calendar);
       validateNotAlreadyScrapped(user, calendar);
+      validateCalendarLimit(user, calendar.getStartDate());
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 스크랩할 수 없습니다. " + e.getDetail());
     }
@@ -148,6 +145,57 @@ public class CalendarPolicy {
     }
   }
 
+
+  // permission
+  private void validateOwner(User user, Calendar calendar) {
+    if (!isOwner(user, calendar)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "본인 캘린더가 아닙니다.");
+    }
+  }
+
+  private void validateUpdatePermission(User user, Calendar calendar) {
+    if (calendar.isOfficialCalendar()) {
+      validateAdmin(user);
+    } else {
+      validateOwner(user, calendar);
+    }
+  }
+
+  private void validateNotOwner(User user, Calendar calendar) {
+    if (isOwner(user, calendar)) {
+      throw new EveryventException(ErrorCode.INVALID_INPUT, "본인 캘린더입니다.");
+    }
+  }
+
+  private void validateAdmin(User user) {
+    if (!isAdmin(user)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "관리자가 아닙니다.");
+    }
+  }
+
+  private boolean canView(User user, Calendar calendar) {
+    if (isAdmin(user) || isOwner(user, calendar)) {
+      return true;
+    }
+
+    Long viewerId = user.getId();
+    Long ownerId = calendar.getUser().getId();
+
+    return switch (calendar.getVisibility()) {
+      case PUBLIC -> true;
+      case FOLLOWER -> followService.isFollowing(viewerId, ownerId);
+      case MUTUAL -> followService.isMutualFollow(viewerId, ownerId);
+      case PRIVATE -> false;
+      case ADMIN -> false;
+    };
+  }
+
+  private boolean isAdmin(User user) {
+    return user.getRole() == Role.ADMIN;
+  }
+
+
+  // calendarState
   private void validateCalendarLimit(User user, LocalDate targetDate) {
     int year = targetDate.getYear();
     int month = targetDate.getMonthValue();
@@ -161,12 +209,6 @@ public class CalendarPolicy {
           ErrorCode.INVALID_INPUT,
           String.format("%d년 %d월에 생성 가능한 캘린더 수를 초과했습니다.", year, month)
       );
-    }
-  }
-
-  public void validateOwner(User user, Calendar calendar) {
-    if (!isOwner(user, calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "본인 캘린더가 아닙니다.");
     }
   }
 
@@ -203,15 +245,11 @@ public class CalendarPolicy {
     }
   }
 
+
+  // scrap
   private void validateIsScrappedCalendar(Calendar calendar) {
     if (!calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "스크랩한 캘린더가 아닙니다.");
-    }
-  }
-
-  private void validateNotOwner(User user, Calendar calendar) {
-    if (isOwner(user, calendar)) {
-      throw new EveryventException(ErrorCode.INVALID_INPUT, "본인 캘린더입니다.");
     }
   }
 

@@ -2,7 +2,10 @@ package kr.santanrudolph.everyvent.domain.calendar.service;
 
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.Scrap;
-import kr.santanrudolph.everyvent.domain.calendar.dto.*;
+import kr.santanrudolph.everyvent.domain.calendar.dto.reponse.*;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarCreateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarUpdateRequest;
+import kr.santanrudolph.everyvent.domain.calendar.dto.request.ScrapCalendarRequest;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
 import kr.santanrudolph.everyvent.domain.task.TaskService;
@@ -38,13 +41,11 @@ public class CalendarService {
   private final ScrapService scrapService;
   private final CalendarPolicy calendarPolicy;
 
+  // create
+  public Calendar createCalendar(CalendarCreateRequest request, CalendarType calendarType) {
+    User user = getCurrentUser();
 
-  @Transactional
-  public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
-
-    User user = userService.getCurrentUser();
-
-    calendarPolicy.validateCanCreate(user, request.startDate());
+    calendarPolicy.validateCanCreate(user, request.startDate(), calendarType);
 
     Calendar calendar = Calendar.createCalendarWithStartDay(
         user,
@@ -56,20 +57,28 @@ public class CalendarService {
         request.visibility(),
         request.color(),
         request.category(),
-        CalendarType.PERSONAL
+        calendarType
     );
 
+    return calendarRepository.save(calendar);
+  }
 
-    Calendar saved = calendarRepository.save(calendar);
-    log.info("Calendar created - userId={}, calendarId={}, startDate={}",
-        user.getId(), saved.getId(), saved.getStartDate());
+  @Transactional
+  public CalendarDetailResponse createPersonalCalendar(CalendarCreateRequest request) {
+    User user = getCurrentUser();
+    Calendar saved = createCalendar(request, CalendarType.PERSONAL);
+
+    log.info("Calendar created - userId={}, calendarId={}, startDate={}, calendarType={}",
+        user.getId(), saved.getId(), saved.getStartDate(), saved.getCalendarType());
 
     return CalendarDetailResponse.from(saved, NOT_SCRAPPABLE, INITIAL_SCRAP_COUNT);
   }
 
+
+  // read
   public CalendarDetailResponse getCalendar(Long calendarId) {
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
 
     calendarPolicy.validateCanView(currentUser, calendar);
 
@@ -79,7 +88,7 @@ public class CalendarService {
   }
 
   public CalendarScrollResponse getMyCalendars(YearMonth cursor, Integer size) {
-    User user = userService.getCurrentUser();
+    User user = getCurrentUser();
 
     if (size <= 0) {
       throw new EveryventException(ErrorCode.INVALID_INPUT, "size는 1 이상이어야 합니다.");
@@ -131,7 +140,7 @@ public class CalendarService {
     LocalDate startDate = yearMonth.atDay(1);
     LocalDate endDate = yearMonth.atEndOfMonth();
     List<Calendar> calendars = calendarRepository.findByUserAndStartDateBetween(
-        userService.getCurrentUser(),
+        getCurrentUser(),
         startDate,
         endDate
     );
@@ -146,49 +155,39 @@ public class CalendarService {
         .toList();
   }
 
+
+  // update
+  public Calendar updateCalendar(Calendar calendar, CalendarUpdateRequest request) {
+    Optional.ofNullable(request.title()).ifPresent(calendar::updateTitle);
+    Optional.ofNullable(request.description()).ifPresent(calendar::updateDescription);
+    Optional.ofNullable(request.startDate()).ifPresent(calendar::updateStartDate);
+    Optional.ofNullable(request.endDate()).ifPresent(calendar::updateEndDate);
+    Optional.ofNullable(request.previewStartDate()).ifPresent(calendar::updatePreviewStartDay);
+    Optional.ofNullable(request.previewEndDate()).ifPresent(calendar::updatePreviewEndDay);
+    Optional.ofNullable(request.visibility()).ifPresent(calendar::updateVisibility);
+    Optional.ofNullable(request.color()).ifPresent(calendar::updateColor);
+    Optional.ofNullable(request.category()).ifPresent(calendar::updateCategory);
+
+    return calendar;
+  }
+
   @Transactional
   public CalendarDetailResponse updatePersonalCalendar(Long calendarId, CalendarUpdateRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanUpdate(currentUser, calendar);
-
-    if (request.title() != null) {
-      calendar.updateTitle(request.title());
-    }
-    if (request.description() != null) {
-      calendar.updateDescription(request.description());
-    }
-    if (request.startDate() != null) {
-      calendar.updateStartDate(request.startDate());
-    }
-    if (request.endDate() != null) {
-      calendar.updateEndDate(request.endDate());
-    }
-    if (request.previewStartDate() != null) {
-      calendar.updatePreviewStartDay(request.previewStartDate());
-    }
-    if (request.previewEndDate() != null) {
-      calendar.updatePreviewEndDay(request.previewEndDate());
-    }
-    if (request.visibility() != null) {
-      calendar.updateVisibility(request.visibility());
-    }
-    if (request.color() != null) {
-      calendar.updateColor(request.color());
-    }
-    if (request.category() != null) {
-      calendar.updateCategory(request.category());
-    }
+    updateCalendar(calendar, request);
 
     Long scrapCount = scrapService.getScrapCount(calendar.getId());
 
     return CalendarDetailResponse.from(calendar, false, scrapCount);
   }
 
+  // scrap
   @Transactional
   public CalendarDetailResponse scrapCalendar(Long calendarId, ScrapCalendarRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar originalCalendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanScrap(currentUser, originalCalendar);
@@ -214,7 +213,7 @@ public class CalendarService {
 
   @Transactional
   public void cancelScrap(Long originalCalendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar scrappedCalendar = calendarRepository
         .findByOriginalCalendarIdAndUserId(originalCalendarId, currentUser.getId())
         .orElseThrow(() ->
@@ -234,7 +233,7 @@ public class CalendarService {
 
   @Transactional
   public CalendarDetailResponse updateScrapColor(Long calendarId, ScrapCalendarRequest request) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = calendarRepository.findById(calendarId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
 
@@ -246,9 +245,11 @@ public class CalendarService {
     return CalendarDetailResponse.from(calendar, NOT_SCRAPPABLE, scrapCount);
   }
 
+
+  // delete
   @Transactional
   public void deleteCalendar(Long calendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     if (calendar.getCalendarType().equals(CalendarType.SCRAPED)) {
@@ -267,7 +268,7 @@ public class CalendarService {
 
   @Transactional
   public void hardDeleteCalendar(Long calendarId) {
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
 
     calendarPolicy.validateCanHardDelete(currentUser, calendar);
@@ -278,6 +279,8 @@ public class CalendarService {
     calendarRepository.deleteById(calendarId);
   }
 
+
+  // domain query method
   public Calendar findCalendarByIdAndDeletedAtIsNull(Long calendarId) {
     return calendarRepository.findByIdAndDeletedAtIsNull(calendarId)
         .orElseThrow(() -> new EveryventException(ErrorCode.NOT_FOUND, "캘린더를 찾을 수 없습니다."));
@@ -289,13 +292,19 @@ public class CalendarService {
     }
 
     Calendar calendar = findCalendarByIdAndDeletedAtIsNull(calendarId);
-    User currentUser = userService.getCurrentUser();
+    User currentUser = getCurrentUser();
 
     calendarPolicy.validateCanView(currentUser, calendar);
 
     return scrapService.getScrappers(calendarId, cursor, size);
   }
 
+  public User getCurrentUser() {
+    return userService.getCurrentUser();
+  }
+
+
+  // utility method
   private Map<Long, Long> getScrapCountMapFromCalendars(List<Calendar> calendars) {
     if (calendars == null || calendars.isEmpty()) {
       return Collections.emptyMap();

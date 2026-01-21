@@ -1,4 +1,4 @@
-package kr.santanrudolph.everyvent.domain.calendar.dto;
+package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 
 import jakarta.validation.constraints.Size;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
