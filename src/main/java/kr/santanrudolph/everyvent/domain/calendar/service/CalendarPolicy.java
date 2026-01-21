@@ -26,29 +26,26 @@ public class CalendarPolicy {
   private final ScrapService scrapService;
 
   public boolean canView(User user, Calendar calendar) {
+    if (isAdmin(user) || isOwner(user, calendar)) {
+      return true;
+    }
+
+    Long viewerId = user.getId();
+    Long ownerId = calendar.getUser().getId();
+
+    return switch (calendar.getVisibility()) {
+      case PUBLIC -> true;
+      case FOLLOWER -> followService.isFollowing(viewerId, ownerId);
+      case MUTUAL -> followService.isMutualFollow(viewerId, ownerId);
+      case PRIVATE -> false;
+      case ADMIN -> false;
+    };
+  }
+
+  private boolean isAdmin(User user) {
     if (user.getRole() == Role.ADMIN) {
       return true;
     }
-
-    if (isOwner(user, calendar)) {
-      return true;
-    }
-
-    Visibility visibility = calendar.getVisibility();
-    if (visibility == Visibility.PUBLIC) {
-      return true;
-    }
-
-    Long followerId = user.getId();
-    Long targetId = calendar.getUser().getId();
-    if (visibility == Visibility.FOLLOWER) {
-      return followService.isFollowing(followerId, targetId);
-    }
-
-    if (visibility == Visibility.MUTUAL) {
-      return followService.isMutualFollow(followerId, targetId);
-    }
-
     return false;
   }
 
@@ -68,10 +65,17 @@ public class CalendarPolicy {
     return calendar.getUser().getId().equals(user.getId());
   }
 
-  public void validateCanCreate(User user, LocalDate startDate) {
+  public void validateCanCreate(User user, LocalDate startDate, CalendarType calendarType) {
     try {
-      validateCalendarLimit(user, startDate);
-      validateFuture(startDate);
+      switch (calendarType) {
+        case OFFICIAL -> {
+          validateAdmin(user);
+        }
+        case PERSONAL -> {
+          validateCalendarLimit(user, startDate);
+          validateFuture(startDate);
+        }
+      }
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 만들 수 없습니다. " + e.getDetail());
     }
@@ -79,12 +83,26 @@ public class CalendarPolicy {
 
   public void validateCanUpdate(User user, Calendar calendar) {
     try {
+      validateUpdatePermission(user, calendar);
       validateFuture(calendar.getStartDate());
       validateDeleted(calendar);
-      validateOwner(user, calendar);
       validateOriginalCalendar(calendar);
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 수정할 수 없습니다. " + e.getDetail());
+    }
+  }
+
+  private void validateUpdatePermission(User user, Calendar calendar) {
+    if (calendar.isOfficialCalendar()) {
+      validateAdmin(user);
+    } else {
+      validateOwner(user, calendar);
+    }
+  }
+
+  private void validateAdmin(User user) {
+    if (!isAdmin(user)) {
+      throw new EveryventException(ErrorCode.FORBIDDEN, "관리자가 아닙니다.");
     }
   }
 
@@ -121,8 +139,15 @@ public class CalendarPolicy {
   }
 
   public void validateCanView(User user, Calendar calendar) {
-    if (!canView(user, calendar)) {
-      throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
+    switch (calendar.getCalendarType()) {
+      case OFFICIAL -> {
+        validateAdmin(user);
+      }
+      case PERSONAL -> {
+        if (!canView(user, calendar)) {
+          throw new EveryventException(ErrorCode.FORBIDDEN, "해당 캘린더에 접근 권한이 없습니다.");
+        }
+      }
     }
   }
 
