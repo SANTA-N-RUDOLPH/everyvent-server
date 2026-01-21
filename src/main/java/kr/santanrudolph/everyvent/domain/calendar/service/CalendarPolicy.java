@@ -158,6 +158,7 @@ public class CalendarPolicy {
       validateDeleted(calendar);
       validateNotOwner(user, calendar);
       validateNotAlreadyScrapped(user, calendar);
+      validateCalendarLimit(user, calendar.getStartDate());
     } catch (EveryventException e) {
       throw new EveryventException(e.getErrorCode(), "캘린더를 스크랩할 수 없습니다. " + e.getDetail());
     }
