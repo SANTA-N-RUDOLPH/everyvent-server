@@ -1,10 +1,11 @@
-package kr.santanrudolph.everyvent.domain.calendar.dto;
+package kr.santanrudolph.everyvent.domain.calendar.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarColor;
 import kr.santanrudolph.everyvent.domain.calendar.enums.Category;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 
 import java.time.LocalDate;
 
@@ -28,4 +29,17 @@ public record OfficialCalendarCreateRequest(
     @NotNull(message = "카테고리는 필수입니다")
     Category category
 ) {
+
+  public CalendarCreateRequest toCalendarCreateRequest() {
+    return new CalendarCreateRequest(
+        this.title,
+        this.description,
+        this.startDate,
+        this.previewStartDate,
+        this.previewEndDate,
+        Visibility.ADMIN,
+        this.color,
+        this.category
+    );
+  }
 }
