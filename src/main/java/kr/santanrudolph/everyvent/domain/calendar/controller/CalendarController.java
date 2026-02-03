@@ -210,60 +210,70 @@ public class CalendarController {
         new CalendarListResponse(
             101L, 11L, "인기 캘린더 1", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.BLUE, Category.CHALLENGE,
             null, CalendarType.PERSONAL, 150L
         ),
         new CalendarListResponse(
             102L, 12L, "인기 캘린더 2", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.PEACH, Category.HOBBY,
             null, CalendarType.PERSONAL, 120L
         ),
         new CalendarListResponse(
             103L, 13L, "인기 캘린더 3", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.MINT, Category.CHALLENGE,
             null, CalendarType.PERSONAL, 100L
         ),
         new CalendarListResponse(
             104L, 14L, "인기 캘린더 4", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.LAVENDER, Category.HOBBY,
             null, CalendarType.PERSONAL, 90L
         ),
         new CalendarListResponse(
             105L, 15L, "인기 캘린더 5", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.YELLOW, Category.CHALLENGE,
             null, CalendarType.PERSONAL, 85L
         ),
         new CalendarListResponse(
             106L, 16L, "인기 캘린더 6", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.BLUE, Category.HOBBY,
             null, CalendarType.PERSONAL, 75L
         ),
         new CalendarListResponse(
             107L, 17L, "인기 캘린더 7", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.PEACH, Category.CHALLENGE,
             null, CalendarType.PERSONAL, 70L
         ),
         new CalendarListResponse(
             108L, 18L, "인기 캘린더 8", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.MINT, Category.HOBBY,
             null, CalendarType.PERSONAL, 65L
         ),
         new CalendarListResponse(
             109L, 19L, "인기 캘린더 9", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.LAVENDER, Category.CHALLENGE,
             null, CalendarType.PERSONAL, 60L
         ),
         new CalendarListResponse(
             110L, 20L, "인기 캘린더 10", "설명",
             LocalDate.of(2025, 12, 1), LocalDate.of(2025, 12, 25),
+            null, null,
             Visibility.PUBLIC, CalendarColor.YELLOW, Category.HOBBY,
             null, CalendarType.PERSONAL, 55L
         )
