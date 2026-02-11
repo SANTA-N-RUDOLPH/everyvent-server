@@ -2,7 +2,9 @@ package kr.santanrudolph.everyvent.domain.calendar.repository;
 
 import kr.santanrudolph.everyvent.domain.calendar.Calendar;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.user.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -50,4 +52,22 @@ public interface CalendarRepository extends JpaRepository<Calendar, Long> {
   Optional<Calendar> findByIdAndDeletedAtIsNull(Long calendarId);
 
   Optional<Calendar> findByOriginalCalendarIdAndUserId(Long originalCalendarId, Long id);
+
+  @Query("""
+      SELECT c FROM Calendar c
+      LEFT JOIN Scrap s ON s.calendar = c
+      WHERE YEAR(c.startDate) = :year
+        AND MONTH(c.startDate) = :month
+        AND c.visibility = :visibility
+        AND c.calendarType = :calendarType
+        AND c.deletedAt IS NULL
+      ORDER BY COALESCE(s.scrapCount, 0) DESC
+      """)
+  List<Calendar> findPopularCalendars(
+      @Param("year") int year,
+      @Param("month") int month,
+      @Param("visibility") Visibility visibility,
+      @Param("calendarType") CalendarType calendarType,
+      Pageable pageable
+  );
 }

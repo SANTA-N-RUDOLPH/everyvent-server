@@ -7,6 +7,7 @@ import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarCreateRequ
 import kr.santanrudolph.everyvent.domain.calendar.dto.request.CalendarUpdateRequest;
 import kr.santanrudolph.everyvent.domain.calendar.dto.request.ScrapCalendarRequest;
 import kr.santanrudolph.everyvent.domain.calendar.enums.CalendarType;
+import kr.santanrudolph.everyvent.domain.calendar.enums.Visibility;
 import kr.santanrudolph.everyvent.domain.calendar.repository.CalendarRepository;
 import kr.santanrudolph.everyvent.domain.task.TaskService;
 import kr.santanrudolph.everyvent.domain.task.dto.TaskResponse;
@@ -16,6 +17,7 @@ import kr.santanrudolph.everyvent.global.exception.ErrorCode;
 import kr.santanrudolph.everyvent.global.exception.EveryventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,6 +136,27 @@ public class CalendarService {
     }
 
     return new CalendarScrollResponse(calendarMonthGroups, nextCursor, hasNext);
+  }
+
+  private static final int POPULAR_CALENDAR_LIMIT = 30;
+
+  public List<CalendarListResponse> getPopularCalendars(YearMonth yearMonth) {
+    List<Calendar> calendars = calendarRepository.findPopularCalendars(
+        yearMonth.getYear(),
+        yearMonth.getMonthValue(),
+        Visibility.PUBLIC,
+        CalendarType.PERSONAL,
+        PageRequest.of(0, POPULAR_CALENDAR_LIMIT)
+    );
+
+    Map<Long, Long> scrapCountMap = getScrapCountMapFromCalendars(calendars);
+
+    return calendars.stream()
+        .map(calendar -> CalendarListResponse.fromCalendar(
+            calendar,
+            scrapCountMap.getOrDefault(calendar.getId(), 0L)
+        ))
+        .toList();
   }
 
   public List<CalendarDetailResponse> getMonthlyCalendars(YearMonth yearMonth) {
